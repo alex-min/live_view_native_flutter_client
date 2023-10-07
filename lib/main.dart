@@ -29,7 +29,7 @@ class _MyAppState extends State<MyApp> {
     await view.connect(Platform.isAndroid
         ?
         // android emulator
-        'http://10.0.0.2:4000'
+        'http://10.0.2.2:4000'
         // computer
         : 'http://localhost:4000');
   }

@@ -149,6 +149,9 @@ class LiveView {
 
   handleMessage(Message event) {
     print("message received: $event");
+    if (event.event.value == 'diff') {
+      return handleDiffMessage(event.payload!);
+    }
     if (event.payload == null || !event.payload!.containsKey('response')) {
       return;
     }
