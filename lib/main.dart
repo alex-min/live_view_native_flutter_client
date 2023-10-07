@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 
@@ -24,7 +26,12 @@ class _MyAppState extends State<MyApp> {
   boot() async {
     view = LiveView(onReload: () => setState(() {}));
 
-    await view.connect('http://localhost:4000');
+    await view.connect(Platform.isAndroid
+        ?
+        // android emulator
+        'http://10.0.0.2:4000'
+        // computer
+        : 'http://localhost:4000');
   }
 
   // This widget is the root of your application.
