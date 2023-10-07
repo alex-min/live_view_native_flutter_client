@@ -8,6 +8,7 @@ A Flutter client for LiveView native
 
 - [Install Flutter](https://docs.flutter.dev/get-started/install)
 - clone this repository in a folder
+- clone [the demo live view flutter server](https://github.com/alex-min/live_view_flutter_demo)
 - Use "flutter run" to run the client
 - You can modify the live view url in lib/main.dart, by default it uses localhost:4000 and 10.0.0.2:4000 for the android emulator
 
