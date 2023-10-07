@@ -4,6 +4,12 @@ A Flutter client for LiveView native
 
 ⚠⚠ This client is a tech preview only, it's not ready to be usable for your own project ⚠⚠ 
 
+
+
+https://github.com/alex-min/live_view_native_flutter_client/assets/1898825/b8bbd652-f4ae-49d4-8b84-777b693952f5
+
+
+
 ## Getting Started
 
 - [Install Flutter](https://docs.flutter.dev/get-started/install)
