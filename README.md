@@ -1,9 +1,12 @@
 # Live View Native Flutter Client
 
-A Flutter client for LiveView native
-
 ⚠⚠ This client is a tech preview only, it's not ready to be usable for your own project ⚠⚠ 
 
+A Flutter client for LiveView native.
+
+This repo enables you to create an app for any Flutter platform (mobile & desktop) where the full UI is synced to the backend and reflects any change being made, similar as a Live View web client.
+
+Here is a demo of an Android, a Desktop and a web app synced on the same backend code:
 
 https://github.com/alex-min/live_view_native_flutter_client/assets/1898825/b8bbd652-f4ae-49d4-8b84-777b693952f5
 
@@ -15,7 +18,7 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 - clone this repository in a folder
 - clone [the demo live view flutter server](https://github.com/alex-min/live_view_flutter_demo)
 - Use "flutter run" to run the client
-- You can modify the live view url in lib/main.dart, by default it uses localhost:4000 and 10.0.0.2:4000 for the android emulator
+- You can modify the live view url in lib/main.dart, by default it uses localhost:4000 and 10.0.2.2:4000 for the android emulator
 
 ## What is there already?
 
