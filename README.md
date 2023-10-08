@@ -1,6 +1,7 @@
 # Live View Native Flutter Client
 
-⚠⚠ This client is a tech preview only, it's not ready to be usable for your own project ⚠⚠ 
+> [!WARNING]
+> This client is a tech preview, it's not ready to be usable for your own app
 
 A Flutter client for LiveView native.
 
