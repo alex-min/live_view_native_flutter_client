@@ -3,7 +3,8 @@ import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.
 import 'package:liveview_flutter/live_view/ui/components/live_title_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveAppBar extends LiveStateWidget implements PreferredSizeWidget {
+class LiveAppBar extends LiveStateWidget<LiveAppBar>
+    implements PreferredSizeWidget {
   const LiveAppBar({super.key, required super.state})
       : preferredSize = const Size.fromHeight(kToolbarHeight);
 

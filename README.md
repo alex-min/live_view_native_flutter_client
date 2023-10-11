@@ -2,6 +2,7 @@
 
 > [!WARNING]
 > This client is a tech preview, it's not ready to be usable for your own app
+> APIs might break and features might be missing
 
 A Flutter client for LiveView native.
 
@@ -27,19 +28,21 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 - Basic styling (padding, margin and background)
 - Basic forms (validation & submit)
 - Dynamic attributes & replacement
-- Conditional components
+- Conditional component rendering
 - Material Icons
+- Server-side themes with JSON, also you can switch & save theme on the server side
+- Basic Navigation (switch pages, go back)
 
 ## What is missing?
 
 - Documentation
-- Navigation
 - A full API support of all the components
-- Themes
 - Modclasses (same as live view swift native)
 - Hooks
 - Animations
 - Better live reloading
+- Local storage
+- Images & Video
 - ...
 
 As you see on this list, the client isn't fully usable for a real app yet.
@@ -94,17 +97,17 @@ This is an example of the code on the server:
             <% else %>
               <Center><Text>the current margin is even</Text></Center>
             <% end %>
-            <TextButton phx-click="inc">
+            <ElevatedButton phx-click="inc">
               <Text>
                 Increment margin
               </Text>
-            </TextButton>
+            </ElevatedButton>
             <Container margin="10 0 0 0">
-              <TextButton type="submit">
+              <ElevatedButton type="submit">
                 <Text>
                   Submit form
                 </Text>
-              </TextButton>
+              </ElevatedButton>
             </Container>
             <Text><%= @form_field %></Text>
           </ListView>

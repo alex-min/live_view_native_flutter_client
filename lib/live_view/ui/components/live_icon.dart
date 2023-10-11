@@ -5,7 +5,7 @@ import 'package:liveview_flutter/live_view/mapping/icons.dart';
 import 'package:liveview_flutter/live_view/mapping/text_direction.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveIcon extends LiveStateWidget {
+class LiveIcon extends LiveStateWidget<LiveIcon> {
   const LiveIcon({super.key, required super.state});
 
   @override

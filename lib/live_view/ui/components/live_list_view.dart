@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveListView extends LiveStateWidget {
+class LiveListView extends LiveStateWidget<LiveListView> {
   const LiveListView({super.key, required super.state});
 
   @override

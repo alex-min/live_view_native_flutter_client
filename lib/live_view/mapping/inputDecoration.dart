@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/boolean.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
-import 'package:liveview_flutter/live_view/mapping/icons.dart';
 
 InputDecoration getInputDecoration(BuildContext context, String? css,
     {Widget? icon}) {

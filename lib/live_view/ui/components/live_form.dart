@@ -8,7 +8,7 @@ class FormEvents {
   FormEvents({required this.onSave});
 }
 
-class LiveForm extends LiveStateWidget {
+class LiveForm extends LiveStateWidget<LiveForm> {
   const LiveForm({super.key, required super.state});
 
   @override

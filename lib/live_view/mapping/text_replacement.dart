@@ -13,7 +13,7 @@ String replaceVariables(String content, Map<String, dynamic> variables) {
 
 List<String> extractDynamicKeys(String input) {
   var matches =
-      RegExp(r'\[\[flutterState key=(?<key>\d)\]\]').allMatches(input);
+      RegExp(r'\[\[flutterState key=(?<key>\d+)\]\]').allMatches(input);
   List<String> ret = [];
   for (var match in matches) {
     var key = match.group(1);
@@ -34,7 +34,8 @@ List<String> extractDynamicKeys(String input) {
   if (attr == null) {
     return (null, null);
   }
-  var matches = RegExp(r'\[\[flutterState key=(?<key>\d)\]\]').firstMatch(attr);
+  var matches =
+      RegExp(r'\[\[flutterState key=(?<key>\d+)\]\]').firstMatch(attr);
   var key = matches?.group(1);
 
   if (key != null && variables[key] != null) {

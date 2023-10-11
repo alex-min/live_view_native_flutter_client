@@ -223,10 +223,24 @@ Map<String, Color> getColorMap() {
   };
 }
 
+Color? _parseVarColor(BuildContext context, String? color) {
+  // TODO var parsing
+  switch (color) {
+    case '@theme.colorScheme.background':
+      return Theme.of(context).colorScheme.background;
+    default:
+      return null;
+  }
+}
+
 Color? getColor(BuildContext context, String? color) {
   if (color == null) {
     return null;
   }
+  if (color.trim().startsWith('@')) {
+    return _parseVarColor(context, color.trim());
+  }
+
   var colors = color.trim().split('-');
   var map = getColorMap();
   if (map.containsKey(colors[0])) {

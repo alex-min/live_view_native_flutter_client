@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveTitleAttribute extends LiveStateWidget {
+class LiveTitleAttribute extends LiveStateWidget<LiveTitleAttribute> {
   const LiveTitleAttribute({super.key, required super.state});
 
   @override

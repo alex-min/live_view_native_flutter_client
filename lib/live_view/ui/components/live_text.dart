@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/mapping/text_style_map.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text_field.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveViewText extends LiveStateWidget<LiveTextField> {
-  const LiveViewText({required super.state, Key? key}) : super(key: key);
+class LiveText extends LiveStateWidget<LiveText> {
+  const LiveText({required super.state, Key? key}) : super(key: key);
 
   @override
-  State<LiveViewText> createState() => _LiveViewTextState();
+  State<LiveText> createState() => _LiveViewTextState();
 }
 
-class _LiveViewTextState extends StateWidget<LiveViewText> {
+class _LiveViewTextState extends StateWidget<LiveText> {
   Map<String, dynamic> lastLiveDiff = {};
 
   @override

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveScaffold extends LiveStateWidget {
+class LiveScaffold extends LiveStateWidget<LiveScaffold> {
   const LiveScaffold({super.key, required super.state});
 
   @override

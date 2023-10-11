@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_center.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_column.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_container.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text_field.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_title_attribute.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_view_text.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:xml/xml.dart';
@@ -21,13 +24,11 @@ import 'package:xml/xml.dart';
 class LiveViewUiParser {
   List<String> html;
   final Map<String, dynamic> _htmlVariables;
-  Function(String event, String value) onEvent;
   LiveView liveView;
 
   LiveViewUiParser(
       {required this.html,
       required Map<String, dynamic> htmlVariables,
-      required this.onEvent,
       required this.liveView})
       : _htmlVariables = htmlVariables;
 
@@ -43,7 +44,7 @@ class LiveViewUiParser {
     var fullHtml = html.joinWith((i) {
       if (variables.containsKey(i.toString())) {
         var injectedValue = variables[i.toString()].toString().trim();
-        if (RegExp(r'^\w+=\".*\"$').hasMatch(injectedValue)) {
+        if (RegExp(r'^[a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
           var split = injectedValue.indexOf('="');
           var key = injectedValue.substring(0, split);
           return ' $key="[[flutterState key=$i]]" ';
@@ -52,6 +53,7 @@ class LiveViewUiParser {
       return '[[flutterState key=$i]]';
     }).trim();
 
+    print(fullHtml);
     return traverse(NodeState(
         liveView: liveView,
         node: XmlDocument.parse(fullHtml).nonEmptyChildren.first,
@@ -75,9 +77,9 @@ class LiveViewUiParser {
         case 'Container':
           return LiveContainer(state: state);
         case 'Text':
-          return LiveViewText(state: state);
-        case 'TextButton':
-          return LiveTextbutton(state: state);
+          return LiveText(state: state);
+        case 'ElevatedButton':
+          return LiveElevatedButton(state: state);
         case 'Center':
           return LiveCenter(state: state);
         case 'ListView':
@@ -92,10 +94,16 @@ class LiveViewUiParser {
           return LiveTitleAttribute(state: state);
         case 'leading':
           return LiveLeadingAttribute(state: state);
+        case 'link':
+          return LiveLink(state: state);
         case 'icon':
           return LiveIconAttribute(state: state);
         case 'Icon':
           return LiveIcon(state: state);
+        case 'Column':
+          return LiveColumn(state: state);
+        case 'Row':
+          return LiveRow(state: state);
         default:
           throw Exception("unknown widget $componentName");
       }
@@ -105,16 +113,4 @@ class LiveViewUiParser {
       throw Exception('unknown node type ${state.node.nodeType}');
     }
   }
-
-  Widget clickable(Widget widget, XmlNode node) {
-    if (node.getAttribute('phx-click') != null) {
-      return GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () => phxClick(node.getAttribute('phx-click')!),
-          child: AbsorbPointer(child: widget));
-    }
-    return widget;
-  }
-
-  void phxClick(String event) => onEvent('phx-click', event);
 }

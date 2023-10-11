@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveDynamicComponent extends LiveStateWidget {
+class LiveDynamicComponent extends LiveStateWidget<LiveDynamicComponent> {
   const LiveDynamicComponent({super.key, required super.state});
 
   @override
@@ -59,10 +59,14 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
         if (lastLiveDiff[key] is String && lastLiveDiff[key].trim() == '') {
           return child ?? const SizedBox.shrink();
         }
+
+        if (lastLiveDiff[key] == null) {
+          return child ?? const SizedBox.shrink();
+        }
         throw Exception('not implemented');
       }
     }
 
-    return child ?? const SizedBox.shrink();
+    return child ?? LiveText(state: widget.state);
   }
 }

@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:xml/xml.dart';
 
 extension NonEmptyChildren on XmlNode {
@@ -35,4 +38,37 @@ extension JoinMethod on List<String> {
 
 extension Matches on String {
   bool matches(String regex) => RegExp(regex).firstMatch(this) != null;
+}
+
+dynamic tryJsonDecode(String source,
+    {Object? Function(Object?, Object?)? reviver}) {
+  try {
+    return jsonDecode(source, reviver: reviver);
+  } on FormatException {
+    return null;
+  }
+}
+
+extension ThemeModeStringify on ThemeMode {
+  static ThemeMode parse(String mode) {
+    switch (mode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  String modeAsString() {
+    switch (this) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      default:
+        return 'system';
+    }
+  }
 }

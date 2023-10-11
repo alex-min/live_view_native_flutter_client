@@ -3,7 +3,7 @@ import 'package:liveview_flutter/live_view/mapping/decoration.dart';
 import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveContainer extends LiveStateWidget {
+class LiveContainer extends LiveStateWidget<LiveContainer> {
   const LiveContainer({super.key, required super.state});
 
   @override

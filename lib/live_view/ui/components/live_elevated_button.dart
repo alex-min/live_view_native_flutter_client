@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveTextbutton extends LiveStateWidget {
-  const LiveTextbutton({super.key, required super.state});
+class LiveElevatedButton extends LiveStateWidget<LiveElevatedButton> {
+  const LiveElevatedButton({super.key, required super.state});
 
   @override
-  State<LiveTextbutton> createState() => _LiveSubmitbuttonState();
+  State<LiveElevatedButton> createState() => _LiveElevatedButtonState();
 }
 
-class _LiveSubmitbuttonState extends StateWidget<LiveTextbutton> {
+class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
     reloadAttributes(['type']);
@@ -24,7 +24,7 @@ class _LiveSubmitbuttonState extends StateWidget<LiveTextbutton> {
           if (getAttribute('type') == 'submit') {
             widget.state.formEvents?.onSave();
           }
-          handlePhxClick();
+          executeTapEventsManually();
         },
         child: singleChild());
   }

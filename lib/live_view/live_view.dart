@@ -5,8 +5,11 @@ import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
+import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
+import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
+import 'package:liveview_flutter/live_view/routes/live_router_delegate.dart';
 import 'package:uuid/uuid.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +18,7 @@ import './ui/live_view_ui_parser.dart';
 class LiveEvent {
   final String type;
   final String name;
-  final String value;
+  final dynamic value;
 
   LiveEvent({required this.type, required this.name, required this.value});
 
@@ -34,7 +37,21 @@ class LiveEvent {
   int get hashCode => Object.hashAll([type, name, value]);
 }
 
+class LiveSocket {
+  PhoenixSocket create(
+          {required String url,
+          required Map<String, String>? params,
+          required Map<String, String>? headers}) =>
+      PhoenixSocket(url,
+          socketOptions: PhoenixSocketOptions(
+            params: params,
+            headers: headers,
+          ));
+}
+
 class LiveView {
+  http.Client httpClient = http.Client();
+  var liveSocket = LiveSocket();
   late String _csrf;
   late String _host;
   late String _clientId;
@@ -42,36 +59,56 @@ class LiveView {
   late String _phxStatic;
   late String _liveViewId;
   late String _baseUrl;
+  late String _currentUrl;
   late String _cookie;
+  late String endpointScheme;
+  List<Function(FlutterExecAction)> _pageActions = [];
+
+  String? redirectToUrl;
 
   late PhoenixSocket _socket;
   late PhoenixSocket _liveReloadSocket;
 
   late PhoenixChannel _channel;
 
-  late m.Widget rootWidget;
+  m.Widget? lastRender;
 
   final Function() onReload;
 
+  // dynamic global state
   late StateNotifier _changeNotifier;
   late LiveConnectionNotifier _connectionNotifier;
+  late ThemeSettings _themeSettings;
+
+  late LiveRouterDelegate router;
 
   LiveView({required this.onReload}) {
-    rootWidget = connectingWidget();
+    _currentUrl = '/';
+    router = LiveRouterDelegate(this);
     _changeNotifier = StateNotifier();
     _connectionNotifier = LiveConnectionNotifier();
+    _themeSettings = ThemeSettings();
+    _themeSettings.httpClient = httpClient;
+
+    router.pushPage(url: '/', widget: connectingWidget());
   }
 
   Future<String?> connect(String address) async {
+    _pageActions = [];
     _baseUrl = address;
+    _currentUrl = address;
     var endpoint = Uri.parse(address);
-    var r = await http.get(endpoint);
+    endpointScheme = endpoint.scheme;
+    var r = await httpClient.get(endpoint);
     var content = html.parse(r.body);
 
     _host = "${endpoint.host}:${endpoint.port}";
     _clientId = const Uuid().v4();
     _cookie = r.headers['set-cookie']!.split(' ')[0];
 
+    _themeSettings.host = "${endpoint.scheme}://$_host";
+    await _themeSettings.loadPreferences();
+    await _themeSettings.fetchCurrentTheme();
     _readInitialSession(content);
     await _websocketConnect();
     await _setupLiveReload();
@@ -80,7 +117,7 @@ class LiveView {
     return _csrf;
   }
 
-  _readInitialSession(Document content) {
+  void _readInitialSession(Document content) {
     _csrf = (content
         .querySelector('meta[name="csrf-token"]')
         ?.attributes['content'])!;
@@ -102,26 +139,34 @@ class LiveView {
         'vsn': '2.0.0'
       };
 
-  _fullsocketParams() => {
-        'session': _session,
-        'static': _phxStatic,
-        'url': _baseUrl,
-        'params': _socketParams()
-      };
+  Map<String, dynamic> _fullsocketParams({bool redirect = false}) {
+    var params = {
+      'session': _session,
+      'static': _phxStatic,
+      'params': _socketParams()
+    };
+    if (redirect) {
+      params['redirect'] = _currentUrl;
+    } else {
+      params['url'] = _currentUrl;
+    }
+    return params;
+  }
 
   _websocketConnect() async {
-    _socket = PhoenixSocket("ws://$_host/live/websocket",
-        socketOptions: PhoenixSocketOptions(
-          params: _socketParams(),
-          headers: {'Cookie': _cookie},
-        ));
+    _socket = liveSocket.create(
+      url: "ws://$_host/live/websocket",
+      params: _socketParams(),
+      headers: {'Cookie': _cookie},
+    );
 
     await _socket.connect();
   }
 
-  _setupPhoenixChannel() async {
+  _setupPhoenixChannel({bool redirect = false}) async {
     _channel = _socket.addChannel(
-        topic: "lv:$_liveViewId", parameters: _fullsocketParams());
+        topic: "lv:$_liveViewId",
+        parameters: _fullsocketParams(redirect: redirect));
 
     _channel.messages.listen(handleMessage);
 
@@ -130,13 +175,16 @@ class LiveView {
     }
   }
 
+  Future<void> redirectTo(String url) async {
+    _channel.push('phx_leave', {}).future;
+    redirectToUrl = "$endpointScheme://$_host$url";
+  }
+
   _setupLiveReload() async {
-    _liveReloadSocket =
-        PhoenixSocket("ws://$_host/phoenix/live_reload/socket/websocket",
-            socketOptions: PhoenixSocketOptions(
-              params: _socketParams(),
-              headers: {'Cookie': _cookie},
-            ));
+    _liveReloadSocket = liveSocket.create(
+        url: "ws://$_host/phoenix/live_reload/socket/websocket",
+        params: _socketParams(),
+        headers: {'Cookie': _cookie});
     var liveReload = _liveReloadSocket.addChannel(
         topic: "phoenix:live_reload", parameters: _fullsocketParams());
     liveReload.messages.listen(liveReloadMessage);
@@ -147,8 +195,25 @@ class LiveView {
     }
   }
 
+  listenPageAction(Function(FlutterExecAction) handle) =>
+      _pageActions.add(handle);
+
+  dispatchGlobalPageAction(FlutterExecAction action) {
+    for (var handle in _pageActions) {
+      handle(action);
+    }
+  }
+
   handleMessage(Message event) {
-    print("message received: $event");
+    if (event.event.value == 'phx_close') {
+      if (redirectToUrl != null) {
+        _currentUrl = redirectToUrl!;
+        _connectionNotifier.reconnect();
+        _pageActions = [];
+        _setupPhoenixChannel(redirect: true);
+      }
+      return;
+    }
     if (event.event.value == 'diff') {
       return handleDiffMessage(event.payload!);
     }
@@ -165,17 +230,18 @@ class LiveView {
   handleRenderedMessage(Map<String, dynamic> rendered) {
     var elements = List<String>.from(rendered['s']);
 
-    rootWidget = MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: _changeNotifier),
-          ChangeNotifierProvider.value(value: _connectionNotifier),
-        ],
+    var path = Uri.parse(_currentUrl).path;
+    if (path == "") {
+      path = "/";
+    }
+    var render = m.Material(
         child: LiveViewUiParser(
                 html: elements,
                 htmlVariables: _extractVariables(rendered),
-                onEvent: onEvent,
                 liveView: this)
             .parse());
+    lastRender = render;
+    router.updatePage(url: path, widget: render);
     onReload();
   }
 
@@ -195,32 +261,59 @@ class LiveView {
     return ret;
   }
 
-  liveReloadMessage(Message event) async {
+  Future<void> liveReloadMessage(Message event) async {
     if (event.event.value == 'assets_change') {
-      _socket.removeChannel(_channel);
-      _socket.close();
-      _liveReloadSocket.close();
+      _socket.dispose();
+      _liveReloadSocket.dispose();
       _changeNotifier.emptyData();
-      _channel.close();
-      rootWidget = connectingWidget();
-      onReload();
 
-      connect(_baseUrl);
-    }
-  }
-
-  onEvent(String eventName, String value) {
-    if (eventName == 'phx-click') {
-      _channel.push('event', {'type': 'click', 'event': value, 'value': {}});
+      await connect(_baseUrl);
+      _connectionNotifier.reconnect();
     }
   }
 
   sendEvent(LiveEvent event) {
-    _channel.push('event',
-        {'type': event.type, 'event': event.name, 'value': event.value});
+    if (_channel.state != PhoenixChannelState.closed) {
+      _channel.push('event',
+          {'type': event.type, 'event': event.name, 'value': event.value});
+    }
   }
 
-  Widget connectingWidget() {
-    return const m.Scaffold(body: m.Text('Connecting....'));
+  Widget connectingWidget() => loadingWidget();
+
+  Widget loadingWidget() => Builder(
+      builder: (context) => Container(
+          color: m.Theme.of(context).colorScheme.background,
+          child: const Center(child: m.CircularProgressIndicator())));
+
+  Widget materialApp() {
+    return MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: _changeNotifier),
+          ChangeNotifierProvider.value(value: _connectionNotifier),
+          ChangeNotifierProvider.value(value: _themeSettings)
+        ],
+        child: Builder(builder: (context) {
+          var theme = Provider.of<ThemeSettings>(context);
+          return m.MaterialApp(
+            title: 'Flutter Demo',
+            themeMode: theme.themeMode,
+            theme: theme.lightTheme,
+            darkTheme: theme.darkTheme,
+            home: Router(
+              routerDelegate: router,
+              backButtonDispatcher: RootBackButtonDispatcher(),
+            ),
+          );
+        }));
   }
+
+  Future<void> switchTheme(String? themeName, String? themeMode) async {
+    if (themeName == null || themeMode == null) {
+      return;
+    }
+    return _themeSettings.setTheme(themeName, themeMode);
+  }
+
+  Future<void> saveCurrentTheme() => _themeSettings.save();
 }
