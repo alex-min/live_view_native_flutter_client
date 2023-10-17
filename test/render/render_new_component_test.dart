@@ -5,7 +5,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('handles a new component', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<ListView>', '</ListView>'],
         '0': ''
@@ -25,7 +25,7 @@ main() async {
   });
 
   testWidgets('handles a new component with inside variables', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<ListView>', '</ListView>'],
         '0': ''
@@ -54,7 +54,7 @@ main() async {
   });
 
   testWidgets('handles a new component being removed', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<ListView>', '</ListView>'],
         '0': ''

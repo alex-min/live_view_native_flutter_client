@@ -8,6 +8,7 @@ String replaceVariables(String content, Map<String, dynamic> variables) {
     content = content.replaceAll(
         '[[flutterState key=${item.key}]]', item.value.toString());
   }
+  content = content.replaceAll(RegExp(r'\[\[flutterState key=\d+\]\]'), '');
   return content;
 }
 
@@ -56,6 +57,16 @@ class VariableAttributes {
   List<String> keys;
 
   VariableAttributes(this.attributes, this.keys);
+
+  void merge(VariableAttributes other) {
+    for (var key in other.keys) {
+      if (!keys.contains(key)) {
+        keys.add(key);
+      }
+    }
+
+    attributes.addAll(other.attributes);
+  }
 }
 
 VariableAttributes getVariableAttributes(

@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_center.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_column.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_container.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_drawer_header.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
@@ -11,6 +15,9 @@ import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dar
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_navigator.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
@@ -20,6 +27,8 @@ import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:xml/xml.dart';
+
+LiveNavigator? _navigator;
 
 class LiveViewUiParser {
   List<String> html;
@@ -32,13 +41,13 @@ class LiveViewUiParser {
       required this.liveView})
       : _htmlVariables = htmlVariables;
 
-  Widget parse() => parseHtml(html, _htmlVariables, []);
+  List<Widget> parse() => parseHtml(html, _htmlVariables, []);
 
-  Widget parseHtml(List<String> html, final Map<String, dynamic> variables,
-      List<int> nestedState) {
+  List<Widget> parseHtml(List<String> html,
+      final Map<String, dynamic> variables, List<int> nestedState) {
     var htmlVariables = Map<String, dynamic>.from(variables);
     if (html.isEmpty) {
-      return const SizedBox.shrink();
+      return [const SizedBox.shrink()];
     }
 
     var fullHtml = html.joinWith((i) {
@@ -53,7 +62,6 @@ class LiveViewUiParser {
       return '[[flutterState key=$i]]';
     }).trim();
 
-    print(fullHtml);
     return traverse(NodeState(
         liveView: liveView,
         node: XmlDocument.parse(fullHtml).nonEmptyChildren.first,
@@ -63,54 +71,78 @@ class LiveViewUiParser {
         formEvents: null));
   }
 
-  Widget traverse(NodeState state) {
+  static List<Widget> traverse(NodeState state) {
     return buildWidget(state);
   }
 
-  Widget buildWidget(NodeState state) {
+  static List<Widget> buildWidget(NodeState state) {
     if (state.node.nodeType == XmlNodeType.ELEMENT) {
       var componentName = (state.node as XmlElement).name.qualified;
 
       switch (componentName) {
         case 'Scaffold':
-          return LiveScaffold(state: state);
+          return [LiveScaffold(state: state)];
         case 'Container':
-          return LiveContainer(state: state);
+          return [LiveContainer(state: state)];
         case 'Text':
-          return LiveText(state: state);
+          return [LiveText(state: state)];
         case 'ElevatedButton':
-          return LiveElevatedButton(state: state);
+          return [LiveElevatedButton(state: state)];
         case 'Center':
-          return LiveCenter(state: state);
+          return [LiveCenter(state: state)];
         case 'ListView':
-          return LiveListView(state: state);
+          return [LiveListView(state: state)];
         case 'Form':
-          return LiveForm(state: state);
+          return [LiveForm(state: state)];
         case 'TextField':
-          return LiveTextField(state: state);
+          return [LiveTextField(state: state)];
         case 'AppBar':
-          return LiveAppBar(state: state);
+          return [LiveAppBar(state: state)];
         case 'title':
-          return LiveTitleAttribute(state: state);
+          return [LiveTitleAttribute(state: state)];
         case 'leading':
-          return LiveLeadingAttribute(state: state);
+          return [LiveLeadingAttribute(state: state)];
         case 'link':
-          return LiveLink(state: state);
+          return [LiveLink(state: state)];
         case 'icon':
-          return LiveIconAttribute(state: state);
+          return [LiveIconAttribute(state: state)];
         case 'Icon':
-          return LiveIcon(state: state);
+          return [LiveIcon(state: state)];
         case 'Column':
-          return LiveColumn(state: state);
+          return [LiveColumn(state: state)];
         case 'Row':
-          return LiveRow(state: state);
+          return [LiveRow(state: state)];
+        case 'Drawer':
+          return [LiveDrawer(state: state)];
+        case 'DrawerHeader':
+          return [LiveDrawerHeader(state: state)];
+        case 'BottomNavigationBar':
+          return [LiveBottomNavigationBar(state: state)];
+        case 'BottomNavigationBarIcon':
+          return [LiveBottomNavigationBarIcon(state: state)];
+        case 'Navigator':
+          return [LiveNavigator(state: state)];
+        case 'viewBody':
+          return [LiveViewBody(state: state)];
+        case 'flutter':
+          return state.node.nonEmptyChildren
+              .map((c) => traverse(state.copyWith(node: c)).first)
+              .toList();
         default:
-          throw Exception("unknown widget $componentName");
+          if (kDebugMode) {
+            throw Exception("unknown widget $componentName");
+          } else {
+            return [const SizedBox.shrink()];
+          }
       }
     } else if (state.node.nodeType == XmlNodeType.TEXT) {
-      return LiveDynamicComponent(state: state);
+      return [LiveDynamicComponent(state: state)];
     } else {
-      throw Exception('unknown node type ${state.node.nodeType}');
+      if (kDebugMode) {
+        throw Exception('unknown node type ${state.node.nodeType}');
+      } else {
+        return [const SizedBox.shrink()];
+      }
     }
   }
 }

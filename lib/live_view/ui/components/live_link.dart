@@ -10,24 +10,10 @@ class LiveLink extends LiveStateWidget<LiveLink> {
 
 class _LiveCenterState extends StateWidget<LiveLink> {
   @override
-  void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(['patch']);
-  }
+  void onStateChange(Map<String, dynamic> diff) {}
 
   @override
   Widget render(BuildContext context) {
-    var patchUrl = getAttribute('patch');
-    if (patchUrl == null) {
-      return singleChild();
-    }
-
-    return GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-          liveView.redirectTo(patchUrl);
-          liveView.router
-              .pushPage(url: 'loading', widget: liveView.loadingWidget());
-        },
-        child: AbsorbPointer(child: singleChild()));
+    return MouseRegion(cursor: SystemMouseCursors.click, child: singleChild());
   }
 }

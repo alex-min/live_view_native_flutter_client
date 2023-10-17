@@ -22,9 +22,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   boot() async {
-    view = LiveView(onReload: () {
-      setState(() {});
-    });
+    view = LiveView();
 
     await view.connect(Platform.isAndroid
         ?
@@ -37,6 +35,6 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return view.materialApp();
+    return view.rootView;
   }
 }

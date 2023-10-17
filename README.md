@@ -2,6 +2,7 @@
 
 > [!WARNING]
 > This client is a tech preview, it's not ready to be usable for your own app
+>
 > APIs might break and features might be missing
 
 A Flutter client for LiveView native.
@@ -24,25 +25,29 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 
 ## What is there already?
 
-- Some basic components are partially supported (Container, TextButton, Icon, AppBar ...)
+- Some basic components are partially supported (Container, TextButton, Icon, AppBar, BottomNavigationBar ...)
+- Modern Flutter Navigation with router 2.0 (switch pages, transitions go back). Although transitions aren't customizable yet.
 - Basic styling (padding, margin and background)
 - Basic forms (validation & submit)
 - Dynamic attributes & replacement
 - Conditional component rendering
 - Material Icons
 - Server-side themes with JSON, also you can switch & save theme on the server side
-- Basic Navigation (switch pages, go back)
+- Live reloading
 
 ## What is missing?
 
 - Documentation
 - A full API support of all the components
 - Modclasses (same as live view swift native)
-- Hooks
+- Hooks similar as web hooks
 - Animations
 - Better live reloading
 - Local storage
 - Images & Video
+- More server side-events, something like "flutter-onrender"
+- Responsive navigation & desktop support (like windows title)
+- Sessions & Session storage events
 - ...
 
 As you see on this list, the client isn't fully usable for a real app yet.
@@ -60,60 +65,34 @@ This is an example of the code on the server:
 
 ```elixir
   @impl true
-  def render(%{platform_id: :flutterui} = assigns) do
+  def render(%{platform_id: :flutter} = assigns) do
     # This UI renders on flutter
-    ~FLUTTERUI"""
-    <Scaffold>
-      <AppBar>
-        <title>
-          <Text>Hello Native</Text>
-        </title>
-        <leading>
-        <Icon size="20" name="menu" />
-        </leading>
-      </AppBar>
-      <Container padding={10 + @counter} decoration={bg_color(@counter)}>
-        <Form phx-change="validate" phx-submit="save">
-          <ListView>
-            <Container decoration="background: white">
-              <TextField decoration="fillColor: white; filled: true" name="myfield" value={"Current margin #{@counter}"}>
-                <icon>
-                  <Container decoration="background" padding="10">
-                    <Icon size="20" name="key" />
-                  </Container>
-                </icon>
-              </TextField>
+    ~FLUTTER"""
+      <flutter>
+        <AppBar>
+          <title>hello</title>
+        </AppBar>
+        <viewBody>
+          <Container padding="10">
+            <Container padding={10 + @counter} decoration={bg_color(@counter)}>
+              <Text>Margin Counter <%= @counter %></Text>
+              <ElevatedButton flutter-click="go_back">go back</ElevatedButton>
             </Container>
-            <Container decoration="background: white" margin="10 0 0 0">
-              <TextField name="myfield2" decoration="fillColor: white; filled: true" value="Second field" />
-            </Container>
-            <Center>
-              <Text style="textTheme: headlineMedium; fontWeight: bold; fontStyle: italic">
-                Current Margin: <%= @counter %>
-              </Text>
-            </Center>
-            <%= if rem(@counter, 2) == 1 do %>
-              <Center><Text>the current margin is odd</Text></Center>
-            <% else %>
-              <Center><Text>the current margin is even</Text></Center>
-            <% end %>
-            <ElevatedButton phx-click="inc">
-              <Text>
-                Increment margin
-              </Text>
-            </ElevatedButton>
-            <Container margin="10 0 0 0">
-              <ElevatedButton type="submit">
-                <Text>
-                  Submit form
-                </Text>
-              </ElevatedButton>
-            </Container>
-            <Text><%= @form_field %></Text>
-          </ListView>
-        </Form>
-      </Container>
-    </Scaffold>
+            <Row>
+              <ElevatedButton phx-click={Dart.switch_theme("dark")}>Switch dark theme</ElevatedButton>
+              <Container margin="0 20 0 0">
+                <ElevatedButton phx-click={Dart.switch_theme("light")}>Switch light theme</ElevatedButton>
+              </Container>
+            </Row>
+          </Container>
+        </viewBody>
+        <BottomNavigationBar currentIndex="0" selectedItemColor="blue-500">
+          <BottomNavigationBarIcon name="home" label="Page 1" />
+          <BottomNavigationBarIcon live-patch="/second-page" name="home" label="Page 2" />
+          <BottomNavigationBarIcon phx-click="inc" name="arrow_upward" label="Increment" />
+          <BottomNavigationBarIcon phx-click="dec" name="arrow_downward" label="Decrement" />
+        </BottomNavigationBar>
+      </flutter>
     """
   end
 ```

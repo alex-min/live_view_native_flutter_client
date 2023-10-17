@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,13 +9,29 @@ import 'package:phoenix_socket/phoenix_socket.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+http.Response jsonHttpResponse(dynamic data) {
+  return http.Response(jsonEncode(data), 200,
+      headers: {'content-type': 'application/json'});
+}
+
+class BasicColors {
+  static Color red = const Color.fromARGB(255, 255, 0, 0);
+  static Color blue = const Color.fromARGB(255, 0, 0, 255);
+}
+
+extension ButtonColor on ThemeData {
+  Color? get elevatedButtonBgColor =>
+      elevatedButtonTheme.style?.backgroundColor?.resolve({});
+}
+
 extension TakeKeys on Map {
   Map<String, dynamic> takeKeys(List<String> keys) =>
       Map.fromEntries(keys.map((key) => MapEntry(key, this[key])));
 }
 
 extension FindText on CommonFinders {
-  String? firstText() => (byType(Text).evaluate().single.widget as Text).data;
+  String? firstText() => allTexts().firstOrNull;
+
   T firstOf<T>() => byType(T).evaluate().single.widget as T;
   List<String> allTexts() =>
       (byType(Text).evaluate().map((e) => (e.widget as Text).data ?? ''))
@@ -27,7 +45,9 @@ extension ValueText on FormBuilderTextField {
 
 extension RunLiveView on WidgetTester {
   Future<void> runLiveView(LiveView view) async {
-    return pumpWidget(view.materialApp());
+    view.catchExceptions = false;
+    view.disableAnimations = true;
+    await pumpWidget(view.rootView);
   }
 }
 
@@ -134,6 +154,7 @@ class FakePhoenixSocket extends PhoenixSocket {
 
 class FakeLiveSocket extends LiveSocket {
   List<FakePhoenixSocket> socketsOpened = [];
+  List<http.Request> httpRequestsMade = [];
 
   @override
   PhoenixSocket create(
@@ -164,12 +185,21 @@ class FakeLiveSocket extends LiveSocket {
   EventSent? get lastChannelAction => lastChannelActions?.last;
 }
 
-Future<(LiveView, FakeLiveSocket)> connect(LiveView view) async {
+Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
+    {Map<String, dynamic>? rendered,
+    http.Response? Function(http.Request)? onRequest}) async {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
   var socket = FakeLiveSocket();
   final MockClient client = MockClient((request) async {
+    socket.httpRequestsMade.add(request);
+    if (onRequest != null) {
+      var response = onRequest(request);
+      if (response != null) {
+        return response;
+      }
+    }
     return http.Response(
         """
         <meta name="csrf-token" content="csrf" />
@@ -182,6 +212,9 @@ Future<(LiveView, FakeLiveSocket)> connect(LiveView view) async {
   view.liveSocket = socket;
   view.httpClient = client;
   await view.connect('http://localhost:9999');
+  if (rendered != null) {
+    view.handleRenderedMessage(rendered);
+  }
   return (view, socket);
 }
 

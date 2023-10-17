@@ -6,7 +6,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('global padding', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<Container padding="10" />'],
       });
@@ -17,7 +17,7 @@ main() async {
   });
 
   testWidgets('symetric padding', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<Container padding="10 20" />'],
       });
@@ -33,7 +33,7 @@ main() async {
   });
 
   testWidgets('full padding', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<Container padding="10 20 30 40" />'],
       });

@@ -6,7 +6,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('handles dynamic attributes', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<TextField ', '', '></TextField>'],
         '0': 'name="myfield"',

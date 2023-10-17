@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
-import 'package:liveview_flutter/live_view/mapping/double.dart';
+import 'package:liveview_flutter/live_view/mapping/number.dart';
 import 'package:liveview_flutter/live_view/mapping/icons.dart';
 import 'package:liveview_flutter/live_view/mapping/text_direction.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';

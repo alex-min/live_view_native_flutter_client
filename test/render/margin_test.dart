@@ -6,7 +6,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('global margin', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<Container margin="10" />'],
       });
@@ -17,7 +17,7 @@ main() async {
   });
 
   testWidgets('symetric margin', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<Container margin="10 20" />'],
       });
@@ -33,7 +33,7 @@ main() async {
   });
 
   testWidgets('full margin', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<Container margin="10 20 30 40" />'],
       });

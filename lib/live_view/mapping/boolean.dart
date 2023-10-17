@@ -1,4 +1,4 @@
-bool? getBoolean(String prop) {
+bool? getBoolean(String? prop) {
   switch (prop) {
     case 'true':
       return true;

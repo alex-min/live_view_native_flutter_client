@@ -27,9 +27,9 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
   }
 
   @override
-  void onReconnect() {
+  void onWipeState() {
     child = null;
-    super.onReconnect();
+    super.onWipeState();
   }
 
   @override
@@ -45,10 +45,11 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
         if (lastLiveDiff[key].containsKey('s')) {
           var newState = List<int>.from(widget.state.nestedState);
           newState.add(int.parse(key));
-          child = widget.state.parser.parseHtml(
-              List<String>.from(lastLiveDiff[key]['s']),
-              Map<String, dynamic>.from(lastLiveDiff[key]),
-              newState);
+          // TODO: handle multiple children passed here and turn it into a column
+          child = widget.state.parser
+              .parseHtml(List<String>.from(lastLiveDiff[key]['s']),
+                  Map<String, dynamic>.from(lastLiveDiff[key]), newState)
+              .first;
           return child!;
         } else {
           // only updating child props
@@ -63,7 +64,8 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
         if (lastLiveDiff[key] == null) {
           return child ?? const SizedBox.shrink();
         }
-        throw Exception('not implemented');
+        throw Exception(
+            'not implemented ${lastLiveDiff[key]} $key ${lastLiveDiff[key].runtimeType}');
       }
     }
 

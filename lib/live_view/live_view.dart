@@ -1,18 +1,24 @@
 import 'dart:convert';
 
+import 'package:event_hub/event_hub.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
-import 'package:liveview_flutter/exec/flutter_exec.dart';
+import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
+import 'package:liveview_flutter/live_view/ui/errors/compilation_error_view.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
 import 'package:liveview_flutter/live_view/routes/live_router_delegate.dart';
+import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
+import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
 import 'package:uuid/uuid.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
-import 'package:provider/provider.dart';
 import './ui/live_view_ui_parser.dart';
 
 class LiveEvent {
@@ -50,8 +56,14 @@ class LiveSocket {
 }
 
 class LiveView {
+  bool catchExceptions = true;
+  bool disableAnimations = false;
+
   http.Client httpClient = http.Client();
   var liveSocket = LiveSocket();
+
+  Widget? onErrorWidget;
+  late LiveRootView rootView;
   late String _csrf;
   late String _host;
   late String _clientId;
@@ -62,39 +74,37 @@ class LiveView {
   late String _currentUrl;
   late String _cookie;
   late String endpointScheme;
-  List<Function(FlutterExecAction)> _pageActions = [];
+  EventHub eventHub = EventHub();
 
   String? redirectToUrl;
 
-  late PhoenixSocket _socket;
+  PhoenixSocket? _socket;
   late PhoenixSocket _liveReloadSocket;
 
   late PhoenixChannel _channel;
 
-  m.Widget? lastRender;
-
-  final Function() onReload;
+  List<m.Widget>? lastRender;
 
   // dynamic global state
-  late StateNotifier _changeNotifier;
-  late LiveConnectionNotifier _connectionNotifier;
-  late ThemeSettings _themeSettings;
-
+  late StateNotifier changeNotifier;
+  late LiveConnectionNotifier connectionNotifier;
+  late ThemeSettings themeSettings;
+  LiveGoBackNotifier goBackNotifier = LiveGoBackNotifier();
   late LiveRouterDelegate router;
 
-  LiveView({required this.onReload}) {
+  LiveView() {
     _currentUrl = '/';
     router = LiveRouterDelegate(this);
-    _changeNotifier = StateNotifier();
-    _connectionNotifier = LiveConnectionNotifier();
-    _themeSettings = ThemeSettings();
-    _themeSettings.httpClient = httpClient;
+    changeNotifier = StateNotifier();
+    connectionNotifier = LiveConnectionNotifier();
+    themeSettings = ThemeSettings();
+    themeSettings.httpClient = httpClient;
+    rootView = LiveRootView(view: this);
 
-    router.pushPage(url: '/', widget: connectingWidget());
+    router.pushPage(url: 'loading', widget: connectingWidget());
   }
 
   Future<String?> connect(String address) async {
-    _pageActions = [];
     _baseUrl = address;
     _currentUrl = address;
     var endpoint = Uri.parse(address);
@@ -104,11 +114,18 @@ class LiveView {
 
     _host = "${endpoint.host}:${endpoint.port}";
     _clientId = const Uuid().v4();
+    if (r.statusCode != 200) {
+      _setupLiveReload();
+      router
+          .pushPage(url: 'error', widget: [CompilationErrorView(html: r.body)]);
+      return null;
+    }
     _cookie = r.headers['set-cookie']!.split(' ')[0];
 
-    _themeSettings.host = "${endpoint.scheme}://$_host";
-    await _themeSettings.loadPreferences();
-    await _themeSettings.fetchCurrentTheme();
+    themeSettings.httpClient = httpClient;
+    themeSettings.host = "${endpoint.scheme}://$_host";
+    await themeSettings.loadPreferences();
+    await themeSettings.fetchCurrentTheme();
     _readInitialSession(content);
     await _websocketConnect();
     await _setupLiveReload();
@@ -135,7 +152,7 @@ class LiveView {
         '_csrf_token': _csrf,
         '_mounts': '0',
         'client_id': _clientId,
-        '_platform': 'flutterui',
+        '_platform': 'flutter',
         'vsn': '2.0.0'
       };
 
@@ -160,11 +177,11 @@ class LiveView {
       headers: {'Cookie': _cookie},
     );
 
-    await _socket.connect();
+    await _socket?.connect();
   }
 
   _setupPhoenixChannel({bool redirect = false}) async {
-    _channel = _socket.addChannel(
+    _channel = _socket!.addChannel(
         topic: "lv:$_liveViewId",
         parameters: _fullsocketParams(redirect: redirect));
 
@@ -183,11 +200,11 @@ class LiveView {
   _setupLiveReload() async {
     _liveReloadSocket = liveSocket.create(
         url: "ws://$_host/phoenix/live_reload/socket/websocket",
-        params: _socketParams(),
-        headers: {'Cookie': _cookie});
-    var liveReload = _liveReloadSocket.addChannel(
-        topic: "phoenix:live_reload", parameters: _fullsocketParams());
-    liveReload.messages.listen(liveReloadMessage);
+        params: {'_platform': 'flutter', 'vsn': '2.0.0'},
+        headers: {});
+    var liveReload = _liveReloadSocket
+        .addChannel(topic: "phoenix:live_reload", parameters: {});
+    liveReload.messages.listen(handleLiveReloadMessage);
 
     await _liveReloadSocket.connect();
     if (liveReload.state != PhoenixChannelState.joined) {
@@ -195,21 +212,10 @@ class LiveView {
     }
   }
 
-  listenPageAction(Function(FlutterExecAction) handle) =>
-      _pageActions.add(handle);
-
-  dispatchGlobalPageAction(FlutterExecAction action) {
-    for (var handle in _pageActions) {
-      handle(action);
-    }
-  }
-
   handleMessage(Message event) {
     if (event.event.value == 'phx_close') {
       if (redirectToUrl != null) {
         _currentUrl = redirectToUrl!;
-        _connectionNotifier.reconnect();
-        _pageActions = [];
         _setupPhoenixChannel(redirect: true);
       }
       return;
@@ -234,19 +240,18 @@ class LiveView {
     if (path == "") {
       path = "/";
     }
-    var render = m.Material(
-        child: LiveViewUiParser(
-                html: elements,
-                htmlVariables: _extractVariables(rendered),
-                liveView: this)
-            .parse());
+    var render = LiveViewUiParser(
+            html: elements,
+            htmlVariables: _extractVariables(rendered),
+            liveView: this)
+        .parse();
     lastRender = render;
+    connectionNotifier.wipeState();
     router.updatePage(url: path, widget: render);
-    onReload();
   }
 
   handleDiffMessage(Map<String, dynamic> diff) {
-    _changeNotifier.setDiff(diff);
+    changeNotifier.setDiff(diff);
   }
 
   Map<String, dynamic> _extractVariables(Map<String, dynamic> rendered) {
@@ -261,14 +266,14 @@ class LiveView {
     return ret;
   }
 
-  Future<void> liveReloadMessage(Message event) async {
+  Future<void> handleLiveReloadMessage(Message event) async {
     if (event.event.value == 'assets_change') {
-      _socket.dispose();
+      _socket?.dispose();
       _liveReloadSocket.dispose();
-      _changeNotifier.emptyData();
+      changeNotifier.emptyData();
 
+      connectionNotifier.wipeState();
       await connect(_baseUrl);
-      _connectionNotifier.reconnect();
     }
   }
 
@@ -279,41 +284,39 @@ class LiveView {
     }
   }
 
-  Widget connectingWidget() => loadingWidget();
+  List<Widget> connectingWidget() => loadingWidget();
 
-  Widget loadingWidget() => Builder(
-      builder: (context) => Container(
-          color: m.Theme.of(context).colorScheme.background,
-          child: const Center(child: m.CircularProgressIndicator())));
+  List<Widget> loadingWidget() {
+    var previousWidgets = router.lastRealPage?.widgets ?? [];
 
-  Widget materialApp() {
-    return MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: _changeNotifier),
-          ChangeNotifierProvider.value(value: _connectionNotifier),
-          ChangeNotifierProvider.value(value: _themeSettings)
-        ],
-        child: Builder(builder: (context) {
-          var theme = Provider.of<ThemeSettings>(context);
-          return m.MaterialApp(
-            title: 'Flutter Demo',
-            themeMode: theme.themeMode,
-            theme: theme.lightTheme,
-            darkTheme: theme.darkTheme,
-            home: Router(
-              routerDelegate: router,
-              backButtonDispatcher: RootBackButtonDispatcher(),
-            ),
-          );
-        }));
+    List<Widget> ret = [
+      InternalView(
+          child: Builder(
+              builder: (context) => Container(
+                  color: m.Theme.of(context).colorScheme.background,
+                  child: Center(
+                      child: m.CircularProgressIndicator(
+                          value: disableAnimations == false ? null : 1)))))
+    ];
+
+    // we keep the previous appbar & bottom bar to avoid flickering with the load screen
+    // the loading page doesn't stay very long but it's enough to cause a flickering
+    var previousNavigation = previousWidgets
+        .where((element) =>
+            element is LiveAppBar || element is LiveBottomNavigationBar)
+        .toList();
+
+    ret.addAll(previousNavigation);
+
+    return ret;
   }
 
   Future<void> switchTheme(String? themeName, String? themeMode) async {
     if (themeName == null || themeMode == null) {
       return;
     }
-    return _themeSettings.setTheme(themeName, themeMode);
+    return themeSettings.setTheme(themeName, themeMode);
   }
 
-  Future<void> saveCurrentTheme() => _themeSettings.save();
+  Future<void> saveCurrentTheme() => themeSettings.save();
 }

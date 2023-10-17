@@ -7,7 +7,7 @@ import '../test_helpers.dart';
 main() async {
   testWidgets('supports implicit Columns for single child widgets',
       (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': [
           """<Container>

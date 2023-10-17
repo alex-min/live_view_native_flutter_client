@@ -7,7 +7,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('phx click on button', (tester) async {
-    var (view, server) = await connect(LiveView(onReload: () => {}));
+    var (view, server) = await connect(LiveView());
 
     await tester.runLiveView(view);
 
@@ -23,7 +23,7 @@ main() async {
   });
 
   testWidgets('phx click on a text component', (tester) async {
-    var (view, server) = await connect(LiveView(onReload: () => {}));
+    var (view, server) = await connect(LiveView());
 
     await tester.runLiveView(view);
 

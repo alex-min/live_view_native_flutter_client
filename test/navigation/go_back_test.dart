@@ -8,12 +8,15 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('navigate to another page and back', (tester) async {
-    var (view, server) = await connect(LiveView(onReload: () => {}));
+    var (view, server) = await connect(LiveView());
 
     await tester.runLiveView(view);
 
     view.handleRenderedMessage({
-      's': ['<link patch="/second-page"><Text>variable: ', '</Text></link>'],
+      's': [
+        '<link live-patch="/second-page"><Text>variable: ',
+        '</Text></link>'
+      ],
       '0': 1
     });
 

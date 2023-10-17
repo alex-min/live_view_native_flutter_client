@@ -1,12 +1,20 @@
-import 'dart:ffi';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:html_unescape/html_unescape.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/mapping/boolean.dart';
+import 'package:liveview_flutter/live_view/mapping/colors.dart';
+import 'package:liveview_flutter/live_view/mapping/decoration.dart';
+import 'package:liveview_flutter/live_view/mapping/number.dart';
+import 'package:liveview_flutter/live_view/mapping/icons.dart';
+import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/live_view_ui_parser.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:provider/provider.dart';
@@ -28,13 +36,12 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   late StateNotifier stateNotifier;
   late Map<String, dynamic> currentVariables;
   late VariableAttributes computedAttributes;
-  late LiveConnectionNotifier connectionNotifier;
   late List<String> extraKeysListened;
-  bool forceReconnectRefresh = false;
-  var defaultListenedKeys = ['phx-click', 'flutter-click', 'id'];
-  bool _reloadCalled = false;
+  var defaultListenedKeys = ['phx-click', 'flutter-click', 'id', 'live-patch'];
   AnimationController? _animationController;
   Status status = Status.visible;
+  late StreamSubscription _eventSubscription;
+  bool _dirty = false;
 
   @override
   void initState() {
@@ -43,35 +50,41 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     computedAttributes = VariableAttributes({}, []);
     extraKeysListened = [];
     onStateChange(currentVariables);
+    reloadPredefinedAttributes();
     stateNotifier = Provider.of<StateNotifier>(context, listen: false);
     stateNotifier.addListener(onDiffUpdateEvent);
-    connectionNotifier =
-        Provider.of<LiveConnectionNotifier>(context, listen: false)
-          ..addListener(onReconnect);
-    liveView.listenPageAction(handleGlobalAction);
+    widget.state.liveView.connectionNotifier.addListener(onWipeState);
+    widget.state.liveView.goBackNotifier.addListener(onGoBack);
+    _eventSubscription = liveView.eventHub.on('globalAction', (data) {
+      handleGlobalAction(data);
+    });
     super.initState();
   }
 
   @override
   void dispose() {
     stateNotifier.removeListener(onDiffUpdateEvent);
-    connectionNotifier.removeListener(onReconnect);
+    widget.state.liveView.connectionNotifier.removeListener(onWipeState);
+    widget.state.liveView.goBackNotifier.removeListener(onGoBack);
     _animationController?.dispose();
+    _eventSubscription.cancel();
     super.dispose();
   }
 
-  void onReconnect() {
+  void onGoBack() {
+    _dirty = true;
+    executeDirty();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void onWipeState() {
+    _dirty = true;
+
     if (!mounted) {
       return;
     }
-    currentVariables = Map.from(widget.state.variables);
-    computedAttributes = VariableAttributes({}, []);
-    onStateChange(currentVariables);
-    forceReconnectRefresh = true;
-    _animationController?.reset();
-    _animationController?.value = 0;
-    status = Status.visible;
-    setState(() {});
   }
 
   void onStateChange(Map<String, dynamic> diff);
@@ -81,15 +94,10 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       return;
     }
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
-    if (lastLiveDiff.keys.any((key) => isKeyListened(key)) ||
-        forceReconnectRefresh) {
+    if (lastLiveDiff.keys.any((key) => isKeyListened(key))) {
       currentVariables.addAll(lastLiveDiff);
-      forceReconnectRefresh = false;
-      _reloadCalled = false;
       onStateChange(lastLiveDiff);
-      if (!_reloadCalled) {
-        reloadAttributes([]);
-      }
+      reloadPredefinedAttributes();
       setState(() {});
     }
   }
@@ -97,13 +105,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   bool isKeyListened(String key) =>
       computedAttributes.keys.contains(key) || extraKeysListened.contains(key);
 
+  void reloadPredefinedAttributes() {
+    var attrs = getVariableAttributes(
+        widget.state.node, defaultListenedKeys, currentVariables);
+    computedAttributes.merge(attrs);
+  }
+
   void reloadAttributes(List<String> attributes) {
-    _reloadCalled = true;
-    for (var key in defaultListenedKeys) {
-      if (!attributes.contains(key)) {
-        attributes.add(key);
-      }
-    }
     computedAttributes =
         getVariableAttributes(widget.state.node, attributes, currentVariables);
   }
@@ -116,7 +124,11 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   String? getAttribute(String name) {
     if (computedAttributes.attributes.containsKey(name)) {
-      return computedAttributes.attributes[name];
+      var attribute = computedAttributes.attributes[name];
+      if (attribute == null) {
+        return null;
+      }
+      return HtmlUnescape().convert(attribute);
     }
     return null;
   }
@@ -128,7 +140,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       case 0:
         return const SizedBox.shrink();
       case 1:
-        return state.parser.traverse(state.copyWith(node: children[0]));
+        return LiveViewUiParser.traverse(state.copyWith(node: children[0]))
+            .first;
       default:
         return Column(children: multipleChildren(state: state));
     }
@@ -136,31 +149,85 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   List<Widget> multipleChildren({NodeState? state}) {
     state ??= widget.state;
-    return state.node.nonEmptyChildren
-        .map((child) => state!.parser.traverse(state.copyWith(node: child)))
-        .toList();
+    return state.node.nonEmptyChildren.map((child) {
+      return LiveViewUiParser.traverse(state!.copyWith(node: child)).first;
+    }).toList();
   }
 
-  Type? extractChild<Type extends Widget>(List<Widget> children) {
+  List<LiveStateWidget> extractChildren<Type extends LiveStateWidget>(
+      List<Widget> children) {
+    List<LiveStateWidget> ret = [];
+    var refType = (Type.toString()
+        .replaceAll('Live', '')
+        .replaceAll('Attribute', '')
+        .toLowerCase());
+    for (var child in children) {
+      if (child is Type) {
+        ret.add(child);
+      }
+      if (child is LiveStateWidget &&
+          child.state.node.getAttribute('as') == refType) {
+        ret.add(child);
+      }
+    }
+    children.removeWhere((e) => ret.contains(e));
+    return ret;
+  }
+
+  LiveStateWidget? extractChild<Type extends Widget>(List<Widget> children) {
+    LiveStateWidget? ret;
+    var refType = (Type.toString()
+        .replaceAll('Live', '')
+        .replaceAll('Attribute', '')
+        .toLowerCase());
+    for (var child in children) {
+      if (child is Type) {
+        ret = child as LiveStateWidget;
+      }
+      if (child is LiveStateWidget &&
+          child.state.node.getAttribute('as') == refType) {
+        ret = child;
+      }
+    }
+    children.removeWhere((e) => e == ret);
+
+    return ret;
+  }
+
+  Type? extractWidgetChild<Type extends Widget>(List<Widget> children) {
     Type? ret;
     for (var child in children) {
       if (child is Type) {
         ret = child;
       }
     }
-    children.removeWhere((e) => e is Type);
+    children.removeWhere((e) => e == ret);
 
     return ret;
   }
 
+  void executeDirty() {
+    if (_dirty) {
+      _dirty = false;
+      status = Status.visible;
+      computedAttributes = VariableAttributes({}, []);
+      currentVariables = Map.from(widget.state.variables);
+      _animationController?.dispose();
+      _animationController = null;
+      onStateChange(currentVariables);
+      reloadPredefinedAttributes();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    var widget = handleTransitions(render(context));
+    executeDirty();
+    var child = handleTransitions(render(context));
 
     if (handleClickState() == HandleClickState.automatic) {
-      return handleEvents(widget);
+      return handleEvents(child);
     } else {
-      return widget;
+      return child;
     }
   }
 
@@ -169,11 +236,15 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     if (controller == null) {
       return child;
     }
+
     return AnimatedBuilder(
         animation: controller,
         builder: (_, __) {
           if (controller.value == 0) {
             return child;
+          }
+          if (controller.value == 1) {
+            return const SizedBox.shrink();
           }
           return ClipRect(
               child: Container(
@@ -185,15 +256,32 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
         });
   }
 
-  void handleAllEvents(List<EventHandler> events) {
+  void handleAllEvents(List<EventHandler> events,
+      {Map<String, dynamic>? fromAttributes}) {
     List<FlutterExecAction> actions = [];
 
-    for (var eventName in ['flutter-click', 'phx-click']) {
-      actions.addAll(FlutterExec.parse(getAttribute(eventName), eventName));
+    for (var eventName in ['flutter-click', 'phx-click', 'live-patch']) {
+      if (fromAttributes != null) {
+        if (fromAttributes[eventName] != null) {
+          actions
+              .addAll(FlutterExec.parse(fromAttributes[eventName], eventName));
+        }
+      } else {
+        actions.addAll(FlutterExec.parse(getAttribute(eventName), eventName));
+      }
     }
 
     for (var action in actions) {
       switch (action.name) {
+        case 'live-patch':
+          events.add((_) {
+            var url = action.value!['name'];
+            if (url != null) {
+              liveView.router.pushPage(
+                  url: 'loading;$url', widget: liveView.loadingWidget());
+              liveView.redirectTo(url);
+            }
+          });
         case 'phx-click':
           events.add((_) {
             liveView.sendEvent(LiveEvent(
@@ -211,12 +299,52 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
         case 'saveCurrentTheme':
           liveView.saveCurrentTheme();
         case 'show':
+          if (action.value?['to'] != null) {
+            liveView.eventHub.fire('globalAction', action);
+          } else {
+            show(action);
+          }
         case 'hide':
-          liveView.dispatchGlobalPageAction(action);
+          if (action.value?['to'] != null) {
+            liveView.eventHub.fire('globalAction', action);
+          } else {
+            hide(action);
+          }
         default:
           print("unknown action $action");
       }
     }
+  }
+
+  void hide(FlutterExecAction action) {
+    if (status == Status.hidden || !mounted) {
+      return;
+    }
+    status = Status.hidden;
+    _animationController?.dispose();
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: action.value?['time'] ?? 200),
+      vsync: this,
+    )..drive(CurveTween(curve: Curves.ease));
+    setState(() {});
+    Tween<double>(begin: 0, end: 1).animate(_animationController!);
+    _animationController!.forward();
+  }
+
+  void show(FlutterExecAction action) {
+    if (status == Status.visible || !mounted) {
+      return;
+    }
+    status = Status.visible;
+    _animationController?.dispose();
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: action.value?['time'] ?? 200),
+      vsync: this,
+    )..drive(CurveTween(curve: Curves.ease));
+    setState(() {});
+    Tween<double>(begin: 1, end: 0).animate(_animationController!);
+    _animationController!.value = 1;
+    _animationController!.reverse();
   }
 
   void handleGlobalAction(FlutterExecAction action) {
@@ -227,36 +355,19 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     switch (action.name) {
       case 'hide':
         var id = ((action.value?['to']) as String?)?.replaceAll('#', '');
+        if (id == null) {
+          return;
+        }
         if (id == getAttribute('id')) {
-          if (status == Status.hidden) {
-            return;
-          }
-          status = Status.hidden;
-          _animationController?.dispose();
-          _animationController = AnimationController(
-            duration: Duration(milliseconds: action.value?['time'] ?? 200),
-            vsync: this,
-          )..drive(CurveTween(curve: Curves.ease));
-          setState(() {});
-          Tween<double>(begin: 0, end: 1).animate(_animationController!);
-          _animationController!.forward();
+          hide(action);
         }
       case 'show':
         var id = ((action.value?['to']) as String?)?.replaceAll('#', '');
+        if (id == null) {
+          return;
+        }
         if (id == getAttribute('id')) {
-          if (status == Status.visible) {
-            return;
-          }
-          status = Status.visible;
-          _animationController?.dispose();
-          _animationController = AnimationController(
-            duration: Duration(milliseconds: action.value?['time'] ?? 200),
-            vsync: this,
-          )..drive(CurveTween(curve: Curves.ease));
-          setState(() {});
-          Tween<double>(begin: 1, end: 0).animate(_animationController!);
-          _animationController!.value = 1;
-          _animationController!.reverse();
+          show(action);
         }
     }
   }
@@ -267,10 +378,10 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
   }
 
-  void executeTapEventsManually() {
+  void executeTapEventsManually({Map<String, dynamic>? fromAttributes}) {
     List<EventHandler> events = [];
 
-    handleAllEvents(events);
+    handleAllEvents(events, fromAttributes: fromAttributes);
     executeAllEvents(events);
   }
 
@@ -313,4 +424,19 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
         return Column(children: children);
     }
   }
+
+  // attributes
+  double? doubleAttribute(String attribute) =>
+      getDouble(getAttribute(attribute));
+  int? intAttribute(String attribute) => getInt(getAttribute(attribute));
+  Color? colorAttribute(String attribute) =>
+      getColor(context, getAttribute(attribute));
+  bool? booleanAttribute(String attribute) =>
+      getBoolean(getAttribute(attribute));
+  Decoration? decorationAttribute(String attribute) =>
+      getDecoration(context, getAttribute(attribute));
+  EdgeInsetsGeometry? edgeInsetsAttribute(String attribute) =>
+      getMarginOrPadding(getAttribute(attribute));
+  Icon getIconAttribute(String attribute) =>
+      Icon(getIcon(getAttribute('attribute')));
 }

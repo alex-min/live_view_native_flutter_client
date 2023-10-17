@@ -89,7 +89,7 @@ class ThemeSettings extends ChangeNotifier {
 
   Future<void> fetchCurrentTheme() async {
     await loadCurrentTheme();
-    await http
+    await httpClient
         .get(Uri.parse(
             '$host/flutter/themes/$_themeName/${getDisplayedThemeMode().modeAsString()}.json'))
         .then((response) {

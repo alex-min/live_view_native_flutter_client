@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:html/parser.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 
@@ -9,9 +11,14 @@ class FlutterExecAction {
 
   @override
   String toString() => 'FlutterExecAction(name: $name, value: $value)';
+
+  dynamic toJson() => [name, value];
 }
 
 class FlutterExec {
+  static String encode(List<FlutterExecAction> actions) =>
+      const HtmlEscape().convert(jsonEncode(actions));
+
   static List<FlutterExecAction> parse(String? attribute, String defaultEvent) {
     if (attribute == null) {
       return [];
@@ -32,10 +39,7 @@ class FlutterExec {
     List<FlutterExecAction> ret = [];
 
     for (var action in actionList) {
-      if (action[0] == 'push') {
-        ret.add(FlutterExecAction(
-            name: action[1]['event'], value: action[1]['value']));
-      }
+      ret.add(FlutterExecAction(name: action[0], value: action[1]));
     }
     return ret;
   }

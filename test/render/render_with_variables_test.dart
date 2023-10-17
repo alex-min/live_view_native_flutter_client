@@ -5,7 +5,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('handles variable inside text', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': [
           '<Text>the first counter is (',

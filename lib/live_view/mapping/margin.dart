@@ -10,6 +10,9 @@ EdgeInsetsGeometry? getMarginOrPadding(String? margin) {
   if (!valid) {
     return null;
   }
+  if (margin == '0') {
+    return EdgeInsets.zero;
+  }
 
   margin.replaceAll(RegExp(r' +'), ' ');
   var margins = margin.split(' ');

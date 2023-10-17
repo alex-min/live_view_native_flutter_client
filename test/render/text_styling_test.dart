@@ -6,7 +6,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('rext styling', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': [
           '<Text style="textTheme: headlineMedium; fontWeight: bold; fontStyle: italic">my text</Text>'
@@ -27,7 +27,7 @@ main() async {
   });
 
   testWidgets('handles dynamic styling', (tester) async {
-    var view = LiveView(onReload: () => {})
+    var view = LiveView()
       ..handleRenderedMessage({
         's': ['<Text ', '>my test</Text>'],
         '0': 'style="fontWeight: bold"',

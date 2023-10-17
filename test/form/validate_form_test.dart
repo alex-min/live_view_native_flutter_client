@@ -6,7 +6,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('handles form change', (tester) async {
-    var (view, server) = await connect(LiveView(onReload: () => {}));
+    var (view, server) = await connect(LiveView());
     await tester.runLiveView(view);
 
     view.handleRenderedMessage({

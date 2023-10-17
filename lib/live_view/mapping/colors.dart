@@ -224,10 +224,110 @@ Map<String, Color> getColorMap() {
 }
 
 Color? _parseVarColor(BuildContext context, String? color) {
-  // TODO var parsing
+  // TODO: add more theme colors
   switch (color) {
+    /* 
+        Color Scheme
+    */
+    case '@theme.colorScheme.primary':
+      return Theme.of(context).colorScheme.primary;
+    case '@theme.colorScheme.onPrimary':
+      return Theme.of(context).colorScheme.onPrimary;
+    case '@theme.colorScheme.primaryContainer':
+      return Theme.of(context).colorScheme.primaryContainer;
+    case '@theme.colorScheme.onPrimaryContainer':
+      return Theme.of(context).colorScheme.onPrimaryContainer;
+    case '@theme.colorScheme.secondary':
+      return Theme.of(context).colorScheme.secondary;
+    case '@theme.colorScheme.onSecondary':
+      return Theme.of(context).colorScheme.onSecondary;
+    case '@theme.colorScheme.secondaryContainer':
+      return Theme.of(context).colorScheme.secondaryContainer;
+    case '@theme.colorScheme.onSecondaryContainer':
+      return Theme.of(context).colorScheme.onSecondaryContainer;
+    case '@theme.colorScheme.tertiary':
+      return Theme.of(context).colorScheme.tertiary;
+    case '@theme.colorScheme.onTertiary':
+      return Theme.of(context).colorScheme.onTertiary;
+    case '@theme.colorScheme.tertiaryContainer':
+      return Theme.of(context).colorScheme.tertiaryContainer;
+    case '@theme.colorScheme.onTertiaryContainer':
+      return Theme.of(context).colorScheme.onTertiaryContainer;
+    case '@theme.colorScheme.error':
+      return Theme.of(context).colorScheme.error;
+    case '@theme.colorScheme.onError':
+      return Theme.of(context).colorScheme.onError;
+    case '@theme.colorScheme.errorContainer':
+      return Theme.of(context).colorScheme.errorContainer;
+    case '@theme.colorScheme.onErrorContainer':
+      return Theme.of(context).colorScheme.onErrorContainer;
     case '@theme.colorScheme.background':
       return Theme.of(context).colorScheme.background;
+    case '@theme.colorScheme.onBackground':
+      return Theme.of(context).colorScheme.onBackground;
+    case '@theme.colorScheme.surface':
+      return Theme.of(context).colorScheme.surface;
+    case '@theme.colorScheme.onSurface':
+      return Theme.of(context).colorScheme.onSurface;
+    case '@theme.colorScheme.surfaceVariant':
+      return Theme.of(context).colorScheme.surfaceVariant;
+    case '@theme.colorScheme.onSurfaceVariant':
+      return Theme.of(context).colorScheme.onSurfaceVariant;
+    case '@theme.colorScheme.outline':
+      return Theme.of(context).colorScheme.outline;
+    case '@theme.colorScheme.outlineVariant':
+      return Theme.of(context).colorScheme.outlineVariant;
+    case '@theme.colorScheme.shadow':
+      return Theme.of(context).colorScheme.shadow;
+    case '@theme.colorScheme.scrim':
+      return Theme.of(context).colorScheme.scrim;
+    case '@theme.colorScheme.inverseSurface':
+      return Theme.of(context).colorScheme.inverseSurface;
+    case '@theme.colorScheme.onInverseSurface':
+      return Theme.of(context).colorScheme.onInverseSurface;
+    case '@theme.colorScheme.inversePrimary':
+      return Theme.of(context).colorScheme.inversePrimary;
+    case '@theme.colorScheme.surfaceTint':
+      return Theme.of(context).colorScheme.surfaceTint;
+    /* 
+        Theme Color
+    */
+    case '@theme.canvasColor':
+      return Theme.of(context).canvasColor;
+    case '@theme.cardColor':
+      return Theme.of(context).cardColor;
+    case '@theme.dialogBackgroundColor':
+      return Theme.of(context).dialogBackgroundColor;
+    case '@theme.disabledColor':
+      return Theme.of(context).disabledColor;
+    case '@theme.dividerColor':
+      return Theme.of(context).dividerColor;
+    case '@theme.focusColor':
+      return Theme.of(context).focusColor;
+    case '@theme.highlightColor':
+      return Theme.of(context).highlightColor;
+    case '@theme.hintColor':
+      return Theme.of(context).hintColor;
+    case '@theme.hoverColor':
+      return Theme.of(context).hoverColor;
+    case '@theme.indicatorColor':
+      return Theme.of(context).indicatorColor;
+    case '@theme.primaryColor':
+      return Theme.of(context).primaryColor;
+    case '@theme.primaryColorDark':
+      return Theme.of(context).primaryColorDark;
+    case '@theme.primaryColorLight':
+      return Theme.of(context).primaryColorLight;
+    case '@theme.scaffoldBackgroundColor':
+      return Theme.of(context).scaffoldBackgroundColor;
+    case '@theme.secondaryHeaderColor':
+      return Theme.of(context).secondaryHeaderColor;
+    case '@theme.shadowColor':
+      return Theme.of(context).shadowColor;
+    case '@theme.splashColor':
+      return Theme.of(context).splashColor;
+    case '@theme.unselectedWidgetColor':
+      return Theme.of(context).unselectedWidgetColor;
     default:
       return null;
   }
