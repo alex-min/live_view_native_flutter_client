@@ -9,9 +9,16 @@ A Flutter client for LiveView native.
 
 This repo enables you to create an app for any Flutter platform (mobile & desktop) where the full UI is synced to the backend and reflects any change being made, similar as a Live View web client.
 
+## Video Demos
+
 Here is a demo of an Android, a Desktop and a web app synced on the same backend code:
 
 https://github.com/alex-min/live_view_native_flutter_client/assets/1898825/b8bbd652-f4ae-49d4-8b84-777b693952f5
+
+Here is a navigation and theme switching demo (the theme is also defined server side)
+
+https://github.com/alex-min/live_view_native_flutter_client/assets/1898825/a6032bfa-d696-4093-8b1b-bd0771364c87
+
 
 Please see the announcement here: https://alex-min.fr/live-view-native-flutter-release/
 
