@@ -9,7 +9,6 @@ import 'package:html/parser.dart' as html;
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/errors/compilation_error_view.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';

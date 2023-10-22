@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
-import 'package:liveview_flutter/live_view/ui/live_view_ui_parser.dart';
 
 class RootBottomNavigationBar extends StatefulWidget {
   final LiveView view;

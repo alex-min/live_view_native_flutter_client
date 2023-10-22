@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';

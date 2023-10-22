@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
-import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
 import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_material_app.dart';
 import 'package:provider/provider.dart';

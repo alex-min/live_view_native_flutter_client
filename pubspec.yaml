@@ -47,12 +47,9 @@ dependencies:
   provider: ^6.0.5
   flutter_form_builder: ^9.1.1
   json_annotation: ^4.8.1
-  mockito: ^5.4.2
   json_theme: ^6.3.0
   shared_preferences: ^2.2.2
   golden_toolkit: ^0.15.0
-  webview_flutter: ^4.4.1
-  flutter_html: ^3.0.0-beta.2
   event_hub: ^0.2.1
   html_unescape: ^2.0.0
 
