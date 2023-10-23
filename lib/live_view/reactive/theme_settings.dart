@@ -19,6 +19,9 @@ class ThemeSettings extends ChangeNotifier {
   ThemeData? get darkTheme => _darkTheme;
 
   Future<void> setTheme(String name, String mode) async {
+    if (_themeName == name && _themeMode.modeAsString() == mode) {
+      return;
+    }
     _themeName = name;
     _themeMode = ThemeModeStringify.parse(mode);
     return fetchCurrentTheme();
@@ -47,6 +50,12 @@ class ThemeSettings extends ChangeNotifier {
     var content = tryJsonDecode(theme);
     if (content == null) {
       return;
+    }
+    // material 3 is the future of material in flutter
+    // we set it as true to not break the theme in future updates
+    // because this will be set as true by default later in a future update
+    if (content['useMaterial3'] == null) {
+      content['useMaterial3'] = true;
     }
     try {
       switch (getDisplayedThemeMode()) {

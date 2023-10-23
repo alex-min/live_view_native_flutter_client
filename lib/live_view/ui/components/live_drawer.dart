@@ -10,7 +10,7 @@ class LiveDrawer extends LiveStateWidget<LiveDrawer> {
 
 class _LiveDrawerState extends StateWidget<LiveDrawer> {
   @override
-  void onStateChange(Map<String, dynamic> diff) => reloadAttributes([
+  void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
         'backgroundColor',
         'elevation',
         'shadowColor',
@@ -22,10 +22,10 @@ class _LiveDrawerState extends StateWidget<LiveDrawer> {
   @override
   Widget render(BuildContext context) {
     return Drawer(
-        backgroundColor: colorAttribute('backgroundColor'),
+        backgroundColor: colorAttribute(context, 'backgroundColor'),
         elevation: doubleAttribute('elevation'),
-        shadowColor: colorAttribute('shadowColor'),
-        surfaceTintColor: colorAttribute('surfaceTintColor'),
+        shadowColor: colorAttribute(context, 'shadowColor'),
+        surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
         width: doubleAttribute('width'),
         semanticLabel: getAttribute('semanticLabel'),
         child: singleChild());

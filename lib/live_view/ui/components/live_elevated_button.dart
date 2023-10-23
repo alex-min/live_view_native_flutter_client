@@ -11,7 +11,7 @@ class LiveElevatedButton extends LiveStateWidget<LiveElevatedButton> {
 class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(['type']);
+    reloadAttributes(node, ['type']);
   }
 
   @override

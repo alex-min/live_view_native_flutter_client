@@ -23,7 +23,7 @@ var blueButtonTheme = jsonHttpResponse({
 
 main() async {
   testWidgets('themes defaults are set properly', (tester) async {
-    var (view, server) = await connect(LiveView());
+    var (view, _) = await connect(LiveView());
 
     await tester.runLiveView(view);
 
@@ -34,7 +34,7 @@ main() async {
 
   testGoldens('switching themes', (tester) async {
     await loadAppFonts();
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         '<ElevatedButton ',
         '>button theme</ElevatedButton>',
@@ -67,7 +67,7 @@ main() async {
 
   testWidgets('loads a theme from the storage', (tester) async {
     var once = false;
-    var (view, server) = await connect(LiveView(), onRequest: (request) {
+    var (view, _) = await connect(LiveView(), onRequest: (request) {
       if (request.url.path == '/flutter/themes/default/light.json' &&
           once == false) {
         once = true;
@@ -88,7 +88,7 @@ main() async {
 
   testWidgets('refetches the theme when switching', (tester) async {
     var count = 0;
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         '<ElevatedButton ',
         '>button theme</ElevatedButton>',

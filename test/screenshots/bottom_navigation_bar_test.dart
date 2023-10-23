@@ -8,7 +8,7 @@ import '../test_helpers.dart';
 main() async {
   testGoldens('appbar', (tester) async {
     loadAppFonts();
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         """
       <Scaffold>

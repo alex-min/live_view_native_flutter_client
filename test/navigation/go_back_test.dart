@@ -31,7 +31,7 @@ main() async {
     expect(server.lastChannelActions, [liveEvents.join]);
 
     view.handleRenderedMessage({
-      's': ['<Text flutter-click="go_back">go back</Text>']
+      's': ['<Text phx-click="${baseActions.goBack}">go back</Text>']
     });
 
     await tester.pumpAndSettle();
@@ -42,7 +42,7 @@ main() async {
     expect(server.lastChannelActions, [liveEvents.join]);
 
     expect((server.liveSocket?.navigationLogs), [
-      {'url': 'http://localhost:9999', 'redirect': null},
+      {'url': 'http://localhost:9999/', 'redirect': null},
       {'url': null, 'redirect': 'http://localhost:9999/second-page'},
       {'url': null, 'redirect': 'http://localhost:9999/'},
     ]);

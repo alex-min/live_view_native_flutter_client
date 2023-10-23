@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart';
 
@@ -73,5 +74,13 @@ extension ThemeModeStringify on ThemeMode {
       default:
         return 'system';
     }
+  }
+}
+
+void reportError(String error) {
+  if (kDebugMode) {
+    throw Exception(error);
+  } else {
+    debugPrint(error);
   }
 }

@@ -1,3 +1,4 @@
+import 'package:html_unescape/html_unescape.dart';
 import 'package:xml/xml.dart';
 
 String replaceVariables(String content, Map<String, dynamic> variables) {
@@ -78,7 +79,8 @@ VariableAttributes getVariableAttributes(
 
   for (var attribute in attributes) {
     var (value, key) = getVariableAttribute(node, attribute, variables);
-    ret.attributes[attribute] = value;
+    ret.attributes[attribute] =
+        value != null ? HtmlUnescape().convert(value) : null;
     if (key != null && !ret.keys.contains(key)) {
       ret.keys.add(key);
     }

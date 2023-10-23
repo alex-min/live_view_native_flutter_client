@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:liveview_flutter/live_view/mapping/inputDecoration.dart';
+import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:uuid/uuid.dart';
@@ -17,14 +18,14 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(['name', 'value', 'decoration']);
+    reloadAttributes(node, ['name', 'value', 'decoration']);
     key.currentState?.didChange(getAttribute('value'));
   }
 
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
-    var icon = extractChild<LiveIconAttribute>(children);
+    var icon = StateChild.extractChild<LiveIconAttribute>(children);
 
     return FormBuilderTextField(
         key: key,

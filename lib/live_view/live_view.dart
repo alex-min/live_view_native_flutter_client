@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
 import 'package:flutter/material.dart' as m;
@@ -6,46 +6,30 @@ import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
+import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/errors/compilation_error_view.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
 import 'package:liveview_flutter/live_view/routes/live_router_delegate.dart';
+import 'package:liveview_flutter/live_view/ui/errors/error_404.dart';
+import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
+import 'package:liveview_flutter/live_view/ui/errors/no_server_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
+import 'package:liveview_flutter/platform_name.dart';
 import 'package:uuid/uuid.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 import './ui/live_view_ui_parser.dart';
 
-class LiveEvent {
-  final String type;
-  final String name;
-  final dynamic value;
-
-  LiveEvent({required this.type, required this.name, required this.value});
-
-  @override
-  String toString() => jsonEncode({'type': type, 'name': name, 'value': value});
-
-  @override
-  bool operator ==(Object other) {
-    if (other is LiveEvent) {
-      return other.hashCode == hashCode;
-    }
-    return false;
-  }
-
-  @override
-  int get hashCode => Object.hashAll([type, name, value]);
-}
-
 class LiveSocket {
   PhoenixSocket create(
           {required String url,
-          required Map<String, String>? params,
+          required Map<String, dynamic>? params,
           required Map<String, String>? headers}) =>
       PhoenixSocket(url,
           socketOptions: PhoenixSocketOptions(
@@ -64,16 +48,17 @@ class LiveView {
   Widget? onErrorWidget;
   late LiveRootView rootView;
   late String _csrf;
-  late String _host;
+  late String host;
   late String _clientId;
   late String _session;
   late String _phxStatic;
   late String _liveViewId;
-  late String _baseUrl;
-  late String _currentUrl;
+  late String currentUrl;
   late String _cookie;
   late String endpointScheme;
+  int mount = 0;
   EventHub eventHub = EventHub();
+  bool isLiveReloading = false;
 
   String? redirectToUrl;
 
@@ -90,9 +75,10 @@ class LiveView {
   late ThemeSettings themeSettings;
   LiveGoBackNotifier goBackNotifier = LiveGoBackNotifier();
   late LiveRouterDelegate router;
+  bool throttleSpammyCalls = true;
 
   LiveView() {
-    _currentUrl = '/';
+    currentUrl = '/';
     router = LiveRouterDelegate(this);
     changeNotifier = StateNotifier();
     connectionNotifier = LiveConnectionNotifier();
@@ -104,33 +90,64 @@ class LiveView {
   }
 
   Future<String?> connect(String address) async {
-    _baseUrl = address;
-    _currentUrl = address;
     var endpoint = Uri.parse(address);
+    currentUrl = endpoint.path == "" ? "/" : endpoint.path;
     endpointScheme = endpoint.scheme;
-    var r = await httpClient.get(endpoint);
-    var content = html.parse(r.body);
+    try {
+      var r = await httpClient.get(endpoint, headers: httpHeaders());
+      var content = html.parse(r.body);
 
-    _host = "${endpoint.host}:${endpoint.port}";
-    _clientId = const Uuid().v4();
-    if (r.statusCode != 200) {
-      _setupLiveReload();
-      router
-          .pushPage(url: 'error', widget: [CompilationErrorView(html: r.body)]);
-      return null;
+      host = "${endpoint.host}:${endpoint.port}";
+      _clientId = const Uuid().v4();
+      if (r.statusCode != 200) {
+        _setupLiveReload();
+        if (r.statusCode == 404) {
+          router.pushPage(
+              url: 'error', widget: [Error404(url: endpoint.toString())]);
+        } else {
+          router.pushPage(
+              url: 'error', widget: [CompilationErrorView(html: r.body)]);
+        }
+        return null;
+      }
+      _cookie = r.headers['set-cookie']!.split(' ')[0];
+
+      themeSettings.httpClient = httpClient;
+      themeSettings.host = "${endpoint.scheme}://$host";
+      _readInitialSession(content);
+    } on SocketException catch (e, stack) {
+      router.pushPage(url: 'error', widget: [
+        NoServerError(error: FlutterErrorDetails(exception: e, stack: stack))
+      ]);
+    } catch (e, stack) {
+      router.pushPage(url: 'error', widget: [
+        FlutterErrorView(error: FlutterErrorDetails(exception: e, stack: stack))
+      ]);
     }
-    _cookie = r.headers['set-cookie']!.split(' ')[0];
 
-    themeSettings.httpClient = httpClient;
-    themeSettings.host = "${endpoint.scheme}://$_host";
+    await reconnect();
+
+    return _csrf;
+  }
+
+  Map<String, String> httpHeaders() {
+    return {
+      'Accept-Language': WidgetsBinding.instance.platformDispatcher.locales
+          .map((l) => l.toLanguageTag())
+          .where((e) => e != 'C')
+          .toSet()
+          .toList()
+          .join(', '),
+      'User-Agent': 'Flutter Live View - ${getPlatformName()}'
+    };
+  }
+
+  Future<void> reconnect() async {
     await themeSettings.loadPreferences();
     await themeSettings.fetchCurrentTheme();
-    _readInitialSession(content);
     await _websocketConnect();
     await _setupLiveReload();
     await _setupPhoenixChannel();
-
-    return _csrf;
   }
 
   void _readInitialSession(Document content) {
@@ -147,9 +164,9 @@ class LiveView {
     _liveViewId = (content.querySelector('[data-phx-main]')?.attributes['id'])!;
   }
 
-  _socketParams() => {
+  Map<String, dynamic> _socketParams() => {
         '_csrf_token': _csrf,
-        '_mounts': '0',
+        '_mounts': mount.toString(),
         'client_id': _clientId,
         '_platform': 'flutter',
         'vsn': '2.0.0'
@@ -161,17 +178,18 @@ class LiveView {
       'static': _phxStatic,
       'params': _socketParams()
     };
+    var nextUrl = "$endpointScheme://$host$currentUrl";
     if (redirect) {
-      params['redirect'] = _currentUrl;
+      params['redirect'] = nextUrl;
     } else {
-      params['url'] = _currentUrl;
+      params['url'] = nextUrl;
     }
     return params;
   }
 
-  _websocketConnect() async {
+  Future<void> _websocketConnect() async {
     _socket = liveSocket.create(
-      url: "ws://$_host/live/websocket",
+      url: "ws://$host/live/websocket",
       params: _socketParams(),
       headers: {'Cookie': _cookie},
     );
@@ -191,14 +209,14 @@ class LiveView {
     }
   }
 
-  Future<void> redirectTo(String url) async {
+  Future<void> redirectTo(String path) async {
     _channel.push('phx_leave', {}).future;
-    redirectToUrl = "$endpointScheme://$_host$url";
+    redirectToUrl = path;
   }
 
-  _setupLiveReload() async {
+  Future<void> _setupLiveReload() async {
     _liveReloadSocket = liveSocket.create(
-        url: "ws://$_host/phoenix/live_reload/socket/websocket",
+        url: "ws://$host/phoenix/live_reload/socket/websocket",
         params: {'_platform': 'flutter', 'vsn': '2.0.0'},
         headers: {});
     var liveReload = _liveReloadSocket
@@ -214,7 +232,7 @@ class LiveView {
   handleMessage(Message event) {
     if (event.event.value == 'phx_close') {
       if (redirectToUrl != null) {
-        _currentUrl = redirectToUrl!;
+        currentUrl = redirectToUrl!;
         _setupPhoenixChannel(redirect: true);
       }
       return;
@@ -235,18 +253,15 @@ class LiveView {
   handleRenderedMessage(Map<String, dynamic> rendered) {
     var elements = List<String>.from(rendered['s']);
 
-    var path = Uri.parse(_currentUrl).path;
-    if (path == "") {
-      path = "/";
-    }
     var render = LiveViewUiParser(
             html: elements,
             htmlVariables: _extractVariables(rendered),
-            liveView: this)
+            liveView: this,
+            urlPath: currentUrl)
         .parse();
     lastRender = render;
     connectionNotifier.wipeState();
-    router.updatePage(url: path, widget: render);
+    router.updatePage(url: currentUrl, widget: render);
   }
 
   handleDiffMessage(Map<String, dynamic> diff) {
@@ -266,17 +281,21 @@ class LiveView {
   }
 
   Future<void> handleLiveReloadMessage(Message event) async {
-    if (event.event.value == 'assets_change') {
-      _socket?.dispose();
-      _liveReloadSocket.dispose();
-      changeNotifier.emptyData();
+    if (event.event.value == 'assets_change' && isLiveReloading == false) {
+      eventHub.fire('live-reload:start');
+      isLiveReloading = true;
 
+      _socket?.close();
+      _channel.close();
       connectionNotifier.wipeState();
-      await connect(_baseUrl);
+      redirectToUrl = null;
+      await connect("$endpointScheme://$host$currentUrl");
+      isLiveReloading = false;
+      eventHub.fire('live-reload:end');
     }
   }
 
-  sendEvent(LiveEvent event) {
+  sendEvent(ExecLiveEvent event) {
     if (_channel.state != PhoenixChannelState.closed) {
       _channel.push('event',
           {'type': event.type, 'event': event.name, 'value': event.value});
@@ -302,7 +321,9 @@ class LiveView {
     // the loading page doesn't stay very long but it's enough to cause a flickering
     var previousNavigation = previousWidgets
         .where((element) =>
-            element is LiveAppBar || element is LiveBottomNavigationBar)
+            element is LiveAppBar ||
+            element is LiveBottomNavigationBar ||
+            element is LiveNavigationRail)
         .toList();
 
     ret.addAll(previousNavigation);

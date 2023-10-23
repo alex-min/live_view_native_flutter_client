@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class FormEvents {
@@ -20,7 +20,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(['phx-change', 'phx-submit']);
+    reloadAttributes(node, ['phx-change', 'phx-submit']);
   }
 
   void onFormEvent(String eventKind, {sendOnChange = true}) {
@@ -50,7 +50,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
       if (inputChanged.isNotEmpty) {
         ret['_target'] = inputChanged.last;
       }
-      liveView.sendEvent(LiveEvent(
+      liveView.sendEvent(ExecLiveEvent(
           type: 'form',
           name: getAttribute(eventKind)!,
           value: Uri(host: 'localhost', queryParameters: ret).query));

@@ -35,4 +35,26 @@ main() async {
     await tester.tap(find.byType(LiveText));
     expect(server.lastChannelActions?.last, liveEvents.phxClick({}));
   });
+
+  testWidgets('phx click on a bottom bar item', (tester) async {
+    var (view, server) = await connect(LiveView(), rendered: {
+      's': [
+        """
+        <BottomNavigationBar>
+          <BottomNavigationBarIcon phx-click="other_event" name="home" label="Page 1" />
+          <BottomNavigationBarIcon phx-click="other_event" name="home" label="Page 2" />
+          <BottomNavigationBarIcon phx-click="other_event" name="home" label="Page 3" />
+          <BottomNavigationBarIcon phx-click="my_event" phx-value-something="hello" name="home" label="Page 4" />
+        </BottomNavigationBar>
+        """
+      ]
+    });
+
+    await tester.runLiveView(view);
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Page 4"));
+    expect(server.lastChannelActions?.last,
+        liveEvents.phxClick({'something': 'hello'}, eventName: 'my_event'));
+  });
 }

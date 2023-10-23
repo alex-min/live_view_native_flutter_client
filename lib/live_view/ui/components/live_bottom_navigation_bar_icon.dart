@@ -16,8 +16,8 @@ class _LiveBottomNavigationBarItemState
     extends StateWidget<LiveBottomNavigationBarIcon> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(['label', 'backgroundColor']);
-    reloadPredefinedAttributes();
+    reloadAttributes(node, ['label', 'backgroundColor']);
+    reloadPredefinedAttributes(node);
     var data = {
       'label': getAttribute('label'),
       'backgroundColor': getAttribute('backgroundColor'),

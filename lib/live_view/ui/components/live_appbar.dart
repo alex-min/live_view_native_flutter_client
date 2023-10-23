@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_title_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
@@ -18,7 +19,7 @@ class LiveAppBar extends LiveStateWidget<LiveAppBar>
 class _LiveAppBarState extends StateWidget<LiveAppBar> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes([
+    reloadAttributes(node, [
       'elevation',
       'scrolledUnderElevation',
       'shadowColor',
@@ -37,8 +38,8 @@ class _LiveAppBarState extends StateWidget<LiveAppBar> {
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
-    var title = extractChild<LiveTitleAttribute>(children);
-    var leading = extractChild<LiveLeadingAttribute>(children);
+    var title = StateChild.extractChild<LiveTitleAttribute>(children);
+    var leading = StateChild.extractChild<LiveLeadingAttribute>(children);
 
     return AppBar(
       title: title,
@@ -46,10 +47,10 @@ class _LiveAppBarState extends StateWidget<LiveAppBar> {
       actions: children,
       elevation: doubleAttribute('elevation'),
       scrolledUnderElevation: doubleAttribute('scrolledUnderElevation'),
-      shadowColor: colorAttribute('shadowColor'),
-      surfaceTintColor: colorAttribute('surfaceTintColor'),
-      backgroundColor: colorAttribute('backgroundColor'),
-      foregroundColor: colorAttribute('foregroundColor'),
+      shadowColor: colorAttribute(context, 'shadowColor'),
+      surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
+      backgroundColor: colorAttribute(context, 'backgroundColor'),
+      foregroundColor: colorAttribute(context, 'foregroundColor'),
       primary: booleanAttribute('primary') ?? true,
       centerTitle: booleanAttribute('centerTitle'),
       titleSpacing: doubleAttribute('titleSpacing'),

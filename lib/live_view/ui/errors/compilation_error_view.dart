@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as htmlparser;
 import 'package:html/dom.dart' as dom;
+import 'package:html_unescape/html_unescape.dart';
 
 class CompilationErrorView extends StatefulWidget {
   final String html;
@@ -14,10 +17,10 @@ class _CompilationErrorViewState extends State<CompilationErrorView> {
   @override
   Widget build(BuildContext context) {
     dom.Document document = htmlparser.parse(widget.html);
-    var error = document
+    var error = HtmlUnescape().convert(document
         .getElementsByClassName('code-block')
         .map((e) => e.innerHtml)
-        .join("\n");
+        .join("\n"));
     List<Widget> doc = [
       Container(
           color: Colors.grey[200],
@@ -36,7 +39,7 @@ class _CompilationErrorViewState extends State<CompilationErrorView> {
     doc.addAll([
       Container(
           padding: const EdgeInsets.all(20),
-          child: Text(error,
+          child: Text(error == '' ? document.outerHtml : error,
               style: const TextStyle(color: Colors.black, fontSize: 15)))
     ]);
     return Scaffold(

@@ -17,11 +17,6 @@ class _LiveRootViewState extends State<LiveRootView> {
 
   @override
   Widget build(BuildContext context) {
-   /* print(WidgetsBinding.instance.platformDispatcher.locales
-        .map((l) => l.toLanguageTag())
-        .where((e) => e != 'C')
-        .toSet()
-        .toList());*/
     if (liveView.catchExceptions) {
       ErrorWidget.builder = (err) {
         return FlutterErrorView(error: err);

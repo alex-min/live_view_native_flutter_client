@@ -10,14 +10,14 @@ class LiveDrawerHeader extends LiveStateWidget<LiveDrawerHeader> {
 
 class _LiveDrawerHeaderState extends StateWidget<LiveDrawerHeader> {
   @override
-  void onStateChange(Map<String, dynamic> diff) => reloadAttributes([
+  void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
         'decoration',
       ]);
 
   @override
   Widget render(BuildContext context) {
     return DrawerHeader(
-      decoration: decorationAttribute('decoration'),
+      decoration: decorationAttribute(context, 'decoration'),
       margin:
           edgeInsetsAttribute('margin') ?? const EdgeInsets.only(bottom: 8.0),
       padding: edgeInsetsAttribute('padding') ??

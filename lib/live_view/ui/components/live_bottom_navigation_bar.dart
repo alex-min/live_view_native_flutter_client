@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/bottom_navigation_bar_type.dart';
+import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
@@ -32,7 +33,7 @@ class _LiveBottomNavigationBarState
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes([
+    reloadAttributes(node, [
       'selectedItemColor',
       'fixedColor',
       'unselectedItemColor',
@@ -64,11 +65,11 @@ class _LiveBottomNavigationBarState
 
   @override
   Widget render(BuildContext context) {
-    var children =
-        extractChildren<LiveBottomNavigationBarIcon>(multipleChildren())
-            .asMap()
-            .entries
-            .map((w) {
+    var children = StateChild.extractChildren<LiveBottomNavigationBarIcon>(
+            multipleChildren())
+        .asMap()
+        .entries
+        .map((w) {
       return NotificationListener<BottomNavigationBarNotification>(
           onNotification: (notif) {
             onChildChanges(w.key, notif);
@@ -93,10 +94,10 @@ class _LiveBottomNavigationBarState
     }
 
     return BottomNavigationBar(
-        selectedItemColor: colorAttribute('selectedItemColor'),
-        fixedColor: colorAttribute('fixedColor'),
-        unselectedItemColor: colorAttribute('unselectedItemColor'),
-        backgroundColor: colorAttribute('backgroundColor'),
+        selectedItemColor: colorAttribute(context, 'selectedItemColor'),
+        fixedColor: colorAttribute(context, 'fixedColor'),
+        unselectedItemColor: colorAttribute(context, 'unselectedItemColor'),
+        backgroundColor: colorAttribute(context, 'backgroundColor'),
         currentIndex: intAttribute('currentIndex') ?? 0,
         type: type,
         selectedFontSize: doubleAttribute('selectedFontSize') ?? 14.0,

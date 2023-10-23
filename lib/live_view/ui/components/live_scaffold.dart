@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
@@ -18,10 +19,10 @@ class _LiveScaffoldState extends StateWidget<LiveScaffold> {
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
-    var appBar = extractWidgetChild<LiveAppBar>(children);
-    var drawer = extractWidgetChild<LiveDrawer>(children);
+    var appBar = StateChild.extractWidgetChild<LiveAppBar>(children);
+    var drawer = StateChild.extractWidgetChild<LiveDrawer>(children);
     var bottomNavigationBar =
-        extractWidgetChild<LiveBottomNavigationBar>(children);
+        StateChild.extractWidgetChild<LiveBottomNavigationBar>(children);
 
     return Scaffold(
       appBar: appBar,

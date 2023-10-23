@@ -15,7 +15,7 @@ class LiveIcon extends LiveStateWidget<LiveIcon> {
 class _LiveIconState extends StateWidget<LiveIcon> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes([
+    reloadAttributes(node, [
       'name',
       'size',
       'fill',

@@ -64,8 +64,8 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
         if (lastLiveDiff[key] == null) {
           return child ?? const SizedBox.shrink();
         }
-        throw Exception(
-            'not implemented ${lastLiveDiff[key]} $key ${lastLiveDiff[key].runtimeType}');
+
+        return child ?? LiveText(state: widget.state);
       }
     }
 

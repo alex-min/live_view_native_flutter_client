@@ -15,7 +15,7 @@ class _LiveViewTextState extends StateWidget<LiveText> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(['style']);
+    reloadAttributes(node, ['style']);
     listenInnerTextKeys();
     lastLiveDiff = diff;
   }

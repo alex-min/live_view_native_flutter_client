@@ -10,15 +10,18 @@ class NodeState {
   final List<int> nestedState;
   final LiveView liveView;
   final FormEvents? formEvents;
+  final String urlPath;
 
-  NodeState({
-    required this.node,
-    required this.variables,
-    required this.parser,
-    required this.nestedState,
-    required this.liveView,
-    required this.formEvents,
-  });
+  bool get isOnTheCurrentPage => urlPath == liveView.currentUrl;
+
+  NodeState(
+      {required this.node,
+      required this.variables,
+      required this.parser,
+      required this.nestedState,
+      required this.liveView,
+      required this.formEvents,
+      required this.urlPath});
 
   NodeState copyWith(
           {XmlNode? node,
@@ -26,7 +29,8 @@ class NodeState {
           LiveViewUiParser? parser,
           List<int>? nestedState,
           LiveView? liveView,
-          FormEvents? formEvents}) =>
+          FormEvents? formEvents,
+          String? urlPath}) =>
       NodeState(
         node: node ?? this.node,
         formEvents: formEvents ?? this.formEvents,
@@ -34,5 +38,6 @@ class NodeState {
         parser: parser ?? this.parser,
         nestedState: nestedState ?? this.nestedState,
         liveView: liveView ?? this.liveView,
+        urlPath: urlPath ?? this.urlPath,
       );
 }

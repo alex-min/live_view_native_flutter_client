@@ -41,6 +41,8 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 - Material Icons
 - Server-side themes with JSON, also you can switch & save theme on the server side
 - Live reloading
+- Responsive navigation
+- Basic Images support
 
 ## What is missing?
 
@@ -49,9 +51,8 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 - Modclasses (same as live view swift native)
 - Hooks similar as web hooks
 - Animations
-- Better live reloading
 - Local storage
-- Images & Video
+- Better Image support & Video
 - More server side-events, something like "flutter-onrender"
 - Responsive navigation & desktop support (like windows title)
 - Sessions & Session storage events
@@ -83,7 +84,7 @@ This is an example of the code on the server:
           <Container padding="10">
             <Container padding={10 + @counter} decoration={bg_color(@counter)}>
               <Text>Margin Counter <%= @counter %></Text>
-              <ElevatedButton flutter-click="go_back">go back</ElevatedButton>
+              <ElevatedButton phx-click={Dart.go_back()}>go back</ElevatedButton>
             </Container>
             <Row>
               <ElevatedButton phx-click={Dart.switch_theme("dark")}>Switch dark theme</ElevatedButton>

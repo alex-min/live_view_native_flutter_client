@@ -7,7 +7,7 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('hides and shows back an id', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         '<ListView><Text id="hello">hello</Text><ElevatedButton ',
         '></ElevatedButton></ListView>',
@@ -41,7 +41,7 @@ main() async {
   });
 
   testWidgets('hides itself', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         '<ElevatedButton ',
         '>click me</ElevatedButton>',

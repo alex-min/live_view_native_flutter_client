@@ -1,21 +1,28 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar_icon.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_cached_networked_image.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_center.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_column.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_container.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer_header.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_expanded.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon_selected_attribute.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_label_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail_destination.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_stack.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigator.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
@@ -24,21 +31,22 @@ import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.da
 import 'package:liveview_flutter/live_view/ui/components/live_text_field.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_title_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
+import 'package:liveview_flutter/live_view/ui/errors/parsing_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:xml/xml.dart';
-
-LiveNavigator? _navigator;
 
 class LiveViewUiParser {
   List<String> html;
   final Map<String, dynamic> _htmlVariables;
   LiveView liveView;
+  String urlPath;
 
   LiveViewUiParser(
       {required this.html,
       required Map<String, dynamic> htmlVariables,
-      required this.liveView})
+      required this.liveView,
+      required this.urlPath})
       : _htmlVariables = htmlVariables;
 
   List<Widget> parse() => parseHtml(html, _htmlVariables, []);
@@ -62,9 +70,18 @@ class LiveViewUiParser {
       return '[[flutterState key=$i]]';
     }).trim();
 
+    late XmlDocument xml;
+
+    try {
+      xml = XmlDocument.parse(fullHtml);
+    } catch (e) {
+      return [ParsingErrorView(xml: html.join(), url: urlPath)];
+    }
+
     return traverse(NodeState(
+        urlPath: urlPath,
         liveView: liveView,
-        node: XmlDocument.parse(fullHtml).nonEmptyChildren.first,
+        node: xml.nonEmptyChildren.first,
         variables: htmlVariables,
         nestedState: nestedState,
         parser: this,
@@ -106,6 +123,10 @@ class LiveViewUiParser {
           return [LiveLink(state: state)];
         case 'icon':
           return [LiveIconAttribute(state: state)];
+        case 'label':
+          return [LiveLabelAttribute(state: state)];
+        case 'selectedIcon':
+          return [LiveIconSelectedAttribute(state: state)];
         case 'Icon':
           return [LiveIcon(state: state)];
         case 'Column':
@@ -120,8 +141,20 @@ class LiveViewUiParser {
           return [LiveBottomNavigationBar(state: state)];
         case 'BottomNavigationBarIcon':
           return [LiveBottomNavigationBarIcon(state: state)];
+        case 'Positioned':
+          return [LivePositioned(state: state)];
+        case 'Stack':
+          return [LiveStack(state: state)];
         case 'Navigator':
           return [LiveNavigator(state: state)];
+        case 'NavigationRail':
+          return [LiveNavigationRail(state: state)];
+        case 'NavigationRailDestination':
+          return [LiveNavigationRailDestination(state: state)];
+        case 'CachedNetworkImage':
+          return [LiveCachedNetworkImage(state: state)];
+        case 'Expanded':
+          return [LiveExpanded(state: state)];
         case 'viewBody':
           return [LiveViewBody(state: state)];
         case 'flutter':
@@ -129,20 +162,14 @@ class LiveViewUiParser {
               .map((c) => traverse(state.copyWith(node: c)).first)
               .toList();
         default:
-          if (kDebugMode) {
-            throw Exception("unknown widget $componentName");
-          } else {
-            return [const SizedBox.shrink()];
-          }
+          reportError("unknown widget $componentName");
+          return [const SizedBox.shrink()];
       }
     } else if (state.node.nodeType == XmlNodeType.TEXT) {
       return [LiveDynamicComponent(state: state)];
     } else {
-      if (kDebugMode) {
-        throw Exception('unknown node type ${state.node.nodeType}');
-      } else {
-        return [const SizedBox.shrink()];
-      }
+      reportError('unknown node type ${state.node.nodeType}');
+      return [const SizedBox.shrink()];
     }
   }
 }

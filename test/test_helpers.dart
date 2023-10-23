@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
+import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 import 'package:http/http.dart' as http;
@@ -45,9 +46,15 @@ extension ValueText on FormBuilderTextField {
 
 extension RunLiveView on WidgetTester {
   Future<void> runLiveView(LiveView view) async {
+    view.throttleSpammyCalls = false;
     view.catchExceptions = false;
     view.disableAnimations = true;
     await pumpWidget(view.rootView);
+  }
+
+  void setScreenSize(Size size) {
+    view.physicalSize = size;
+    view.devicePixelRatio = 1;
   }
 }
 
@@ -88,10 +95,11 @@ class FakePhoenixChannel extends PhoenixChannel {
   @override
   final String topic;
   List<EventSent> actions = [];
+  Map<String, dynamic>? params = {};
   PhoenixChannelState currentState = PhoenixChannelState.closed;
 
-  FakePhoenixChannel(this.socket, this.topic)
-      : super.fromSocket(socket, topic: topic);
+  FakePhoenixChannel(this.socket, this.topic, this.params)
+      : super.fromSocket(socket, topic: topic, parameters: params);
 
   @override
   PhoenixChannelState get state => currentState;
@@ -135,7 +143,7 @@ class FakePhoenixSocket extends PhoenixSocket {
       Map<String, dynamic>? parameters,
       Duration? timeout}) {
     actions.add(EventSent('addChannel', parameters));
-    var channel = FakePhoenixChannel(this, topic);
+    var channel = FakePhoenixChannel(this, topic, parameters);
     channelsAdded.add(channel);
     return channel;
   }
@@ -159,7 +167,7 @@ class FakeLiveSocket extends LiveSocket {
   @override
   PhoenixSocket create(
       {required String url,
-      required Map<String, String>? params,
+      required Map<String, dynamic>? params,
       required Map<String, String>? headers}) {
     var socket = FakePhoenixSocket(
         url,
@@ -221,11 +229,27 @@ Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
 class BaseEvents {
   final join = const EventSent('join', null);
   final phxLeave = const EventSent('phx_leave', {});
-  EventSent phxClick(dynamic value) => EventSent(
-      'event', {'type': 'phx-click', 'event': 'click_event', 'value': value});
+  EventSent phxClick(dynamic value, {String eventName = 'click_event'}) =>
+      EventSent(
+          'event', {'type': 'phx-click', 'event': eventName, 'value': value});
   EventSent phxFormValidate(String name, String value) =>
       EventSent('event', {'type': 'form', 'event': name, 'value': value});
+  EventSent event(String event) =>
+      EventSent('event', {'type': 'event', 'event': event, 'value': {}});
+
   const BaseEvents();
 }
 
+class BaseActions {
+  String show = FlutterExec.encode([FlutterExecAction(name: 'show')]);
+  String hide = FlutterExec.encode([FlutterExecAction(name: 'hide')]);
+  String goBack = FlutterExec.encode([FlutterExecAction(name: 'goBack')]);
+  String switchTheme(String mode, {String theme = 'default'}) =>
+      FlutterExec.encode([
+        FlutterExecAction(
+            name: 'switchTheme', value: {'mode': mode, 'theme': theme})
+      ]);
+}
+
 var liveEvents = const BaseEvents();
+var baseActions = BaseActions();
