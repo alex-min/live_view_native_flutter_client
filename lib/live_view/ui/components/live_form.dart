@@ -3,6 +3,20 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
+enum FormFieldEventType { initField, change, submit }
+
+class FormFieldEvent extends Notification {
+  final String name;
+  final String? data;
+  final FormFieldEventType type;
+
+  const FormFieldEvent(
+      {required this.name, required this.data, required this.type});
+
+  @override
+  String toString() => "FormFieldEvent(type=$type,name=$name,data=$data)";
+}
+
 class FormEvents {
   final void Function() onSave;
   FormEvents({required this.onSave});
@@ -17,55 +31,54 @@ class LiveForm extends LiveStateWidget<LiveForm> {
 
 class _LiveFormState extends StateWidget<LiveForm> {
   final _formKey = GlobalKey<FormBuilderState>();
+  Map<String, String?> formValues = {};
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
     reloadAttributes(node, ['phx-change', 'phx-submit']);
   }
 
-  void onFormEvent(String eventKind, {sendOnChange = true}) {
-    if (_formKey.currentState == null && getAttribute(eventKind) == null) {
+  @override
+  void onWipeState() {
+    formValues = {};
+    super.onWipeState();
+  }
+
+  void sendFormEvent(String eventKind, {String? target}) {
+    if (getAttribute(eventKind) == null) {
       return;
     }
-    List<String> inputChanged = [];
-    var previousInput = Map<String, dynamic>.from(_formKey.currentState!.value);
-    _formKey.currentState?.saveAndValidate();
-    var nextInput = Map<String, dynamic>.from(_formKey.currentState!.value);
-
-    for (var item in nextInput.entries) {
-      if (!previousInput.containsKey(item.key)) {
-        if (!inputChanged.contains(item.key)) {
-          inputChanged.add(item.key);
-        }
-      } else if (previousInput[item.key] != item.value) {
-        if (!inputChanged.contains(item.key)) {
-          inputChanged.add(item.key);
-        }
-      }
+    Map<String, String> eventData = Map<String, String>.from(formValues);
+    if (target != null) {
+      eventData['_target'] = target;
     }
-
-    if (inputChanged.isNotEmpty || !sendOnChange) {
-      Map<String, dynamic> ret =
-          Map<String, dynamic>.from(_formKey.currentState!.value);
-      if (inputChanged.isNotEmpty) {
-        ret['_target'] = inputChanged.last;
-      }
-      liveView.sendEvent(ExecLiveEvent(
-          type: 'form',
-          name: getAttribute(eventKind)!,
-          value: Uri(host: 'localhost', queryParameters: ret).query));
-    }
+    liveView.sendEvent(ExecLiveEvent(
+        type: 'form',
+        name: getAttribute(eventKind)!,
+        value: Uri(host: 'localhost', queryParameters: eventData).query));
   }
 
   @override
   Widget render(BuildContext context) {
-    return FormBuilder(
+    return Form(
       key: _formKey,
-      onChanged: () => onFormEvent('phx-change'),
-      child: singleChild(
-          state: widget.state.copyWith(formEvents: FormEvents(onSave: () {
-        onFormEvent('phx-submit', sendOnChange: false);
-      }))),
+      child: NotificationListener<FormFieldEvent>(
+          onNotification: (event) {
+            if (event.type == FormFieldEventType.change ||
+                event.type == FormFieldEventType.initField) {
+              formValues[event.name] = event.data;
+            }
+
+            if (event.type == FormFieldEventType.change) {
+              sendFormEvent('phx-change', target: event.name);
+            } else if (event.type == FormFieldEventType.submit) {
+              sendFormEvent('phx-submit');
+            }
+            return true;
+          },
+          child: singleChild(
+              state: widget.state
+                  .copyWith(formEvents: FormEvents(onSave: () {})))),
     );
   }
 }

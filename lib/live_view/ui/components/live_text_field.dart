@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:liveview_flutter/live_view/mapping/inputDecoration.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:uuid/uuid.dart';
@@ -14,13 +15,14 @@ class LiveTextField extends LiveStateWidget<LiveTextField> {
 }
 
 class _LiveTextFieldState extends StateWidget<LiveTextField> {
-  final key = GlobalKey<FormBuilderFieldState>();
-  var controller = TextEditingController();
+  final key = GlobalKey<FormFieldState>();
+  var unamedInput = const Uuid().v4();
 
   @override
   void initState() {
     Future.delayed(Duration.zero, () {
-      key.currentState?.validate();
+      validateInput();
+      sendInitialState();
     });
     super.initState();
   }
@@ -29,20 +31,29 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   void onStateChange(Map<String, dynamic> diff) {
     reloadAttributes(
         node, ['name', 'value', 'decoration', 'obscureText', 'error']);
-    key.currentState?.validate();
+    validateInput();
     //key.currentState?.didChange(getAttribute('value'));
+  }
+
+  void validateInput() => key.currentState?.validate();
+  void sendInitialState() {
+    reloadAttributes(node, ['value', 'name']);
+    FormFieldEvent(
+      name: getAttribute('name') ?? "unamed-attribute-$unamedInput",
+      data: getAttribute('value') ?? '',
+      type: FormFieldEventType.initField,
+    ).dispatch(context);
   }
 
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
     var icon = StateChild.extractChild<LiveIconAttribute>(children);
-    return FormBuilderTextField(
+    return TextFormField(
         validator: (_) {
           var error = getAttribute('error');
           return error == '' ? null : error;
         },
-        controller: controller,
         key: key,
         obscureText: booleanAttribute('obscureText') ?? false,
         decoration: getInputDecoration(
@@ -50,7 +61,14 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
           getAttribute('decoration'),
           icon: icon,
         ),
-        name: getAttribute('name') ?? const Uuid().v4(),
+        onChanged: (value) {
+          FormFieldEvent(
+            name: getAttribute('name') ?? "unamed-attribute-$unamedInput",
+            data: value,
+            type: FormFieldEventType.change,
+          ).dispatch(context);
+        },
+        //name: getAttribute('name') ?? "unamed-attribute-${const Uuid().v4()}",
         initialValue: getAttribute('value'));
   }
 }
