@@ -56,7 +56,7 @@ class _RootScaffoldState extends State<RootScaffold> {
               if (widget.view.throttleSpammyCalls) {
                 throttle('window_resize',
                     () => widget.view.eventHub.fire('phx:window:resize'),
-                    cooldown: const Duration(milliseconds: 30));
+                    cooldown: const Duration(milliseconds: 50));
               } else {
                 widget.view.eventHub.fire('phx:window:resize');
               }

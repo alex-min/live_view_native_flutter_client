@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_js/flutter_js.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
-
-var flutterJs = getJavascriptRuntime(xhr: false);
 
 class When {
   String conditions;
@@ -10,16 +7,68 @@ class When {
 
   bool get isNotEmpty => conditions.isNotEmpty;
 
+  bool _calculateCondition(double first, String operator, double second) {
+    switch (operator) {
+      case '>':
+        return first > second;
+      case '<':
+        return first < second;
+      case '>=':
+        return first >= second;
+      case '<=':
+        return first <= second;
+      case '==':
+        return first == second;
+      case '!=':
+        return first != second;
+      default:
+        return false;
+    }
+  }
+
+  bool _execute(List<dynamic> conditions) {
+    var stack = [];
+    while (conditions.length > 1) {
+      var chunk = conditions[0];
+      if (chunk is double) {
+        var first = conditions.removeAt(0);
+        var operator = conditions.removeAt(0);
+        var second = conditions.removeAt(0);
+        stack.insert(0, _calculateCondition(first, operator, second));
+      } else if (chunk is String) {
+        switch (chunk) {
+          case 'and':
+            var restOfCalculation =
+                _execute(conditions.getRange(1, conditions.length).toList());
+            return stack.first && restOfCalculation;
+          case 'or':
+            var restOfCalculation =
+                _execute(conditions.getRange(1, conditions.length).toList());
+            return stack.first || restOfCalculation;
+          default:
+            return false;
+        }
+      }
+    }
+    return stack.first;
+  }
+
   bool execute(BuildContext context) {
     if (conditions.isEmpty) {
       return true;
     }
-    conditions = conditions.replaceAll(
-        'window_width', MediaQuery.of(context).size.width.toString());
-    conditions = conditions.replaceAll(
-        'window_height', MediaQuery.of(context).size.height.toString());
 
-    return flutterJs.evaluate(conditions).rawResult;
+    var window = MediaQuery.of(context);
+    conditions =
+        conditions.replaceAll('window_width', window.size.width.toString());
+    conditions =
+        conditions.replaceAll('window_height', window.size.height.toString());
+
+    var c = conditions.split(' ');
+
+    c.removeWhere((element) => element == '');
+
+    return _execute(c.map((op) => double.tryParse(op) ?? op).toList());
   }
 
   static When parse(String attributeName, Map<String, dynamic>? attributes) {
