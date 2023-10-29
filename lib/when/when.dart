@@ -57,18 +57,33 @@ class When {
     if (conditions.isEmpty) {
       return true;
     }
+    var trimmed = conditions.trim();
+    switch (trimmed) {
+      case 'screen-xs':
+        return MediaQuery.of(context).size.width < 576;
+      case 'screen-sm':
+        return MediaQuery.of(context).size.width >= 576;
+      case 'screen-md':
+        return MediaQuery.of(context).size.width >= 768;
+      case 'screen-lg':
+        return MediaQuery.of(context).size.width >= 992;
+      case 'screen-xl':
+        return MediaQuery.of(context).size.width >= 1200;
+      case 'screen-2xl':
+        return MediaQuery.of(context).size.width >= 1400;
+      default:
+        var window = MediaQuery.of(context);
+        conditions =
+            conditions.replaceAll('window_width', window.size.width.toString());
+        conditions = conditions.replaceAll(
+            'window_height', window.size.height.toString());
 
-    var window = MediaQuery.of(context);
-    conditions =
-        conditions.replaceAll('window_width', window.size.width.toString());
-    conditions =
-        conditions.replaceAll('window_height', window.size.height.toString());
+        var c = conditions.split(' ');
 
-    var c = conditions.split(' ');
+        c.removeWhere((element) => element == '');
 
-    c.removeWhere((element) => element == '');
-
-    return _execute(c.map((op) => double.tryParse(op) ?? op).toList());
+        return _execute(c.map((op) => double.tryParse(op) ?? op).toList());
+    }
   }
 
   static When parse(String attributeName, Map<String, dynamic>? attributes) {
@@ -76,7 +91,6 @@ class When {
     if (when != null) {
       return When(conditions: when);
     }
-    // todo parse
     return When();
   }
 }

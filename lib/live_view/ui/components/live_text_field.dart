@@ -15,20 +15,36 @@ class LiveTextField extends LiveStateWidget<LiveTextField> {
 
 class _LiveTextFieldState extends StateWidget<LiveTextField> {
   final key = GlobalKey<FormBuilderFieldState>();
+  var controller = TextEditingController();
+
+  @override
+  void initState() {
+    Future.delayed(Duration.zero, () {
+      key.currentState?.validate();
+    });
+    super.initState();
+  }
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['name', 'value', 'decoration']);
-    key.currentState?.didChange(getAttribute('value'));
+    reloadAttributes(
+        node, ['name', 'value', 'decoration', 'obscureText', 'error']);
+    key.currentState?.validate();
+    //key.currentState?.didChange(getAttribute('value'));
   }
 
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
     var icon = StateChild.extractChild<LiveIconAttribute>(children);
-
     return FormBuilderTextField(
+        validator: (_) {
+          var error = getAttribute('error');
+          return error == '' ? null : error;
+        },
+        controller: controller,
         key: key,
+        obscureText: booleanAttribute('obscureText') ?? false,
         decoration: getInputDecoration(
           context,
           getAttribute('decoration'),

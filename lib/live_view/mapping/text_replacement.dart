@@ -43,9 +43,11 @@ List<String> extractDynamicKeys(String input) {
   if (key != null && variables[key] != null) {
     var content = "${variables[key]}".trimLeft();
 
-    content = content.replaceFirst('$attribute="', '');
-    if (content[content.length - 1] == '"') {
-      content = content.substring(0, content.length - 1);
+    if (content.contains('$attribute="')) {
+      content = content.replaceFirst('$attribute="', '');
+      if (content[content.length - 1] == '"') {
+        content = content.substring(0, content.length - 1);
+      }
     }
     return (attr.replaceAll("[[flutterState key=$key]]", content), key);
   }
