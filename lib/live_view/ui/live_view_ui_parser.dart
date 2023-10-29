@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar_icon.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_cached_networked_image.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_center.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_checkbox.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_column.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_container.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer_header.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_expanded.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_filled_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
@@ -18,19 +21,16 @@ import 'package:liveview_flutter/live_view/ui/components/live_label_attribute.da
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail_destination.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_stack.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_navigator.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_segmented_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_stack.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text_field.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_title_attribute.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/errors/parsing_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -84,8 +84,7 @@ class LiveViewUiParser {
         node: xml.nonEmptyChildren.first,
         variables: htmlVariables,
         nestedState: nestedState,
-        parser: this,
-        formEvents: null));
+        parser: this));
   }
 
   static List<Widget> traverse(NodeState state) {
@@ -139,28 +138,34 @@ class LiveViewUiParser {
           return [LiveDrawerHeader(state: state)];
         case 'BottomNavigationBar':
           return [LiveBottomNavigationBar(state: state)];
-        case 'BottomNavigationBarIcon':
-          return [LiveBottomNavigationBarIcon(state: state)];
+        case 'BottomNavigationBarItem':
+          return [const SizedBox.shrink()];
         case 'Positioned':
           return [LivePositioned(state: state)];
         case 'Stack':
           return [LiveStack(state: state)];
-        case 'Navigator':
-          return [LiveNavigator(state: state)];
         case 'NavigationRail':
           return [LiveNavigationRail(state: state)];
         case 'NavigationRailDestination':
-          return [LiveNavigationRailDestination(state: state)];
+          return [const SizedBox.shrink()];
         case 'CachedNetworkImage':
           return [LiveCachedNetworkImage(state: state)];
         case 'Expanded':
           return [LiveExpanded(state: state)];
+        case 'FilledButton':
+          return [LiveFilledButton(state: state)];
         case 'viewBody':
           return [LiveViewBody(state: state)];
         case 'flutter':
           return state.node.nonEmptyChildren
               .map((c) => traverse(state.copyWith(node: c)).first)
               .toList();
+        case 'Checkbox':
+          return [LiveCheckbox(state: state)];
+        case 'SegmentedButton':
+          return [LiveSegmentedButton(state: state)];
+        case 'LiveButtonSegment':
+          return [const SizedBox.shrink()];
         default:
           reportError("unknown widget $componentName");
           return [const SizedBox.shrink()];

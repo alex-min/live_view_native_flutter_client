@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/loading/reload_widget.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_app_bar.dart';
@@ -19,6 +20,7 @@ class _RootScaffoldState extends State<RootScaffold> {
   List<Widget> children = [];
   bool isLiveReloading = false;
   LiveNavigationRail? railBar;
+  LiveDrawer? drawer;
 
   @override
   void initState() {
@@ -32,10 +34,16 @@ class _RootScaffoldState extends State<RootScaffold> {
     setState(() {
       railBar = StateChild.extractWidgetChild<LiveNavigationRail>(
           List<Widget>.from(widget.view.router.pages.last.widgets));
+      drawer = StateChild.extractWidgetChild<LiveDrawer>(
+          List<Widget>.from(widget.view.router.pages.last.widgets));
     });
   }
 
   Widget mapRailBar(Widget child) {
+    if (widget.view.router.pages.last.widgets.length > 1) {
+      railBar ??= StateChild.extractWidgetChild<LiveNavigationRail>(
+          List<Widget>.from(widget.view.router.pages.last.widgets));
+    }
     if (railBar == null) {
       return child;
     }
@@ -49,7 +57,13 @@ class _RootScaffoldState extends State<RootScaffold> {
       routerDelegate: widget.view.router,
       backButtonDispatcher: RootBackButtonDispatcher(),
     ));
+    if (widget.view.router.pages.last.widgets.length > 1) {
+      drawer ??= StateChild.extractWidgetChild<LiveDrawer>(
+          List<Widget>.from(widget.view.router.pages.last.widgets));
+    }
+
     var view = Scaffold(
+        drawer: drawer,
         appBar: RootAppBar(view: widget.view),
         body: NotificationListener<SizeChangedLayoutNotification>(
             onNotification: (_) {

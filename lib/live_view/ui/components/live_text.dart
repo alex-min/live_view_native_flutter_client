@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/text_align.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/mapping/text_style_map.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
@@ -15,7 +16,7 @@ class _LiveViewTextState extends StateWidget<LiveText> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['style']);
+    reloadAttributes(node, ['style', 'textAlign']);
     listenInnerTextKeys();
     lastLiveDiff = diff;
   }
@@ -24,7 +25,8 @@ class _LiveViewTextState extends StateWidget<LiveText> {
   Widget render(BuildContext context) {
     return Text(
       replaceVariables(widget.state.node.text, lastLiveDiff),
-      style: textStyle(getAttribute('style'), context),
+      style: getTextStyle(getAttribute('style'), context),
+      textAlign: getTextAlign(getAttribute('textAlign')),
     );
   }
 }

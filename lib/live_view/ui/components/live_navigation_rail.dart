@@ -1,26 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/boolean.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
+import 'package:liveview_flutter/live_view/mapping/icons.dart';
 import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail_destination.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
-
-class LiveNavigationRailNotification extends Notification {
-  final Widget icon;
-  final Widget? selectedIcon;
-  final Widget label;
-  final String? indicatorColor;
-  final String? padding;
-  final Map<String, String?> extraData;
-
-  const LiveNavigationRailNotification(
-      {required this.icon,
-      required this.selectedIcon,
-      required this.label,
-      required this.indicatorColor,
-      required this.padding,
-      required this.extraData});
-}
+import 'package:liveview_flutter/live_view/ui/utils.dart';
 
 class LiveNavigationRail extends LiveStateWidget<LiveNavigationRail> {
   const LiveNavigationRail({super.key, required super.state});
@@ -30,66 +17,78 @@ class LiveNavigationRail extends LiveStateWidget<LiveNavigationRail> {
 }
 
 class _LiveNavigationRailState extends StateWidget<LiveNavigationRail> {
-  Map<int, LiveNavigationRailNotification?> _itemsExtraData = {};
-
   @override
-  void initState() {
-    Future.delayed(Duration.zero, () {
-      setState(() {});
-    });
-    super.initState();
-  }
-
-  @override
-  void onWipeState() {
-    _itemsExtraData = {};
-    setState(() {});
-    super.onWipeState();
-  }
+  HandleClickState handleClickState() => HandleClickState.manual;
+  int selected = 0;
+  bool allowInitialValueChange = true;
+  var attributes = [
+    'labelType',
+    'useIndicator',
+    'indicatorColor',
+    'disabled',
+    'initialValue'
+  ];
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['labelType', 'selectedIndex']);
+    reloadAttributes(node, attributes);
+    if (allowInitialValueChange) {
+      allowInitialValueChange = false;
+      selected = intAttribute('initialValue') ?? 0;
+    }
   }
 
-  bool onChildChanges(int index, LiveNavigationRailNotification data) {
-    _itemsExtraData[index] = data;
-    Future.delayed(Duration.zero, () => setState(() {}));
-    return true;
+  List<(Map<String, String?>, NavigationRailDestination)> barItems() {
+    return childrenNodesOf(node, 'NavigationRailDestination')
+        .map((destination) {
+      var attributes = bindChildVariableAttributes(
+          destination,
+          ['icon', 'label', 'indicatorColor', 'disabled', 'padding'],
+          widget.state.variables);
+      var children =
+          StateChild.multipleChildren(widget.state.copyWith(node: destination));
+      Widget? icon;
+      Widget? label;
+      if (attributes['icon'] != null) {
+        icon = Icon(getIcon(attributes['icon']!));
+      }
+      icon ??= StateChild.extractChild<LiveIcon>(children);
+      if (attributes['label'] != null) {
+        label = Text(attributes['label']!);
+      }
+      label ??= StateChild.extractChild<LiveText>(children);
+
+      return (
+        attributes,
+        NavigationRailDestination(
+            padding: getMarginOrPadding(attributes['padding']),
+            icon: icon ?? defaultIcon,
+            label: label ?? const Text(''),
+            indicatorColor: getColor(
+              context,
+              attributes['indicatorColor'],
+            ),
+            disabled: getBoolean(attributes['disabled']) ?? false)
+      );
+    }).toList();
   }
 
   @override
   Widget render(BuildContext context) {
-    var children = StateChild.extractChildren<LiveNavigationRailDestination>(
-            multipleChildren())
-        .asMap()
-        .entries
-        .map((w) {
-      return NotificationListener<LiveNavigationRailNotification>(
-          onNotification: (notif) {
-            onChildChanges(w.key, notif);
-            return true;
-          },
-          child: w.value);
-    }).toList();
+    var items = barItems();
     return NavigationRail(
-        // the key is necessary because we don't want to cache the appbar accross renders
-        key: ValueKey<int>(widget.state.node.hashCode),
-        labelType: getNavigationRailLabelTypeAttribute('labelType'),
-        useIndicator: true,
-        destinations: children.asMap().entries.map((railDestination) {
-          var data = _itemsExtraData[railDestination.key];
-          return NavigationRailDestination(
-              icon: railDestination.value,
-              selectedIcon: data?.selectedIcon,
-              indicatorColor: getColor(context, data?.indicatorColor),
-              label: data?.label ?? const SizedBox.shrink(),
-              padding: getMarginOrPadding(data?.padding));
-        }).toList(),
-        onDestinationSelected: (selected) {
-          executeTapEventsManually(
-              fromAttributes: _itemsExtraData[selected]?.extraData ?? {});
+        indicatorColor: colorAttribute(context, 'indicatorColor'),
+        onDestinationSelected: (newSelection) {
+          setState(() => selected = newSelection);
+          // tapping on the item
+          executeTapEventsManually(fromAttributes: items[selected].$1);
+
+          // tapping itself
+          executeTapEventsManually();
         },
-        selectedIndex: intAttribute('selectedIndex'));
+        useIndicator: booleanAttribute('useIndicator'),
+        labelType: getNavigationRailLabelTypeAttribute('labelType'),
+        destinations: items.map((e) => e.$2).toList(),
+        selectedIndex: selected);
   }
 }

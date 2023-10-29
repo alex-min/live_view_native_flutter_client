@@ -10,3 +10,17 @@ BottomNavigationBarType? getBottomNavigationBarType(String? prop) {
       return null;
   }
 }
+
+BottomNavigationBarLandscapeLayout? getBottomNavigationBarLandscapeLayout(
+    String? prop) {
+  switch (prop) {
+    case 'centered':
+      return BottomNavigationBarLandscapeLayout.centered;
+    case 'linear':
+      return BottomNavigationBarLandscapeLayout.linear;
+    case 'spread':
+      return BottomNavigationBarLandscapeLayout.spread;
+    default:
+      return null;
+  }
+}

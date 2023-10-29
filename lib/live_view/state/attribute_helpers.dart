@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/boolean.dart';
+import 'package:liveview_flutter/live_view/mapping/buttonStyle.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/decoration.dart';
 import 'package:liveview_flutter/live_view/mapping/icons.dart';
+import 'package:liveview_flutter/live_view/mapping/keyboard_type.dart';
 import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/mapping/navigation_rail_label_type.dart';
 import 'package:liveview_flutter/live_view/mapping/number.dart';
@@ -26,4 +28,8 @@ mixin AttributeHelpers {
       Icon(getIcon(getAttribute(attribute)));
   NavigationRailLabelType? getNavigationRailLabelTypeAttribute(attribute) =>
       getNavigationRailLabelType(getAttribute(attribute));
+  ButtonStyle? buttonStyleAttribute(BuildContext context, String attribute) =>
+      getButtonStyle(context, getAttribute(attribute));
+  TextInputType? textInputTypeAttribute(String attribute) =>
+      getTextInputType(getAttribute(attribute));
 }

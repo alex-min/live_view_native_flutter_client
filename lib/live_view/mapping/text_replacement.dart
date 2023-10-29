@@ -51,20 +51,19 @@ List<String> extractDynamicKeys(String input) {
     }
     return (attr.replaceAll("[[flutterState key=$key]]", content), key);
   }
-  if (attr[0] == '[' && attr[attr.length - 1] == ']') {}
   return (attr, null);
 }
 
 class VariableAttributes {
   Map<String, String?> attributes;
-  List<String> keys;
+  List<String> listenedKeys;
 
-  VariableAttributes(this.attributes, this.keys);
+  VariableAttributes(this.attributes, this.listenedKeys);
 
   void merge(VariableAttributes other) {
-    for (var key in other.keys) {
-      if (!keys.contains(key)) {
-        keys.add(key);
+    for (var key in other.listenedKeys) {
+      if (!listenedKeys.contains(key)) {
+        listenedKeys.add(key);
       }
     }
 
@@ -83,8 +82,8 @@ VariableAttributes getVariableAttributes(
     var (value, key) = getVariableAttribute(node, attribute, variables);
     ret.attributes[attribute] =
         value != null ? HtmlUnescape().convert(value) : null;
-    if (key != null && !ret.keys.contains(key)) {
-      ret.keys.add(key);
+    if (key != null && !ret.listenedKeys.contains(key)) {
+      ret.listenedKeys.add(key);
     }
   }
   return ret;

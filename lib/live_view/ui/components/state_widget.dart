@@ -236,8 +236,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   void executeTapEventsManually({Map<String, dynamic>? fromAttributes}) {
     List<EventHandler> events = [];
 
+    reloadPredefinedAttributes(node);
     gatherAllTapEvents(events, fromAttributes: fromAttributes);
     executeAllEvents(events);
+
+    if (fromAttributes == null) {
+      getAttribute('phx-click');
+    }
   }
 
   void onWindowResize() {

@@ -4,7 +4,28 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 
 import '../test_helpers.dart';
 
+String? fieldValue() =>
+    (find.byType(TextField).evaluate().first.widget as TextField)
+        .controller
+        ?.text;
+
 main() async {
+  testWidgets('initial value cannot change from the server', (tester) async {
+    var (view, _) = await connect(LiveView(), rendered: {
+      's': ['<TextField ', '/>'],
+      '0': 'initialValue="initialValue"'
+    });
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(fieldValue(), 'initialValue');
+
+    view.handleDiffMessage({'0': 'initialValue="new value"'});
+    await tester.pumpAndSettle();
+
+    expect(fieldValue(), 'initialValue');
+  });
+
   testWidgets('handles form change', (tester) async {
     var (view, server) = await connect(LiveView());
     await tester.runLiveView(view);
@@ -20,8 +41,8 @@ main() async {
     });
     await tester.pumpAndSettle();
 
-    var field = find.firstOf<TextField>();
-    field.controller!.value = const TextEditingValue(text: 'typing');
+    await tester.enterText(find.byType(TextField), 'typing');
+
     expect(
         server.lastChannelAction,
         liveEvents.phxFormValidate(

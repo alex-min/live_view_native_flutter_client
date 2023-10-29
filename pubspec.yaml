@@ -53,6 +53,8 @@ dependencies:
   html_unescape: ^2.0.0
   throttled: ^1.0.1
   cached_network_image: ^3.3.0
+  http_query_string: ^1.0.0
+  universal_html: ^2.2.4
 
 dev_dependencies:
   flutter_test:

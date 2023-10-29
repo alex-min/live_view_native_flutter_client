@@ -1,15 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/bottom_navigation_bar_type.dart';
+import 'package:liveview_flutter/live_view/mapping/colors.dart';
+import 'package:liveview_flutter/live_view/mapping/icons.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar_icon.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
-
-class BottomNavigationBarNotification extends Notification {
-  final Map<String, dynamic> data;
-
-  const BottomNavigationBarNotification({required this.data});
-}
+import 'package:liveview_flutter/live_view/ui/utils.dart';
 
 class LiveBottomNavigationBar extends LiveStateWidget<LiveBottomNavigationBar> {
   const LiveBottomNavigationBar({super.key, required super.state});
@@ -21,62 +18,77 @@ class LiveBottomNavigationBar extends LiveStateWidget<LiveBottomNavigationBar> {
 
 class _LiveBottomNavigationBarState
     extends StateWidget<LiveBottomNavigationBar> {
-  final Map<int, Map<String, dynamic>> _itemsExtraData = {};
+  @override
+  HandleClickState handleClickState() => HandleClickState.manual;
+  List<String> attributes = [
+    'showSelectedLabels',
+    'showUnselectedLabels',
+    'initialValue',
+    'selectedItemColor',
+    'unselectedItemColor',
+    'backgroundColor',
+    'elevation',
+    'type',
+    'selectedFontSize',
+    'unselectedFontSize',
+    'fixedColor',
+    'iconSize',
+    'enableFeedback',
+    'landscapeLayout'
+  ];
+  List<String> childAttributes = [
+    'label',
+    'name',
+    'icon',
+    'backgroundColor',
+    'tooltip',
+  ];
+  int _currentIndex = 0;
+  bool allowInitialValueChange = true;
 
   @override
-  void initState() {
-    Future.delayed(Duration.zero, () {
-      setState(() {});
-    });
-    super.initState();
+  void onWipeState() {
+    allowInitialValueChange = true;
+    super.onWipeState();
   }
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, [
-      'selectedItemColor',
-      'fixedColor',
-      'unselectedItemColor',
-      'backgroundColor',
-      'currentIndex',
-      'type',
-      'selectedFontSize',
-      'unselectedFontSize',
-      'showSelectedLabels',
-      'showUnselectedLabels'
-    ]);
+    reloadAttributes(node, attributes);
+    if (allowInitialValueChange) {
+      _currentIndex = intAttribute('initialValue') ?? 0;
+      allowInitialValueChange = false;
+    }
   }
 
-  bool onChildChanges(int index, BottomNavigationBarNotification data) {
-    if (mapEquals(data.data, _itemsExtraData[index])) {
-      return true;
-    }
+  List<(Map<String, String?>, BottomNavigationBarItem)> bottomBarItems() {
+    return childrenNodesOf(node, 'BottomNavigationBarItem').map((button) {
+      var attributes = bindChildVariableAttributes(
+          button, childAttributes, widget.state.variables);
+      var children =
+          StateChild.multipleChildren(widget.state.copyWith(node: button));
 
-    _itemsExtraData[index] = data.data;
-    if (mounted) {
-      try {
-        setState(() {});
-      } catch (e) {
-        // we don't mind if it fails because the state is being rebuilt in the mean time
+      Widget? icon;
+      if (attributes['icon'] != null) {
+        icon = Icon(getIcon(attributes['icon']!));
       }
-    }
-    return true;
+      icon ??= StateChild.extractChild<LiveIcon>(children);
+
+      return (
+        attributes,
+        BottomNavigationBarItem(
+            icon: icon ?? defaultIcon,
+            label: attributes['label'] ?? '',
+            backgroundColor: getColor(context, attributes['backgroundColor']),
+            tooltip: attributes['tooltip'])
+      );
+    }).toList();
   }
 
   @override
   Widget render(BuildContext context) {
-    var children = StateChild.extractChildren<LiveBottomNavigationBarIcon>(
-            multipleChildren())
-        .asMap()
-        .entries
-        .map((w) {
-      return NotificationListener<BottomNavigationBarNotification>(
-          onNotification: (notif) {
-            onChildChanges(w.key, notif);
-            return true;
-          },
-          child: w.value);
-    }).toList();
+    var children = bottomBarItems();
+
     if (children.length < 2) {
       if (kDebugMode) {
         throw Exception(
@@ -94,25 +106,32 @@ class _LiveBottomNavigationBarState
     }
 
     return BottomNavigationBar(
-        selectedItemColor: colorAttribute(context, 'selectedItemColor'),
+        type: type,
+        elevation: doubleAttribute('elevation'),
+        currentIndex: _currentIndex,
+        onTap: (selected) {
+          setState(() {
+            _currentIndex = selected;
+          });
+
+          // tapping on the item
+          executeTapEventsManually(fromAttributes: children[selected].$1);
+
+          // tapping itself
+          executeTapEventsManually();
+        },
+        enableFeedback: booleanAttribute('enableFeedback'),
+        iconSize: doubleAttribute('iconSize') ?? 24.0,
         fixedColor: colorAttribute(context, 'fixedColor'),
         unselectedItemColor: colorAttribute(context, 'unselectedItemColor'),
+        selectedItemColor: colorAttribute(context, 'selectedItemColor'),
         backgroundColor: colorAttribute(context, 'backgroundColor'),
-        currentIndex: intAttribute('currentIndex') ?? 0,
-        type: type,
+        showSelectedLabels: booleanAttribute('showSelectedLabels') ?? true,
+        showUnselectedLabels: booleanAttribute('showUnselectedLabels') ?? true,
         selectedFontSize: doubleAttribute('selectedFontSize') ?? 14.0,
         unselectedFontSize: doubleAttribute('unselectedFontSize') ?? 12.0,
-        showSelectedLabels: booleanAttribute('showSelectedLabels'),
-        showUnselectedLabels: booleanAttribute('showUnselectedLabels'),
-        onTap: (tapped) {
-          executeTapEventsManually(
-              fromAttributes: _itemsExtraData[tapped] ?? {});
-        },
-        items: children.asMap().entries.map((item) {
-          return BottomNavigationBarItem(
-            icon: item.value,
-            label: _itemsExtraData[item.key]?['label'] ?? '',
-          );
-        }).toList());
+        landscapeLayout: getBottomNavigationBarLandscapeLayout(
+            getAttribute('landscapeLayout')),
+        items: children.map((c) => c.$2).toList());
   }
 }

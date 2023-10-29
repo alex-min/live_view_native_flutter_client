@@ -40,6 +40,8 @@ class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
 
   @override
   Widget build(BuildContext context) {
+    bar ??= extractChild<LiveBottomNavigationBar>(
+        widget.view.router.pages.last.widgets);
     return bar ?? const SizedBox.shrink();
   }
 }

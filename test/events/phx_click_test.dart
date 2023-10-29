@@ -41,10 +41,10 @@ main() async {
       's': [
         """
         <BottomNavigationBar>
-          <BottomNavigationBarIcon phx-click="other_event" name="home" label="Page 1" />
-          <BottomNavigationBarIcon phx-click="other_event" name="home" label="Page 2" />
-          <BottomNavigationBarIcon phx-click="other_event" name="home" label="Page 3" />
-          <BottomNavigationBarIcon phx-click="my_event" phx-value-something="hello" name="home" label="Page 4" />
+          <BottomNavigationBarItem phx-click="other_event" icon="home" label="Page 1" />
+          <BottomNavigationBarItem phx-click="other_event" icon="home" label="Page 2" />
+          <BottomNavigationBarItem phx-click="other_event" icon="home" label="Page 3" />
+          <BottomNavigationBarItem phx-click="my_event" phx-value-something="hello" icon="home" label="Page 4" />
         </BottomNavigationBar>
         """
       ]

@@ -20,11 +20,11 @@ main() async {
               <link live-patch="/second-page" />
             </Container>
           </viewBody>
-          <BottomNavigationBar currentIndex="0" selectedItemColor="blue-500">
-            <BottomNavigationBarIcon name="display_settings" label="Display Settings" />
-            <BottomNavigationBarIcon name="work" label="Second option" />
-            <BottomNavigationBarIcon name="done" label="Done" />
-            <BottomNavigationBarIcon name="drafts" label="Drafts" />
+          <BottomNavigationBar initialValue="0" selectedItemColor="blue-500">
+            <BottomNavigationBarItem icon="display_settings" label="Display Settings" />
+            <BottomNavigationBarItem icon="work" label="Second option" />
+            <BottomNavigationBarItem icon="done" label="Done" />
+            <BottomNavigationBarItem icon="drafts" label="Drafts" />
           </BottomNavigationBar>
         </flutter>
       """
@@ -57,11 +57,11 @@ main() async {
               Page 2
             </Container>
           </viewBody>
-          <BottomNavigationBar currentIndex="1" selectedItemColor="blue-500">
-            <BottomNavigationBarIcon name="display_settings" label="Display Settings" />
-            <BottomNavigationBarIcon name="work" label="Second option" />
-            <BottomNavigationBarIcon name="done" label="Done" />
-            <BottomNavigationBarIcon name="drafts" label="Drafts" />
+          <BottomNavigationBar initialValue="1" selectedItemColor="blue-500">
+            <BottomNavigationBarItem icon="display_settings" label="Display Settings" />
+            <BottomNavigationBarItem icon="work" label="Second option" />
+            <BottomNavigationBarItem icon="done" label="Done" />
+            <BottomNavigationBarItem icon="drafts" label="Drafts" />
           </BottomNavigationBar>
         </flutter>
         """

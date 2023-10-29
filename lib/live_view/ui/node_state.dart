@@ -9,7 +9,6 @@ class NodeState {
   final LiveViewUiParser parser;
   final List<int> nestedState;
   final LiveView liveView;
-  final FormEvents? formEvents;
   final String urlPath;
 
   bool get isOnTheCurrentPage => urlPath == liveView.currentUrl;
@@ -20,7 +19,6 @@ class NodeState {
       required this.parser,
       required this.nestedState,
       required this.liveView,
-      required this.formEvents,
       required this.urlPath});
 
   NodeState copyWith(
@@ -33,7 +31,6 @@ class NodeState {
           String? urlPath}) =>
       NodeState(
         node: node ?? this.node,
-        formEvents: formEvents ?? this.formEvents,
         variables: variables ?? this.variables,
         parser: parser ?? this.parser,
         nestedState: nestedState ?? this.nestedState,

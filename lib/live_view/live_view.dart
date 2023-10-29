@@ -1,29 +1,32 @@
 import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart';
-import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
+import 'package:http/http.dart' as http;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
+import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
+import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
+import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
+import 'package:liveview_flutter/live_view/routes/live_router_delegate.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/errors/compilation_error_view.dart';
-import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
-import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
-import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
-import 'package:liveview_flutter/live_view/routes/live_router_delegate.dart';
 import 'package:liveview_flutter/live_view/ui/errors/error_404.dart';
 import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/errors/no_server_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
+import 'package:liveview_flutter/live_view/webdocs.dart';
 import 'package:liveview_flutter/platform_name.dart';
-import 'package:uuid/uuid.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
+import 'package:uuid/uuid.dart';
+
 import './ui/live_view_ui_parser.dart';
 
 class LiveSocket {
@@ -41,6 +44,7 @@ class LiveSocket {
 class LiveView {
   bool catchExceptions = true;
   bool disableAnimations = false;
+  bool webDocsMode = false;
 
   http.Client httpClient = http.Client();
   var liveSocket = LiveSocket();
@@ -87,6 +91,13 @@ class LiveView {
     rootView = LiveRootView(view: this);
 
     router.pushPage(url: 'loading', widget: connectingWidget());
+  }
+
+  void connectToDocs() {
+    if (!kIsWeb) {
+      return;
+    }
+    bindWebDocs(this);
   }
 
   Future<String?> connect(String address) async {

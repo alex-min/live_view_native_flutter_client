@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 
 import '../test_helpers.dart';
 
@@ -67,18 +67,22 @@ main() async {
         reason: 'the width is enough to trigger the event');
   });
 
-  testWidgets('hide with conditions reverses if the conditions are not met',
+  testGoldens('hide with conditions reverses if the conditions are not met',
       (tester) async {
+    loadAppFonts();
+
     tester.setScreenSize(const Size(400, 400));
 
     var (view, _) = await connect(LiveView(), rendered: {
       's': [
         """
-        <Container>
-          <ElevatedButton 
-            phx-window-resize="${baseActions.hide}"
-            phx-window-resize-when="window_width > 800" 
-          >hello</ElevatedButton>
+        <Container padding="10">
+          <Row>
+            <ElevatedButton
+              phx-window-resize="${baseActions.hide}"
+              phx-window-resize-when="window_width > 800"
+            >hello</ElevatedButton>
+          </Row>
         </Container>
       """
       ]
@@ -87,8 +91,7 @@ main() async {
     await tester.runLiveView(view);
 
     await tester.pumpAndSettle();
-
-    expect(find.text('hello').hitTestable(), findsOneWidget);
+    expect(find.firstText(), "hello");
 
     tester.setScreenSize(const Size(900, 900));
     await tester.pumpAndSettle();
@@ -96,7 +99,7 @@ main() async {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('hello').hitTestable(), findsNothing);
+    expect(find.firstText(), null);
 
     tester.setScreenSize(const Size(400, 400));
 
@@ -104,7 +107,7 @@ main() async {
     tester.setScreenSize(const Size(401, 401));
     await tester.pumpAndSettle();
 
-    expect(find.text('hello').hitTestable(), findsOneWidget);
+    expect(find.firstText(), "hello");
   });
 
   testWidgets('shows with conditions reverses if the conditions are not met',
@@ -132,7 +135,7 @@ main() async {
     tester.setScreenSize(const Size(398, 398));
     await tester.pumpAndSettle();
 
-    expect(find.text('hello').hitTestable(), findsNothing);
+    expect(find.firstText(), null);
 
     tester.setScreenSize(const Size(900, 900));
     await tester.pumpAndSettle();
@@ -140,6 +143,6 @@ main() async {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('hello').hitTestable(), findsOneWidget);
+    expect(find.firstText(), 'hello');
   });
 }
