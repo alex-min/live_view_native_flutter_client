@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
+import 'package:uuid/uuid.dart';
 
 class LiveElevatedButton extends LiveStateWidget<LiveElevatedButton> {
   const LiveElevatedButton({super.key, required super.state});
@@ -9,9 +11,11 @@ class LiveElevatedButton extends LiveStateWidget<LiveElevatedButton> {
 }
 
 class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
+  var unamedInput = const Uuid().v4();
+
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['type']);
+    reloadAttributes(node, ['type', 'name']);
   }
 
   @override
@@ -22,10 +26,15 @@ class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
     return ElevatedButton(
         onPressed: () {
           if (getAttribute('type') == 'submit') {
-            widget.state.formEvents?.onSave();
+            FormFieldEvent(
+                    name: getAttribute('name') ??
+                        'unamed-elevated-button-$unamedInput',
+                    data: null,
+                    type: FormFieldEventType.submit)
+                .dispatch(context);
           }
           executeTapEventsManually();
         },
-        child: singleChild());
+        child: AbsorbPointer(child: singleChild()));
   }
 }

@@ -39,7 +39,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   void sendInitialState() {
     reloadAttributes(node, ['value', 'name']);
     FormFieldEvent(
-      name: getAttribute('name') ?? "unamed-attribute-$unamedInput",
+      name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
       data: getAttribute('value') ?? '',
       type: FormFieldEventType.initField,
     ).dispatch(context);
@@ -63,7 +63,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
         ),
         onChanged: (value) {
           FormFieldEvent(
-            name: getAttribute('name') ?? "unamed-attribute-$unamedInput",
+            name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
             data: value,
             type: FormFieldEventType.change,
           ).dispatch(context);

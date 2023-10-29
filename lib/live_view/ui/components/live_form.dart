@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
@@ -30,7 +29,7 @@ class LiveForm extends LiveStateWidget<LiveForm> {
 }
 
 class _LiveFormState extends StateWidget<LiveForm> {
-  final _formKey = GlobalKey<FormBuilderState>();
+  final _formKey = GlobalKey<FormState>();
   Map<String, String?> formValues = {};
 
   @override
@@ -72,7 +71,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
             if (event.type == FormFieldEventType.change) {
               sendFormEvent('phx-change', target: event.name);
             } else if (event.type == FormFieldEventType.submit) {
-              sendFormEvent('phx-submit');
+              sendFormEvent('phx-submit', target: event.name);
             }
             return true;
           },
