@@ -16,6 +16,13 @@ class FormFieldEvent extends Notification {
   String toString() => "FormFieldEvent(type=$type,name=$name,data=$data)";
 }
 
+class FormError {
+  final String message;
+  Map<String, dynamic>? options;
+
+  FormError({required this.message, required this.options});
+}
+
 class FormEvents {
   final void Function() onSave;
   FormEvents({required this.onSave});

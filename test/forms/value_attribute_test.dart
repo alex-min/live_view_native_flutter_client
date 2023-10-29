@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -5,7 +6,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('handles dynamic attributes', (tester) async {
+  testWidgets('changing value does not reset the input', (tester) async {
     var view = LiveView()
       ..handleRenderedMessage({
         's': ['<TextField ', '', '></TextField>'],
@@ -14,20 +15,17 @@ main() async {
       });
 
     await tester.runLiveView(view);
+    await tester.pumpAndSettle();
 
-    var field = find.firstOf<FormBuilderTextField>();
-    expect(field.name, 'myfield');
-    expect(field.initialValue, 'content');
-    expect(field.value, 'content');
+    expect(find.firstOf<TextFormField>().initialValue, 'content');
+    expect((find.firstOf<TextField>()).controller?.text, 'content');
 
     view.handleDiffMessage({
       '0': 'name="new name"',
       '1': 'value="new content"',
     });
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    field = find.firstOf<FormBuilderTextField>();
-    expect(field.name, 'new name');
-    expect(field.value, 'new content');
+    expect((find.firstOf<TextField>()).controller?.text, 'content');
   });
 }

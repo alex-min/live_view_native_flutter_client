@@ -51,7 +51,6 @@ List<String> extractDynamicKeys(String input) {
     }
     return (attr.replaceAll("[[flutterState key=$key]]", content), key);
   }
-  if (attr[0] == '[' && attr[attr.length - 1] == ']') {}
   return (attr, null);
 }
 
