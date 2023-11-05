@@ -25,6 +25,7 @@ import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
 import 'package:liveview_flutter/live_view/webdocs.dart';
 import 'package:liveview_flutter/platform_name.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
+import "package:universal_html/html.dart" as web_html;
 import 'package:uuid/uuid.dart';
 
 import './ui/live_view_ui_parser.dart';
@@ -307,9 +308,17 @@ class LiveView {
   }
 
   sendEvent(ExecLiveEvent event) {
-    if (_channel.state != PhoenixChannelState.closed) {
-      _channel.push('event',
-          {'type': event.type, 'event': event.name, 'value': event.value});
+    var eventData = {
+      'type': event.type,
+      'event': event.name,
+      'value': event.value
+    };
+
+    if (webDocsMode) {
+      web_html.window.parent
+          ?.postMessage({'type': 'event', 'data': eventData}, "*");
+    } else if (_channel.state != PhoenixChannelState.closed) {
+      _channel.push('event', eventData);
     }
   }
 
