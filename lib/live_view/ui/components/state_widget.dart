@@ -42,6 +42,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     computedAttributes = VariableAttributes({}, []);
     extraKeysListened = [];
     onStateChange(currentVariables);
+    onFormInitialize();
     reloadPredefinedAttributes(node);
     stateNotifier = Provider.of<StateNotifier>(context, listen: false);
     stateNotifier.addListener(onDiffUpdateEvent);
@@ -94,6 +95,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   void onStateChange(Map<String, dynamic> diff);
 
+  void onFormInitialize() {}
+
   void onDiffUpdateEvent() {
     if (!mounted) {
       return;
@@ -122,6 +125,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       computedAttributes = VariableAttributes({}, []);
       currentVariables = Map.from(widget.state.variables);
       onStateChange(currentVariables);
+      onFormInitialize();
       reloadPredefinedAttributes(node);
       onLoad();
     }
@@ -131,12 +135,17 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   Widget build(BuildContext context) {
     executeDirty();
     var child = handleTransitions(render(context));
+    child = handleMarginPadding(child);
 
     if (handleClickState() == HandleClickState.automatic) {
       return handleBeforeEachRenderEvents(handleTapEvents(child));
     } else {
       return handleBeforeEachRenderEvents(child);
     }
+  }
+
+  Widget handleMarginPadding(Widget child) {
+    return child;
   }
 
   Widget handleTransitions(Widget child) {
@@ -239,10 +248,24 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     reloadPredefinedAttributes(node);
     gatherAllTapEvents(events, fromAttributes: fromAttributes);
     executeAllEvents(events);
+  }
 
-    if (fromAttributes == null) {
-      getAttribute('phx-click');
-    }
+  void executeOnTriggerEventsManually({Map<String, dynamic>? fromAttributes}) {
+    List<EventHandler> events = [];
+
+    reloadPredefinedAttributes(node);
+    gatherAllEvents(['phx-on-trigger'], events, fromAttributes: fromAttributes);
+    executeAllEvents(events);
+  }
+
+  void executeOnTapOutsideEventsManually(
+      {Map<String, dynamic>? fromAttributes}) {
+    List<EventHandler> events = [];
+
+    reloadPredefinedAttributes(node);
+    gatherAllEvents(['phx-click-outside'], events,
+        fromAttributes: fromAttributes);
+    executeAllEvents(events);
   }
 
   void onWindowResize() {
@@ -275,11 +298,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       return child;
     }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: () => executeAllEvents(tapEvents),
-      child: AbsorbPointer(child: child),
-    );
+    return MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => executeAllEvents(tapEvents),
+          child: AbsorbPointer(child: child),
+        ));
   }
 
   Widget render(BuildContext context);
@@ -306,25 +331,4 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
         return Column(children: children);
     }
   }
-
-  // attributes
-
-  /*
-  double? doubleAttribute(String attribute) =>
-      getDouble(getAttribute(attribute));
-  int? intAttribute(String attribute) => getInt(getAttribute(attribute));
-  Color? colorAttribute(String attribute) =>
-      getColor(context, getAttribute(attribute));
-  bool? booleanAttribute(String attribute) =>
-      getBoolean(getAttribute(attribute));
-  Decoration? decorationAttribute(String attribute) =>
-      getDecoration(context, getAttribute(attribute));
-  EdgeInsetsGeometry? edgeInsetsAttribute(String attribute) =>
-      getMarginOrPadding(getAttribute(attribute));
-  Icon getIconAttribute(String attribute) =>
-      Icon(getIcon(getAttribute(attribute)));
-  NavigationRailLabelType? getNavigationRailLabelTypeAttribute(attribute) =>
-      getNavigationRailLabelType(getAttribute(attribute));
-
-*/
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 
-EdgeInsetsGeometry? getMarginOrPadding(String? margin) {
+EdgeInsets? getMarginOrPadding(String? margin) {
   if (margin == null) {
     return null;
   }

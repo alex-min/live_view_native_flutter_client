@@ -9,7 +9,9 @@ mixin ComputedAttributes {
     'phx-click',
     'id',
     'live-patch',
-    'phx-before-each-render'
+    'phx-before-each-render',
+    'self-padding',
+    'self-margin'
   ];
   Map<String, dynamic> currentVariables = {};
 

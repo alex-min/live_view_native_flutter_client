@@ -5,6 +5,7 @@ import 'package:liveview_flutter/exec/exec_go_back.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/exec_live_patch.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
+import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -57,6 +58,8 @@ class FlutterExecAction {
       case 'hide':
         return ExecHideAction(
             to: value?['to'], timeInMilliseconds: value?['time']);
+      case 'showBottomSheet':
+        return ExecShowBottomSheet();
     }
 
     // using a just string triggers a server event

@@ -14,7 +14,9 @@ class StateChild {
         return LiveViewUiParser.traverse(state.copyWith(node: children[0]))
             .first;
       default:
-        return Column(children: multipleChildren(state));
+        return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: multipleChildren(state));
     }
   }
 

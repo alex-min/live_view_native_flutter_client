@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/ui/utils.dart';
 
 Map<String, IconData> iconMap = {
   'ten_k': Icons.ten_k,
@@ -8605,5 +8606,5 @@ IconData getIcon(String? name) {
   if (name != null && iconMap.containsKey(name)) {
     return iconMap[name]!;
   }
-  return Icons.close;
+  return defaultIconData;
 }

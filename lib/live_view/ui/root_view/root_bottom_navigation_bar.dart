@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
@@ -13,7 +14,7 @@ class RootBottomNavigationBar extends StatefulWidget {
 }
 
 class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
-  LiveBottomNavigationBar? bar;
+  Widget? bar;
 
   @override
   void initState() {
@@ -22,11 +23,13 @@ class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   void routeChange() {
-    setState(() {
-      bar = extractChild<LiveBottomNavigationBar>(
-          widget.view.router.pages.last.widgets);
-    });
+    setState(() {});
   }
 
   T? extractChild<T extends LiveStateWidget>(List<Widget> children) {
@@ -40,8 +43,14 @@ class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
 
   @override
   Widget build(BuildContext context) {
-    bar ??= extractChild<LiveBottomNavigationBar>(
-        widget.view.router.pages.last.widgets);
+    if (widget.view.router.pages.last.containsGlobalNavigationWidgets) {
+      bar = extractChild<LiveBottomNavigationBar>(
+          widget.view.router.pages.last.widgets);
+      bar ??=
+          extractChild<LiveBottomAppBar>(widget.view.router.pages.last.widgets);
+    } else {
+      bar = null;
+    }
     return bar ?? const SizedBox.shrink();
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 Map<String, Color> getColorMap() {
   return {
+    'transparent': Colors.transparent,
     'red': Colors.red,
     'redAccent': Colors.redAccent,
     'redShade50': Colors.red.shade50,

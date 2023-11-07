@@ -5,6 +5,8 @@ import 'package:liveview_flutter/live_view/mapping/icons.dart';
 import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_label_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -52,11 +54,13 @@ class _LiveNavigationRailState extends StateWidget<LiveNavigationRail> {
       if (attributes['icon'] != null) {
         icon = Icon(getIcon(attributes['icon']!));
       }
+      icon ??= StateChild.extractChild<LiveIconAttribute>(children);
       icon ??= StateChild.extractChild<LiveIcon>(children);
       if (attributes['label'] != null) {
         label = Text(attributes['label']!);
       }
       label ??= StateChild.extractChild<LiveText>(children);
+      label ??= StateChild.extractChild<LiveLabelAttribute>(children);
 
       return (
         attributes,

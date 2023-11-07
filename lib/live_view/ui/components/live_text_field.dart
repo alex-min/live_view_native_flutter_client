@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/inputDecoration.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -30,8 +33,23 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
     'autocorrect',
     'enableSuggestions',
     'showCursor',
-    'obscuringCharacter'
+    'obscuringCharacter',
+    'icon',
+    'textAlign',
+    'enabled',
+    'cursorWidth',
+    'cursorHeight',
+    'cursorColor',
+    'cursorOpacityAnimates',
+    'scrollPadding',
+    'enableInteractiveSelection',
+    'scribbleEnabled',
+    'enableIMEPersonalizedLearning',
+    'canRequestFocus',
+    'selectionHeightStyle'
   ];
+  @override
+  handleClickState() => HandleClickState.manual;
   final key = GlobalKey<FormFieldState>();
   var unamedInput = const Uuid().v4();
   List<FormError> errors = [];
@@ -86,16 +104,20 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
-    var icon = StateChild.extractChild<LiveIconAttribute>(children);
-    var keyboardType = textInputTypeAttribute('keyboardType');
+    Widget? icon = StateChild.extractChild<LiveIconAttribute>(children);
+    icon ??= StateChild.extractChild<LiveIcon>(children);
+    icon ??= iconWidgetFromAttribute('icon');
+
     return TextFormField(
+        selectionHeightStyle: boxHeightStyleAttribute('selectionHeightStyle') ??
+            BoxHeightStyle.tight,
         obscuringCharacter: getAttribute('obscuringCharacter') ?? '•',
         showCursor: booleanAttribute('showCursor'),
         enableSuggestions: booleanAttribute('enableSuggestions') ?? true,
         autocorrect: booleanAttribute('autocorrect') ?? false,
         expands: booleanAttribute('expands') ?? false,
         readOnly: booleanAttribute('readOnly') ?? false,
-        keyboardType: keyboardType,
+        keyboardType: textInputTypeAttribute('keyboardType'),
         maxLength: intAttribute('maxLength'),
         minLines: intAttribute('minLines'),
         maxLines: getAttribute('maxLines') == 'unlimited'
@@ -113,6 +135,8 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
           getAttribute('decoration'),
           icon: icon,
         ),
+        onTapOutside: (_) => executeOnTapOutsideEventsManually(),
+        onTap: () => executeTapEventsManually(),
         onChanged: (value) {
           FormFieldEvent(
             name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
@@ -120,6 +144,21 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
             type: FormFieldEventType.change,
           ).dispatch(context);
         },
-        initialValue: getAttribute('initialValue'));
+        initialValue: getAttribute('initialValue'),
+        textAlign: textAlignAttribute('textAlign') ?? TextAlign.start,
+        enabled: booleanAttribute('enabled'),
+        cursorWidth: doubleAttribute('cursorWidth') ?? 2.0,
+        cursorHeight: doubleAttribute('cursorHeight'),
+        cursorRadius: null, // TODO: Radius
+        cursorColor: colorAttribute(context, 'cursorColor'),
+        cursorOpacityAnimates: booleanAttribute('cursorOpacityAnimates'),
+        scrollPadding: marginOrPaddingAttribute('scrollPadding') ??
+            const EdgeInsets.all(20.0),
+        enableInteractiveSelection:
+            booleanAttribute('enableInteractiveSelection'),
+        scribbleEnabled: booleanAttribute('scribbleEnabled') ?? true,
+        enableIMEPersonalizedLearning:
+            booleanAttribute('enableIMEPersonalizedLearning') ?? true,
+        canRequestFocus: booleanAttribute('canRequestFocus') ?? true);
   }
 }

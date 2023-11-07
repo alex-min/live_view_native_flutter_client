@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/buttonStyle.dart';
+import 'package:liveview_flutter/live_view/mapping/clip_behavior.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:uuid/uuid.dart';
@@ -15,7 +17,13 @@ class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['type', 'name']);
+    reloadAttributes(node, [
+      'type',
+      'name',
+      'style',
+      'autofocus',
+      'clipBehavior',
+    ]);
   }
 
   @override
@@ -24,6 +32,9 @@ class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
   @override
   Widget render(BuildContext context) {
     return ElevatedButton(
+        style: buttonStyleAttribute(context, 'style'),
+        autofocus: booleanAttribute('autofocus') ?? false,
+        clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
         onPressed: () {
           if (getAttribute('type') == 'submit') {
             FormFieldEvent(

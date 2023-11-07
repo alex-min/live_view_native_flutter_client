@@ -14,8 +14,12 @@ import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
 import 'package:liveview_flutter/live_view/routes/live_router_delegate.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/errors/compilation_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/errors/error_404.dart';
 import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
@@ -91,7 +95,8 @@ class LiveView {
     themeSettings.httpClient = httpClient;
     rootView = LiveRootView(view: this);
 
-    router.pushPage(url: 'loading', widget: connectingWidget());
+    router.pushPage(
+        url: 'loading', widget: connectingWidget(), rootState: null);
   }
 
   void connectToDocs() {
@@ -115,10 +120,14 @@ class LiveView {
         _setupLiveReload();
         if (r.statusCode == 404) {
           router.pushPage(
-              url: 'error', widget: [Error404(url: endpoint.toString())]);
+              url: 'error',
+              widget: [Error404(url: endpoint.toString())],
+              rootState: null);
         } else {
           router.pushPage(
-              url: 'error', widget: [CompilationErrorView(html: r.body)]);
+              url: 'error',
+              widget: [CompilationErrorView(html: r.body)],
+              rootState: null);
         }
         return null;
       }
@@ -128,13 +137,21 @@ class LiveView {
       themeSettings.host = "${endpoint.scheme}://$host";
       _readInitialSession(content);
     } on SocketException catch (e, stack) {
-      router.pushPage(url: 'error', widget: [
-        NoServerError(error: FlutterErrorDetails(exception: e, stack: stack))
-      ]);
+      router.pushPage(
+          url: 'error',
+          widget: [
+            NoServerError(
+                error: FlutterErrorDetails(exception: e, stack: stack)),
+          ],
+          rootState: null);
     } catch (e, stack) {
-      router.pushPage(url: 'error', widget: [
-        FlutterErrorView(error: FlutterErrorDetails(exception: e, stack: stack))
-      ]);
+      router.pushPage(
+          url: 'error',
+          widget: [
+            FlutterErrorView(
+                error: FlutterErrorDetails(exception: e, stack: stack))
+          ],
+          rootState: null);
     }
 
     await reconnect();
@@ -271,9 +288,9 @@ class LiveView {
             liveView: this,
             urlPath: currentUrl)
         .parse();
-    lastRender = render;
+    lastRender = render.$1;
     connectionNotifier.wipeState();
-    router.updatePage(url: currentUrl, widget: render);
+    router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);
   }
 
   handleDiffMessage(Map<String, dynamic> diff) {
@@ -337,13 +354,17 @@ class LiveView {
                           value: disableAnimations == false ? null : 1)))))
     ];
 
-    // we keep the previous appbar & bottom bar to avoid flickering with the load screen
+    // we keep the previous navigation items to avoid flickering with the load screen
     // the loading page doesn't stay very long but it's enough to cause a flickering
     var previousNavigation = previousWidgets
         .where((element) =>
             element is LiveAppBar ||
             element is LiveBottomNavigationBar ||
-            element is LiveNavigationRail)
+            element is LiveBottomAppBar ||
+            element is LiveNavigationRail ||
+            element is LiveFloatingActionButton ||
+            element is LivePersistentFooterButton ||
+            element is LiveBottomSheet)
         .toList();
 
     ret.addAll(previousNavigation);
@@ -359,4 +380,24 @@ class LiveView {
   }
 
   Future<void> saveCurrentTheme() => themeSettings.save();
+
+  Future<void> livePatch(String url) async {
+    if (webDocsMode) {
+      web_html.window.parent
+          ?.postMessage({'type': 'live-patch', 'url': url}, "*");
+    }
+    router.pushPage(
+        url: 'loading;$url',
+        widget: loadingWidget(),
+        rootState: router.pages.lastOrNull?.rootState);
+    redirectTo(url);
+  }
+
+  Future<void> goBack() async {
+    if (webDocsMode) {
+      web_html.window.parent?.postMessage({'type': 'go-back'}, "*");
+    }
+    router.navigatorKey?.currentState?.maybePop();
+    router.notify();
+  }
 }

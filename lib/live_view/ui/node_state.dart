@@ -27,7 +27,6 @@ class NodeState {
           LiveViewUiParser? parser,
           List<int>? nestedState,
           LiveView? liveView,
-          FormEvents? formEvents,
           String? urlPath}) =>
       NodeState(
         node: node ?? this.node,

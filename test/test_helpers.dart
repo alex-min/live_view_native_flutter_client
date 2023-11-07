@@ -262,6 +262,8 @@ class BaseActions {
         FlutterExecAction(
             name: 'switchTheme', value: {'mode': mode, 'theme': theme})
       ]);
+  String showBottomSheet =
+      FlutterExec.encode([FlutterExecAction(name: 'showBottomSheet')]);
 }
 
 var liveEvents = const BaseEvents();

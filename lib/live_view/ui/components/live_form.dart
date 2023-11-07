@@ -71,8 +71,8 @@ class _LiveFormState extends StateWidget<LiveForm> {
   @override
   Widget render(BuildContext context) {
     return Form(
-      key: _formKey,
-      child: NotificationListener<FormFieldEvent>(
+        key: _formKey,
+        child: NotificationListener<FormFieldEvent>(
           onNotification: (event) {
             if (event.type == FormFieldEventType.change ||
                 event.type == FormFieldEventType.initField) {
@@ -86,9 +86,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
             }
             return true;
           },
-          child: singleChild(
-              state: widget.state
-                  .copyWith(formEvents: FormEvents(onSave: () {})))),
-    );
+          child: singleChild(),
+        ));
   }
 }
