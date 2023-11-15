@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/alignment_directional.dart';
 import 'package:liveview_flutter/live_view/mapping/axis_direction.dart';
 import 'package:liveview_flutter/live_view/mapping/boolean.dart';
 import 'package:liveview_flutter/live_view/mapping/box_height_style.dart';
@@ -15,6 +16,7 @@ import 'package:liveview_flutter/live_view/mapping/duration.dart';
 import 'package:liveview_flutter/live_view/mapping/floating_action_button_location.dart';
 import 'package:liveview_flutter/live_view/mapping/icons.dart';
 import 'package:liveview_flutter/live_view/mapping/keyboard_type.dart';
+import 'package:liveview_flutter/live_view/mapping/list_title_alignment.dart';
 import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/mapping/material_tap_target_size.dart';
 import 'package:liveview_flutter/live_view/mapping/mouse_cursor.dart';
@@ -119,6 +121,12 @@ mixin AttributeHelpers {
 
   NotchedShape? notchedShapeAttribute(String attribute) =>
       getNotchedShape(getAttribute(attribute));
+
+  AlignmentDirectional? alignmentDirectionalAttribute(String attribute) =>
+      getAlignmentDirectional(getAttribute(attribute));
+
+  ListTileTitleAlignment? listTileTitleAlignmentAttribute(String attribute) =>
+      getListTitleAligment(getAttribute(attribute));
 
   Text? textWidgetFromAttribute(String attribute) {
     var attr = getAttribute(attribute);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/alignment_directional.dart';
 import 'package:liveview_flutter/live_view/mapping/boolean.dart';
-import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_disabled_hint_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hint_attribute.dart';

@@ -9,6 +9,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dar
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_cached_networked_image.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_card.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_center.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_checkbox.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_column.dart';
@@ -28,10 +29,12 @@ import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hint_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_selected_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_label_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_list_tile.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_material_banner.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
@@ -41,11 +44,13 @@ import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_segmented_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_stack.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_subtitle_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text_field.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_title_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_tooltip.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_trailing_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_underline_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/errors/parsing_error_view.dart';
@@ -220,6 +225,16 @@ class LiveViewUiParser {
           return [LiveDisabledHintAttribute(state: state)];
         case 'underline':
           return [LiveUnderlineAttribute(state: state)];
+        case 'IconButton':
+          return [LiveIconButton(state: state)];
+        case 'Card':
+          return [LiveCard(state: state)];
+        case 'subtitle':
+          return [LiveSubtitleAttribute(state: state)];
+        case 'trailing':
+          return [LiveTrailingAttribute(state: state)];
+        case 'ListTile':
+          return [LiveListTile(state: state)];
         default:
           reportError("unknown widget $componentName");
           return [const SizedBox.shrink()];
