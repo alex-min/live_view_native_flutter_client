@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
@@ -20,6 +21,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart'
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
+import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/errors/compilation_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/errors/error_404.dart';
 import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
@@ -284,7 +286,7 @@ class LiveView {
 
     var render = LiveViewUiParser(
             html: elements,
-            htmlVariables: _extractVariables(rendered),
+            htmlVariables: expandVariables(rendered),
             liveView: this,
             urlPath: currentUrl)
         .parse();
@@ -295,18 +297,6 @@ class LiveView {
 
   handleDiffMessage(Map<String, dynamic> diff) {
     changeNotifier.setDiff(diff);
-  }
-
-  Map<String, dynamic> _extractVariables(Map<String, dynamic> rendered) {
-    Map<String, dynamic> ret = {};
-
-    rendered.forEach((key, value) {
-      if (RegExp(r'^[0-9]+$').hasMatch(key)) {
-        ret[key] = value;
-      }
-    });
-
-    return ret;
   }
 
   Future<void> handleLiveReloadMessage(Message event) async {

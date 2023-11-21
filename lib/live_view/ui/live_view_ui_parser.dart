@@ -53,6 +53,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_tooltip.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_trailing_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_underline_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
+import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/errors/parsing_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -97,7 +98,11 @@ class LiveViewUiParser {
     try {
       xml = XmlDocument.parse(fullHtml);
     } catch (e) {
-      return ([ParsingErrorView(xml: html.join(), url: urlPath)], null);
+      try {
+        xml = XmlDocument.parse("<flutter>$fullHtml</flutter>");
+      } catch (e) {
+        return ([ParsingErrorView(xml: html.join(), url: urlPath)], null);
+      }
     }
 
     var state = NodeState(
@@ -194,9 +199,11 @@ class LiveViewUiParser {
         case 'viewBody':
           return [LiveViewBody(state: state)];
         case 'flutter':
-          return state.node.nonEmptyChildren
-              .map((c) => traverse(state.copyWith(node: c)).first)
-              .toList();
+          List<Widget> ret = [];
+          for (var node in state.node.nonEmptyChildren) {
+            ret.addAll(traverse(state.copyWith(node: node)));
+          }
+          return ret;
         case 'Checkbox':
           return [LiveCheckbox(state: state)];
         case 'SegmentedButton':
@@ -240,7 +247,7 @@ class LiveViewUiParser {
           return [const SizedBox.shrink()];
       }
     } else if (state.node.nodeType == XmlNodeType.TEXT) {
-      return [LiveDynamicComponent(state: state)];
+      return renderDynamicComponent(state);
     } else {
       reportError('unknown node type ${state.node.nodeType}');
       return [const SizedBox.shrink()];

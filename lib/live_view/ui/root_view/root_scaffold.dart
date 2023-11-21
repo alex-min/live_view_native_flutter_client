@@ -140,6 +140,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       backButtonDispatcher: RootBackButtonDispatcher(),
     ));
     var view = Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         key: key,
         drawer: drawer,
         endDrawer: endDrawer,
