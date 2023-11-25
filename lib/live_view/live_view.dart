@@ -195,6 +195,8 @@ class LiveView {
     _liveViewId = (content.querySelector('[data-phx-main]')?.attributes['id'])!;
   }
 
+  String get websocketScheme => endpointScheme == 'https' ? 'wss' : 'ws';
+
   Map<String, dynamic> _socketParams() => {
         '_csrf_token': _csrf,
         '_mounts': mount.toString(),
@@ -220,7 +222,7 @@ class LiveView {
 
   Future<void> _websocketConnect() async {
     _socket = liveSocket.create(
-      url: "ws://$host/live/websocket",
+      url: "$websocketScheme://$host/live/websocket",
       params: _socketParams(),
       headers: {'Cookie': _cookie},
     );
@@ -246,17 +248,25 @@ class LiveView {
   }
 
   Future<void> _setupLiveReload() async {
+    if (endpointScheme == 'https') {
+      return;
+    }
+
     _liveReloadSocket = liveSocket.create(
-        url: "ws://$host/phoenix/live_reload/socket/websocket",
+        url: "$websocketScheme://$host/phoenix/live_reload/socket/websocket",
         params: {'_platform': 'flutter', 'vsn': '2.0.0'},
         headers: {});
     var liveReload = _liveReloadSocket
         .addChannel(topic: "phoenix:live_reload", parameters: {});
     liveReload.messages.listen(handleLiveReloadMessage);
 
-    await _liveReloadSocket.connect();
-    if (liveReload.state != PhoenixChannelState.joined) {
-      await liveReload.join().future;
+    try {
+      await _liveReloadSocket.connect();
+      if (liveReload.state != PhoenixChannelState.joined) {
+        await liveReload.join().future;
+      }
+    } catch (e) {
+      debugPrint('no live reload available');
     }
   }
 
