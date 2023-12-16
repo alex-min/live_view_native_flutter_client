@@ -198,6 +198,7 @@ class LiveViewUiParser {
           return [LiveFilledButton(state: state)];
         case 'viewBody':
           return [LiveViewBody(state: state)];
+        case 'compiled-lvn-stylesheet':
         case 'flutter':
           List<Widget> ret = [];
           for (var node in state.node.nonEmptyChildren) {

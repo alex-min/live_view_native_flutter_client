@@ -73,7 +73,7 @@ This is an example of the code on the server:
 
 ```elixir
   @impl true
-  def render(%{platform_id: :flutter} = assigns) do
+  def render(%{format: :flutter} = assigns) do
     # This UI renders on flutter
     ~FLUTTER"""
       <flutter>
