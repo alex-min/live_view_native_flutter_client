@@ -3,6 +3,7 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/routes/live_custom_page.dart';
 import 'package:liveview_flutter/live_view/routes/no_transition_page.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
+import 'package:liveview_flutter/live_view/ui/errors/missing_page_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
 
@@ -133,7 +134,10 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
         }
       }
       // TODO: not found page + body error page
-      return body ?? const Text('not found');
+      return body ??
+          MissingPageComponent(
+              url: routeSettings.name ?? '(url is null)',
+              html: rootState?.node.outerXml ?? '');
     });
 
     return LivePage(

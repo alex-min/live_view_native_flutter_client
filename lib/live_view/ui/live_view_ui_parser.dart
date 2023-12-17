@@ -19,7 +19,6 @@ import 'package:liveview_flutter/live_view/ui/components/live_disabled_hint_attr
 import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer_header.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dropdown_button.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_end_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_expanded.dart';
@@ -84,7 +83,7 @@ class LiveViewUiParser {
     var fullHtml = html.joinWith((i) {
       if (variables.containsKey(i.toString())) {
         var injectedValue = variables[i.toString()].toString().trim();
-        if (RegExp(r'^[a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
+        if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
           var split = injectedValue.indexOf('="');
           var key = injectedValue.substring(0, split);
           return ' $key="[[flutterState key=$i]]" ';
@@ -243,6 +242,9 @@ class LiveViewUiParser {
           return [LiveTrailingAttribute(state: state)];
         case 'ListTile':
           return [LiveListTile(state: state)];
+        case 'meta':
+        case 'csrf-token':
+          return [const SizedBox.shrink()];
         default:
           reportError("unknown widget $componentName");
           return [const SizedBox.shrink()];

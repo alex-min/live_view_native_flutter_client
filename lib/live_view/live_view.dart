@@ -112,8 +112,9 @@ class LiveView {
     var endpoint = Uri.parse(address);
     currentUrl = endpoint.path == "" ? "/" : endpoint.path;
     endpointScheme = endpoint.scheme;
+    var initialEndpoint = Uri.parse("$address?_lvn[format]=flutter");
     try {
-      var r = await httpClient.get(endpoint, headers: httpHeaders());
+      var r = await httpClient.get(initialEndpoint, headers: httpHeaders());
       var content = html.parse(r.body);
 
       host = "${endpoint.host}:${endpoint.port}";
@@ -182,17 +183,36 @@ class LiveView {
   }
 
   void _readInitialSession(Document content) {
-    _csrf = (content
-        .querySelector('meta[name="csrf-token"]')
-        ?.attributes['content'])!;
-    _session = (content
-        .querySelector('[data-phx-session]')
-        ?.attributes['data-phx-session'])!;
-    _phxStatic = (content
-        .querySelector('[data-phx-static]')
-        ?.attributes['data-phx-static'])!;
+    try {
+      _csrf = (content
+              .querySelector('meta[name="csrf-token"]')
+              ?.attributes['content']) ??
+          (content
+              .getElementsByTagName('csrf-token')
+              .first
+              .attributes['value'])!;
 
-    _liveViewId = (content.querySelector('[data-phx-main]')?.attributes['id'])!;
+      _session = (content
+          .querySelector('[data-phx-session]')
+          ?.attributes['data-phx-session'])!;
+      _phxStatic = (content
+          .querySelector('[data-phx-static]')
+          ?.attributes['data-phx-static'])!;
+
+      _liveViewId =
+          (content.querySelector('[data-phx-main]')?.attributes['id'])!;
+    } catch (e, stack) {
+      router.pushPage(
+          url: 'error',
+          widget: [
+            FlutterErrorView(
+                error: FlutterErrorDetails(
+                    exception: Exception(
+                        'unable to load the meta tags, please add the csrf-token, data-phx-session and data-phx-static tags'),
+                    stack: stack))
+          ],
+          rootState: null);
+    }
   }
 
   String get websocketScheme => endpointScheme == 'https' ? 'wss' : 'ws';
