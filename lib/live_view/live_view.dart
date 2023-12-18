@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
@@ -61,8 +60,8 @@ class LiveView {
   late String _csrf;
   late String host;
   late String _clientId;
-  late String _session;
-  late String _phxStatic;
+  late String? _session;
+  late String? _phxStatic;
   late String _liveViewId;
   late String currentUrl;
   late String _cookie;
@@ -208,7 +207,7 @@ class LiveView {
             FlutterErrorView(
                 error: FlutterErrorDetails(
                     exception: Exception(
-                        'unable to load the meta tags, please add the csrf-token, data-phx-session and data-phx-static tags'),
+                        "unable to load the meta tags, please add the csrf-token, data-phx-session and data-phx-static tags in ${content.outerHtml}"),
                     stack: stack))
           ],
           rootState: null);
@@ -411,6 +410,19 @@ class LiveView {
         widget: loadingWidget(),
         rootState: router.pages.lastOrNull?.rootState);
     redirectTo(url);
+  }
+
+  Future<void> execHrefClick(String url) async {
+    router.pushPage(
+        url: 'loading;$url',
+        widget: loadingWidget(),
+        rootState: router.pages.lastOrNull?.rootState);
+    var r = await http
+        .get(Uri.parse("$endpointScheme://$host$url?_lvn[format]=flutter"));
+    var content = html.parse(r.body);
+    _readInitialSession(content);
+    redirectToUrl = url;
+    _channel.push('phx_leave', {}).future;
   }
 
   Future<void> goBack() async {

@@ -4,6 +4,7 @@ import 'package:liveview_flutter/exec/exec.dart';
 import 'package:liveview_flutter/exec/exec_go_back.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/exec_live_patch.dart';
+import 'package:liveview_flutter/exec/exec_phx_href.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
 import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
@@ -46,6 +47,8 @@ class FlutterExecAction {
             value: phxValues(attributes));
       case 'live-patch':
         return ExecLivePatch(url: value!['name']);
+      case 'phx-href':
+        return ExecPhxHref(url: value!['name']);
       case 'goBack':
         return ExecGoBack();
       case 'switchTheme':

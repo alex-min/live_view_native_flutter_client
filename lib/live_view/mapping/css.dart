@@ -3,7 +3,9 @@ extension StringX on String {
     var val = codeUnitAt(0);
     return (val >= 97 && val <= 122) ||
         (val >= 65 && val <= 90) ||
-        (val >= 48 && val <= 57);
+        (val >= 48 && val <= 57) ||
+        this == '@' ||
+        this == '.';
   }
 }
 

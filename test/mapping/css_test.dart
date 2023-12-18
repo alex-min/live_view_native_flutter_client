@@ -13,6 +13,8 @@ void main() {
         [('hello', 'world'), ('a', 'b')]);
 
     expect(parseCss('a: b; c:'), [('a', 'b')]);
+    expect(parseCss('background: @theme.appBarTheme.backgroundColor'),
+        [('background', '@theme.appBarTheme.backgroundColor')]);
   });
 
   test('nested css', () {

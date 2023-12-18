@@ -198,6 +198,7 @@ class LiveViewUiParser {
         case 'viewBody':
           return [LiveViewBody(state: state)];
         case 'compiled-lvn-stylesheet':
+        case 'div':
         case 'flutter':
           List<Widget> ret = [];
           for (var node in state.node.nonEmptyChildren) {
@@ -244,6 +245,7 @@ class LiveViewUiParser {
           return [LiveListTile(state: state)];
         case 'meta':
         case 'csrf-token':
+        case 'iframe':
           return [const SizedBox.shrink()];
         default:
           reportError("unknown widget $componentName");

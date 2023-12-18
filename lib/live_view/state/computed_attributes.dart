@@ -9,6 +9,7 @@ mixin ComputedAttributes {
     'phx-click',
     'id',
     'live-patch',
+    'phx-href',
     'phx-before-each-render',
     'self-padding',
     'self-margin'

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/exec/exec.dart';
+import 'package:liveview_flutter/exec/exec_phx_href.dart';
 import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/exec/exec_go_back.dart';
@@ -43,6 +44,8 @@ class StateEvents {
       switch (action) {
         case final ExecLivePatch event:
           events.add((_) => liveView.livePatch(event.url));
+        case final ExecPhxHref event:
+          events.add((_) => liveView.execHrefClick(event.url));
         case final ExecLiveEvent event:
           events.add((_) => liveView.sendEvent(event));
         case final ExecGoBack _:
