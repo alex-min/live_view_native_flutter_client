@@ -5,3 +5,9 @@ class ExecPhxHref extends Exec {
 
   ExecPhxHref({required this.url});
 }
+
+class ExecPhxHrefModal extends Exec {
+  String url;
+
+  ExecPhxHrefModal({required this.url});
+}

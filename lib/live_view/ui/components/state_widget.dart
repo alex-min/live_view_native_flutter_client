@@ -171,7 +171,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   void gatherAllTapEvents(List<EventHandler> events,
           {Map<String, dynamic>? fromAttributes}) =>
-      gatherAllEvents(['phx-click', 'live-patch', 'phx-href'], events,
+      gatherAllEvents(
+          ['phx-click', 'live-patch', 'phx-href', 'phx-href-modal'], events,
           fromAttributes: fromAttributes);
 
   List<Exec> convertAttributesToExecs(

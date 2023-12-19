@@ -49,6 +49,8 @@ class FlutterExecAction {
         return ExecLivePatch(url: value!['name']);
       case 'phx-href':
         return ExecPhxHref(url: value!['name']);
+      case 'phx-href-modal':
+        return ExecPhxHrefModal(url: value!['name']);
       case 'goBack':
         return ExecGoBack();
       case 'switchTheme':

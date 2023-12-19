@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:http_query_string/http_query_string.dart' as queryString;
 
 import 'package:event_hub/event_hub.dart';
 import 'package:flutter/foundation.dart';
@@ -17,6 +18,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
@@ -57,14 +59,14 @@ class LiveView {
 
   Widget? onErrorWidget;
   late LiveRootView rootView;
-  late String _csrf;
+  String? _csrf;
   late String host;
   late String _clientId;
   late String? _session;
   late String? _phxStatic;
   late String _liveViewId;
   late String currentUrl;
-  late String _cookie;
+  String? _cookie;
   late String endpointScheme;
   int mount = 0;
   EventHub eventHub = EventHub();
@@ -109,18 +111,17 @@ class LiveView {
 
   Future<String?> connect(String address) async {
     var endpoint = Uri.parse(address);
+    host = "${endpoint.host}:${endpoint.port}";
+
     currentUrl = endpoint.path == "" ? "/" : endpoint.path;
     endpointScheme = endpoint.scheme;
-    var initialEndpoint = Uri.parse("$address?_lvn[format]=flutter");
     try {
-      var r = await httpClient.get(initialEndpoint, headers: httpHeaders());
-      var content = html.parse(r.body);
+      var response = await deadViewGetQuery(currentUrl);
 
-      host = "${endpoint.host}:${endpoint.port}";
       _clientId = const Uuid().v4();
-      if (r.statusCode != 200) {
+      if (response.statusCode != 200) {
         _setupLiveReload();
-        if (r.statusCode == 404) {
+        if (response.statusCode == 404) {
           router.pushPage(
               url: 'error',
               widget: [Error404(url: endpoint.toString())],
@@ -128,16 +129,14 @@ class LiveView {
         } else {
           router.pushPage(
               url: 'error',
-              widget: [CompilationErrorView(html: r.body)],
+              widget: [CompilationErrorView(html: response.body)],
               rootState: null);
         }
         return null;
       }
-      _cookie = r.headers['set-cookie']!.split(' ')[0];
 
       themeSettings.httpClient = httpClient;
       themeSettings.host = "${endpoint.scheme}://$host";
-      _readInitialSession(content);
     } on SocketException catch (e, stack) {
       router.pushPage(
           url: 'error',
@@ -162,15 +161,21 @@ class LiveView {
   }
 
   Map<String, String> httpHeaders() {
-    return {
+    var headers = {
       'Accept-Language': WidgetsBinding.instance.platformDispatcher.locales
           .map((l) => l.toLanguageTag())
           .where((e) => e != 'C')
           .toSet()
           .toList()
           .join(', '),
-      'User-Agent': 'Flutter Live View - ${getPlatformName()}'
+      'User-Agent': 'Flutter Live View - ${getPlatformName()}',
     };
+
+    if (_cookie != null) {
+      headers['Cookie'] = _cookie!;
+    }
+
+    return headers;
   }
 
   Future<void> reconnect() async {
@@ -243,7 +248,7 @@ class LiveView {
     _socket = liveSocket.create(
       url: "$websocketScheme://$host/live/websocket",
       params: _socketParams(),
-      headers: {'Cookie': _cookie},
+      headers: httpHeaders(),
     );
 
     await _socket?.connect();
@@ -377,6 +382,7 @@ class LiveView {
     // the loading page doesn't stay very long but it's enough to cause a flickering
     var previousNavigation = previousWidgets
         .where((element) =>
+            element is LiveDrawer ||
             element is LiveAppBar ||
             element is LiveBottomNavigationBar ||
             element is LiveBottomAppBar ||
@@ -412,17 +418,62 @@ class LiveView {
     redirectTo(url);
   }
 
+  Future<void> postForm(Map<String, dynamic> formValues) async {
+    deadViewPostQuery(currentUrl, formValues);
+  }
+
+  Future<http.Response> deadViewPostQuery(
+      String url, Map<String, dynamic> formValues) async {
+    formValues['_csrf_token'] = _csrf;
+    var r = await http.post(shortUrlToUri(currentUrl, format: false),
+        headers: httpHeaders(), body: formValues);
+
+    if (r.headers['set-cookie'] != null) {
+      _cookie = r.headers['set-cookie']!.split(' ')[0];
+      if (_cookie?.endsWith(';') == true) {
+        _cookie = _cookie!.substring(0, _cookie!.length - 1);
+      }
+    }
+    if (r.statusCode == 200) {
+      var content = html.parse(r.body);
+      _readInitialSession(content);
+    }
+
+    if (r.statusCode == 302 && r.headers['location'] != null) {
+      execHrefClick(r.headers['location']!);
+    }
+    return r;
+  }
+
+  Future<http.Response> deadViewGetQuery(String url) async {
+    var r = await http.get(shortUrlToUri(url));
+    if (r.headers['set-cookie'] != null) {
+      _cookie = r.headers['set-cookie']!.split(' ')[0];
+      if (_cookie?.endsWith(';') == true) {
+        _cookie = _cookie!.substring(0, _cookie!.length - 1);
+      }
+    }
+
+    if (r.statusCode == 200) {
+      var content = html.parse(r.body);
+      _readInitialSession(content);
+    }
+    return r;
+  }
+
   Future<void> execHrefClick(String url) async {
     router.pushPage(
         url: 'loading;$url',
         widget: loadingWidget(),
         rootState: router.pages.lastOrNull?.rootState);
-    var r = await http
-        .get(Uri.parse("$endpointScheme://$host$url?_lvn[format]=flutter"));
-    var content = html.parse(r.body);
-    _readInitialSession(content);
+    await deadViewGetQuery(url);
+
     redirectToUrl = url;
     _channel.push('phx_leave', {}).future;
+  }
+
+  Uri shortUrlToUri(String url, {bool format = true}) {
+    return Uri.parse("$endpointScheme://$host$url?_lvn[format]=flutter");
   }
 
   Future<void> goBack() async {

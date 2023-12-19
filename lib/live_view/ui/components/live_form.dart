@@ -42,7 +42,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['phx-change', 'phx-submit']);
+    reloadAttributes(node, ['phx-change', 'phx-submit', 'method']);
   }
 
   @override
@@ -82,6 +82,10 @@ class _LiveFormState extends StateWidget<LiveForm> {
             if (event.type == FormFieldEventType.change) {
               sendFormEvent('phx-change', target: event.name);
             } else if (event.type == FormFieldEventType.submit) {
+              var method = getAttribute('method');
+              if (method == 'POST') {
+                widget.state.liveView.postForm(formValues);
+              }
               sendFormEvent('phx-submit', target: event.name);
             }
             return true;
