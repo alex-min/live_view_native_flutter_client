@@ -77,7 +77,7 @@ class LiveView {
   PhoenixSocket? _socket;
   late PhoenixSocket _liveReloadSocket;
 
-  late PhoenixChannel _channel;
+  PhoenixChannel? _channel;
 
   List<m.Widget>? lastRender;
 
@@ -112,6 +112,8 @@ class LiveView {
   Future<String?> connect(String address) async {
     var endpoint = Uri.parse(address);
     host = "${endpoint.host}:${endpoint.port}";
+    themeSettings.httpClient = httpClient;
+    themeSettings.host = "${endpoint.scheme}://$host";
 
     currentUrl = endpoint.path == "" ? "/" : endpoint.path;
     endpointScheme = endpoint.scheme;
@@ -134,9 +136,6 @@ class LiveView {
         }
         return null;
       }
-
-      themeSettings.httpClient = httpClient;
-      themeSettings.host = "${endpoint.scheme}://$host";
     } on SocketException catch (e, stack) {
       router.pushPage(
           url: 'error',
@@ -259,15 +258,15 @@ class LiveView {
         topic: "lv:$_liveViewId",
         parameters: _fullsocketParams(redirect: redirect));
 
-    _channel.messages.listen(handleMessage);
+    _channel?.messages.listen(handleMessage);
 
-    if (_channel.state != PhoenixChannelState.joined) {
-      await _channel.join().future;
+    if (_channel?.state != PhoenixChannelState.joined) {
+      await _channel?.join().future;
     }
   }
 
   Future<void> redirectTo(String path) async {
-    _channel.push('phx_leave', {}).future;
+    _channel?.push('phx_leave', {}).future;
     redirectToUrl = path;
   }
 
@@ -339,7 +338,7 @@ class LiveView {
       isLiveReloading = true;
 
       _socket?.close();
-      _channel.close();
+      _channel?.close();
       connectionNotifier.wipeState();
       redirectToUrl = null;
       await connect("$endpointScheme://$host$currentUrl");
@@ -358,8 +357,8 @@ class LiveView {
     if (webDocsMode) {
       web_html.window.parent
           ?.postMessage({'type': 'event', 'data': eventData}, "*");
-    } else if (_channel.state != PhoenixChannelState.closed) {
-      _channel.push('event', eventData);
+    } else if (_channel?.state != PhoenixChannelState.closed) {
+      _channel?.push('event', eventData);
     }
   }
 
@@ -425,7 +424,7 @@ class LiveView {
   Future<http.Response> deadViewPostQuery(
       String url, Map<String, dynamic> formValues) async {
     formValues['_csrf_token'] = _csrf;
-    var r = await http.post(shortUrlToUri(currentUrl, format: false),
+    var r = await httpClient.post(shortUrlToUri(currentUrl, format: false),
         headers: httpHeaders(), body: formValues);
 
     if (r.headers['set-cookie'] != null) {
@@ -446,7 +445,7 @@ class LiveView {
   }
 
   Future<http.Response> deadViewGetQuery(String url) async {
-    var r = await http.get(shortUrlToUri(url));
+    var r = await httpClient.get(shortUrlToUri(url));
     if (r.headers['set-cookie'] != null) {
       _cookie = r.headers['set-cookie']!.split(' ')[0];
       if (_cookie?.endsWith(';') == true) {
@@ -469,7 +468,7 @@ class LiveView {
     await deadViewGetQuery(url);
 
     redirectToUrl = url;
-    _channel.push('phx_leave', {}).future;
+    _channel?.push('phx_leave', {}).future;
   }
 
   Uri shortUrlToUri(String url, {bool format = true}) {
