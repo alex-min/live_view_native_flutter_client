@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:http_query_string/http_query_string.dart' as queryString;
 
 import 'package:event_hub/event_hub.dart';
 import 'package:flutter/foundation.dart';
@@ -110,6 +109,7 @@ class LiveView {
   }
 
   Future<String?> connect(String address) async {
+    _clientId = const Uuid().v4();
     var endpoint = Uri.parse(address);
     host = "${endpoint.host}:${endpoint.port}";
     themeSettings.httpClient = httpClient;
@@ -120,7 +120,6 @@ class LiveView {
     try {
       var response = await deadViewGetQuery(currentUrl);
 
-      _clientId = const Uuid().v4();
       if (response.statusCode != 200) {
         _setupLiveReload();
         if (response.statusCode == 404) {
@@ -152,6 +151,7 @@ class LiveView {
                 error: FlutterErrorDetails(exception: e, stack: stack))
           ],
           rootState: null);
+      rethrow;
     }
 
     await reconnect();
@@ -424,7 +424,7 @@ class LiveView {
   Future<http.Response> deadViewPostQuery(
       String url, Map<String, dynamic> formValues) async {
     formValues['_csrf_token'] = _csrf;
-    var r = await httpClient.post(shortUrlToUri(currentUrl, format: false),
+    var r = await httpClient.post(shortUrlToUri(currentUrl),
         headers: httpHeaders(), body: formValues);
 
     if (r.headers['set-cookie'] != null) {
@@ -438,15 +438,16 @@ class LiveView {
       _readInitialSession(content);
     }
 
-    if (r.statusCode == 302 && r.headers['location'] != null) {
-      execHrefClick(r.headers['location']!);
+    if ((r.statusCode == 302 || r.statusCode == 301) &&
+        r.headers['location'] != null) {
+      await execHrefClick(r.headers['location']!);
+      return r;
     }
 
-    if (r.statusCode >= 200 && r.statusCode <= 202) {
-      handleRenderedMessage({
-        's': [r.body]
-      });
-    }
+    handleRenderedMessage({
+      's': [r.body]
+    });
+
     return r;
   }
 
@@ -477,8 +478,12 @@ class LiveView {
     _channel?.push('phx_leave', {}).future;
   }
 
-  Uri shortUrlToUri(String url, {bool format = true}) {
-    return Uri.parse("$endpointScheme://$host$url?_lvn[format]=flutter");
+  Uri shortUrlToUri(String url) {
+    var uri = Uri.parse("$endpointScheme://$host$url");
+    var queryParams = Map<String, dynamic>.from(uri.queryParametersAll);
+    queryParams['_lvn[format]'] = 'flutter';
+
+    return uri.replace(queryParameters: queryParams);
   }
 
   Future<void> goBack() async {
