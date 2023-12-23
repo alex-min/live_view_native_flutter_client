@@ -441,6 +441,12 @@ class LiveView {
     if (r.statusCode == 302 && r.headers['location'] != null) {
       execHrefClick(r.headers['location']!);
     }
+
+    if (r.statusCode >= 200 && r.statusCode <= 202) {
+      handleRenderedMessage({
+        's': [r.body]
+      });
+    }
     return r;
   }
 
