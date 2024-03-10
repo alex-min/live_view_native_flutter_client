@@ -9,8 +9,17 @@ import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
 import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
+import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:liveview_flutter/when/when.dart';
+
+Map<String, dynamic> getPhxValues(Map<String, dynamic>? attributes) {
+  return Map<String, dynamic>.fromEntries(
+      attributes?.entries.where((e) => e.key.startsWith('phx-value')).map((e) {
+            return MapEntry(e.key.replaceFirst('phx-value-', ''), e.value);
+          }) ??
+          {});
+}
 
 class FlutterExecAction {
   String name;
@@ -23,14 +32,8 @@ class FlutterExecAction {
 
   dynamic toJson() => [name, value];
 
-  Map<String, dynamic> phxValues(Map<String, dynamic>? attributes) {
-    return Map<String, dynamic>.fromEntries(attributes?.entries
-            .where((e) => e.key.startsWith('phx-value'))
-            .map((e) {
-          return MapEntry(e.key.replaceFirst('phx-value-', ''), e.value);
-        }) ??
-        {});
-  }
+  Map<String, dynamic> phxValues(Map<String, dynamic>? attributes) =>
+      getPhxValues(attributes);
 
   Exec parse(String attributeName, Map<String, dynamic>? attributes) {
     Exec exec = _getExec(attributes);
@@ -39,35 +42,46 @@ class FlutterExecAction {
   }
 
   Exec _getExec(Map<String, dynamic>? attributes) {
-    switch (name) {
-      case 'phx-click':
-        return ExecLiveEvent(
-            type: 'phx-click',
-            name: value!['name'],
-            value: phxValues(attributes));
-      case 'live-patch':
-        return ExecLivePatch(url: value!['name']);
-      case 'phx-href':
-        return ExecPhxHref(url: value!['name']);
-      case 'goBack':
-        return ExecGoBack();
-      case 'switchTheme':
-        return ExecSwitchTheme(theme: value!['theme'], mode: value!['mode']);
-      case 'saveCurrentTheme':
-        return ExecSaveCurrentTheme();
-      case 'show':
-        return ExecShowAction(
-            to: value?['to'], timeInMilliseconds: value?['time']);
-      case 'hide':
-        return ExecHideAction(
-            to: value?['to'], timeInMilliseconds: value?['time']);
-      case 'showBottomSheet':
-        return ExecShowBottomSheet();
+    final exec = LiveViewExecRegistry.instance
+        .exec(name, value: value, attributes: attributes);
+
+    if (exec != null) {
+      return exec;
     }
 
     // using a just string triggers a server event
     return ExecLiveEvent(
         type: 'event', name: value!['name'], value: phxValues(attributes));
+  }
+
+  static void registryDefaultExecs() {
+    LiveViewExecRegistry.instance
+      ..add(['phx-click'], (value, attributes) {
+        return ExecLiveEvent(
+            type: 'phx-click',
+            name: value!['name'],
+            value: getPhxValues(attributes));
+      })
+      ..add(['live-patch'], (value, attributes) {
+        return ExecLivePatch(url: value!['name']);
+      })
+      ..add(['phx-href'], (value, attributes) {
+        return ExecPhxHref(url: value!['name']);
+      })
+      ..add(['goBack'], (_, __) => ExecGoBack())
+      ..add(['switchTheme'], (value, attributes) {
+        return ExecSwitchTheme(theme: value!['theme'], mode: value['mode']);
+      })
+      ..add(['saveCurrentTheme'], (_, __) => ExecSaveCurrentTheme())
+      ..add(['show'], (value, attributes) {
+        return ExecShowAction(
+            to: value?['to'], timeInMilliseconds: value?['time']);
+      })
+      ..add(['hide'], (value, attributes) {
+        return ExecHideAction(
+            to: value?['to'], timeInMilliseconds: value?['time']);
+      })
+      ..add(['showBottomSheet'], (_, __) => ExecShowBottomSheet());
   }
 }
 

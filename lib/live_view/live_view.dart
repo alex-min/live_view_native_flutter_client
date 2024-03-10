@@ -8,6 +8,7 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html;
 import 'package:http/http.dart' as http;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
+import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
@@ -95,6 +96,9 @@ class LiveView {
     themeSettings = ThemeSettings();
     themeSettings.httpClient = httpClient;
     rootView = LiveRootView(view: this);
+
+    LiveViewUiParser.registerDefaultComponents();
+    FlutterExecAction.registryDefaultExecs();
 
     router.pushPage(
         url: 'loading', widget: connectingWidget(), rootState: null);

@@ -54,6 +54,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_underline_attribut
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/errors/parsing_error_view.dart';
+import 'package:liveview_flutter/live_view/ui/live_view_ui_registry.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:xml/xml.dart';
@@ -124,138 +125,86 @@ class LiveViewUiParser {
     } else if (state.node.nodeType == XmlNodeType.ELEMENT) {
       var componentName = (state.node as XmlElement).name.qualified;
 
-      switch (componentName) {
-        case 'Scaffold':
-          return [LiveScaffold(state: state)];
-        case 'Container':
-          return [LiveContainer(state: state)];
-        case 'Tooltip':
-          return [LiveTooltip(state: state)];
-        case 'Text':
-          return [LiveText(state: state)];
-        case 'ElevatedButton':
-          return [LiveElevatedButton(state: state)];
-        case 'Center':
-          return [LiveCenter(state: state)];
-        case 'ListView':
-          return [LiveListView(state: state)];
-        case 'Form':
-          return [LiveForm(state: state)];
-        case 'TextField':
-          return [LiveTextField(state: state)];
-        case 'AppBar':
-          return [LiveAppBar(state: state)];
-        case 'title':
-          return [LiveTitleAttribute(state: state)];
-        case 'leading':
-          return [LiveLeadingAttribute(state: state)];
-        case 'link':
-          return [LiveLink(state: state)];
-        case 'icon':
-          return [LiveIconAttribute(state: state)];
-        case 'label':
-          return [LiveLabelAttribute(state: state)];
-        case 'selectedIcon':
-          return [LiveIconSelectedAttribute(state: state)];
-        case 'Icon':
-          return [LiveIcon(state: state)];
-        case 'Column':
-          return [LiveColumn(state: state)];
-        case 'Row':
-          return [LiveRow(state: state)];
-        case 'PersistentFooterButton':
-          return [LivePersistentFooterButton(state: state)];
-        case 'BottomSheet':
-          return [LiveBottomSheet(state: state)];
-        case 'Drawer':
-          return [LiveDrawer(state: state)];
-        case 'EndDrawer':
-          return [LiveEndDrawer(state: state)];
-        case 'DrawerHeader':
-          return [LiveDrawerHeader(state: state)];
-        case 'BottomNavigationBar':
-          return [LiveBottomNavigationBar(state: state)];
-        case 'BottomAppBar':
-          return [LiveBottomAppBar(state: state)];
-        case 'DropdownButton':
-          return [LiveDropdownButton(state: state)];
-        case 'BottomNavigationBarItem':
-          return [const SizedBox.shrink()];
-        case 'Positioned':
-          return [LivePositioned(state: state)];
-        case 'Stack':
-          return [LiveStack(state: state)];
-        case 'NavigationRail':
-          return [LiveNavigationRail(state: state)];
-        case 'NavigationRailDestination':
-          return [const SizedBox.shrink()];
-        case 'CachedNetworkImage':
-          return [LiveCachedNetworkImage(state: state)];
-        case 'Expanded':
-          return [LiveExpanded(state: state)];
-        case 'FilledButton':
-          return [LiveFilledButton(state: state)];
-        case 'viewBody':
-          return [LiveViewBody(state: state)];
-        case 'compiled-lvn-stylesheet':
-        case 'div':
-        case 'flutter':
-          List<Widget> ret = [];
-          for (var node in state.node.nonEmptyChildren) {
-            ret.addAll(traverse(state.copyWith(node: node)));
-          }
-          return ret;
-        case 'Checkbox':
-          return [LiveCheckbox(state: state)];
-        case 'SegmentedButton':
-          return [LiveSegmentedButton(state: state)];
-        case 'LiveButtonSegment':
-          return [const SizedBox.shrink()];
-        case 'FloatingActionButton':
-          return [LiveFloatingActionButton(state: state)];
-        case 'avatar':
-          return [LiveAvatarAttribute(state: state)];
-        case 'ActionChip':
-          return [LiveActionChip(state: state)];
-        case 'content':
-          return [LiveContentAttribute(state: state)];
-        case 'MaterialBanner':
-          return [LiveMaterialBanner(state: state)];
-        case 'TextButton':
-          return [LiveTextButton(state: state)];
-        case 'Autocomplete':
-          return [LiveAutocomplete(state: state)];
-        case 'Badge':
-          return [LiveBadge(state: state)];
-        case 'hint':
-          return [LiveHintAttribute(state: state)];
-        case 'disabledHint':
-          return [LiveDisabledHintAttribute(state: state)];
-        case 'underline':
-          return [LiveUnderlineAttribute(state: state)];
-        case 'IconButton':
-          return [LiveIconButton(state: state)];
-        case 'Card':
-          return [LiveCard(state: state)];
-        case 'subtitle':
-          return [LiveSubtitleAttribute(state: state)];
-        case 'trailing':
-          return [LiveTrailingAttribute(state: state)];
-        case 'ListTile':
-          return [LiveListTile(state: state)];
-        case 'meta':
-        case 'csrf-token':
-        case 'iframe':
-          return [const SizedBox.shrink()];
-        default:
-          reportError("unknown widget $componentName");
-          return [const SizedBox.shrink()];
-      }
+      return LiveViewUiRegistry.instance.buildWidget(componentName, state);
     } else if (state.node.nodeType == XmlNodeType.TEXT) {
       return renderDynamicComponent(state);
     } else {
       reportError('unknown node type ${state.node.nodeType}');
       return [const SizedBox.shrink()];
     }
+  }
+
+  static void registerDefaultComponents() {
+    LiveViewUiRegistry.instance
+      ..add(['Scaffold'], (state) => [LiveScaffold(state: state)])
+      ..add(['Container'], (state) => [LiveContainer(state: state)])
+      ..add(['Tooltip'], (state) => [LiveTooltip(state: state)])
+      ..add(['Text'], (state) => [LiveText(state: state)])
+      ..add(['ElevatedButton'], (state) => [LiveElevatedButton(state: state)])
+      ..add(['Center'], (state) => [LiveCenter(state: state)])
+      ..add(['ListView'], (state) => [LiveListView(state: state)])
+      ..add(['Form'], (state) => [LiveForm(state: state)])
+      ..add(['TextField'], (state) => [LiveTextField(state: state)])
+      ..add(['AppBar'], (state) => [LiveAppBar(state: state)])
+      ..add(['title'], (state) => [LiveTitleAttribute(state: state)])
+      ..add(['leading'], (state) => [LiveLeadingAttribute(state: state)])
+      ..add(['link'], (state) => [LiveLink(state: state)])
+      ..add(['icon'], (state) => [LiveIconAttribute(state: state)])
+      ..add(['label'], (state) => [LiveLabelAttribute(state: state)])
+      ..add(['selectedIcon'],
+          (state) => [LiveIconSelectedAttribute(state: state)])
+      ..add(['Icon'], (state) => [LiveIcon(state: state)])
+      ..add(['Column'], (state) => [LiveColumn(state: state)])
+      ..add(['Row'], (state) => [LiveRow(state: state)])
+      ..add(['PersistentFooterButton'],
+          (state) => [LivePersistentFooterButton(state: state)])
+      ..add(['BottomSheet'], (state) => [LiveBottomSheet(state: state)])
+      ..add(['Drawer'], (state) => [LiveDrawer(state: state)])
+      ..add(['EndDrawer'], (state) => [LiveEndDrawer(state: state)])
+      ..add(['DrawerHeader'], (state) => [LiveDrawerHeader(state: state)])
+      ..add(['BottomNavigationBar'],
+          (state) => [LiveBottomNavigationBar(state: state)])
+      ..add(['BottomAppBar'], (state) => [LiveBottomAppBar(state: state)])
+      ..add(['DropdownButton'], (state) => [LiveDropdownButton(state: state)])
+      ..add(['BottomNavigationBarItem'], (state) => [const SizedBox.shrink()])
+      ..add(['Positioned'], (state) => [LivePositioned(state: state)])
+      ..add(['Stack'], (state) => [LiveStack(state: state)])
+      ..add(['NavigationRail'], (state) => [LiveNavigationRail(state: state)])
+      ..add(['NavigationRailDestination'], (state) => [const SizedBox.shrink()])
+      ..add(['CachedNetworkImage'],
+          (state) => [LiveCachedNetworkImage(state: state)])
+      ..add(['Expanded'], (state) => [LiveExpanded(state: state)])
+      ..add(['FilledButton'], (state) => [LiveFilledButton(state: state)])
+      ..add(['viewBody'], (state) => [LiveViewBody(state: state)])
+      ..add(['compiled-lvn-stylesheet', 'div', 'flutter'], (state) {
+        List<Widget> ret = [];
+        for (var node in state.node.nonEmptyChildren) {
+          ret.addAll(traverse(state.copyWith(node: node)));
+        }
+        return ret;
+      })
+      ..add(['Checkbox'], (state) => [LiveCheckbox(state: state)])
+      ..add(['SegmentedButton'], (state) => [LiveSegmentedButton(state: state)])
+      ..add(['LiveButtonSegment'], (state) => [const SizedBox.shrink()])
+      ..add(['FloatingActionButton'],
+          (state) => [LiveFloatingActionButton(state: state)])
+      ..add(['avatar'], (state) => [LiveAvatarAttribute(state: state)])
+      ..add(['ActionChip'], (state) => [LiveActionChip(state: state)])
+      ..add(['content'], (state) => [LiveContentAttribute(state: state)])
+      ..add(['MaterialBanner'], (state) => [LiveMaterialBanner(state: state)])
+      ..add(['TextButton'], (state) => [LiveTextButton(state: state)])
+      ..add(['Autocomplete'], (state) => [LiveAutocomplete(state: state)])
+      ..add(['Badge'], (state) => [LiveBadge(state: state)])
+      ..add(['hint'], (state) => [LiveHintAttribute(state: state)])
+      ..add(['disabledHint'],
+          (state) => [LiveDisabledHintAttribute(state: state)])
+      ..add(['underline'], (state) => [LiveUnderlineAttribute(state: state)])
+      ..add(['IconButton'], (state) => [LiveIconButton(state: state)])
+      ..add(['Card'], (state) => [LiveCard(state: state)])
+      ..add(['subtitle'], (state) => [LiveSubtitleAttribute(state: state)])
+      ..add(['trailing'], (state) => [LiveTrailingAttribute(state: state)])
+      ..add(['ListTile'], (state) => [LiveListTile(state: state)])
+      ..add(['meta', 'csrf-token', 'iframe'],
+          (state) => [const SizedBox.shrink()]);
   }
 }
