@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http_query_string/http_query_string.dart' as queryString;
+import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
@@ -65,7 +65,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
     liveView.sendEvent(ExecLiveEvent(
         type: 'form',
         name: getAttribute(eventKind)!,
-        value: queryString.Encoder().convert(nonNullValues)));
+        value: qs.Encoder().convert(nonNullValues)));
   }
 
   @override
