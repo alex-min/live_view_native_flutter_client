@@ -114,7 +114,7 @@ main() async {
       (tester) async {
     tester.setScreenSize(const Size(400, 400));
 
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         """
         <Container>

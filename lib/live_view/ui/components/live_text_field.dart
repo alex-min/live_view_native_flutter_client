@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:liveview_flutter/live_view/mapping/inputDecoration.dart';
+import 'package:liveview_flutter/live_view/mapping/input_decoration.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';

@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
-import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 
 Map<String, dynamic> expandVariables(Map<String, dynamic> diff,

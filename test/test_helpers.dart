@@ -1,3 +1,5 @@
+// ignore_for_file: overridden_fields
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
