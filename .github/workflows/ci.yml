@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  deps:
+    name: Cache dependencies
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve Cached Dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ runner.tool_cache }}/flutter
+          key: ${{ runner.OS }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
+  formatter:
+    name: Run formatter
+    runs-on: ubuntu-latest
+    needs: deps
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve Cached Dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ runner.tool_cache }}/flutter
+          key: ${{ runner.OS }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
+      - run: dart format --fix --set-exit-if-changed .
+  analyzer:
+    name: Run analyzer
+    runs-on: ubuntu-latest
+    needs: deps
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve Cached Dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ runner.tool_cache }}/flutter
+          key: ${{ runner.OS }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
+      - run: flutter analyze
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: deps
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve Cached Dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ runner.tool_cache }}/flutter
+          key: ${{ runner.OS }}-${{ hashFiles('**/pubspec.lock') }}
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
+      - run: flutter test --coverage
+      - name: Setup LCOV
+        uses: hrishikesh-kadam/setup-lcov@v1
+      - name: Report code coverage
+        uses: zgosalvez/github-actions-report-lcov@v3
+        with:
+          coverage-files: coverage/lcov*.info
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          update-comment: true

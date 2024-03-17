@@ -224,6 +224,7 @@ class LiveView {
         '_csrf_token': _csrf,
         '_mounts': mount.toString(),
         'client_id': _clientId,
+        '_platform': 'flutter',
         '_lvn': {'format': 'flutter', 'os': getPlatformName()},
         'vsn': '2.0.0'
       };
