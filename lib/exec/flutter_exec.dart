@@ -54,7 +54,7 @@ class FlutterExecAction {
         type: 'event', name: value!['name'], value: phxValues(attributes));
   }
 
-  static void registryDefaultExecs() {
+  static void registerDefaultExecs() {
     LiveViewExecRegistry.instance
       ..add(['phx-click'], (value, attributes) {
         return ExecLiveEvent(

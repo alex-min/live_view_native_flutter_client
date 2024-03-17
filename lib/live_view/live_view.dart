@@ -99,7 +99,7 @@ class LiveView {
     rootView = LiveRootView(view: this);
 
     LiveViewUiParser.registerDefaultComponents();
-    FlutterExecAction.registryDefaultExecs();
+    FlutterExecAction.registerDefaultExecs();
 
     router.pushPage(
         url: 'loading', widget: connectingWidget(), rootState: null);
