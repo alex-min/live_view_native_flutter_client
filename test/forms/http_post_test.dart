@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
-import 'package:http/http.dart' as http;
 import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
