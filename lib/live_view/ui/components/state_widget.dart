@@ -13,7 +13,6 @@ import 'package:liveview_flutter/live_view/state/events.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/rng.dart';
 import 'package:xml/xml.dart';
 
 enum Status { visible, hidden }
