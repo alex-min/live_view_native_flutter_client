@@ -5,7 +5,7 @@
 >
 > APIs might break and features might be missing
 
-A Flutter client for LiveView native.
+A Flutter client for LiveView native. [Join our Slack community](https://join.slack.com/t/liveviewflutter/shared_invite/zt-2eyf5yq9v-x1J8Zr031UOCYFGNpLDv5g)
 
 This repo enables you to create an app for any Flutter platform (mobile & desktop) where the full UI is synced to the backend and reflects any change being made, similar as a Live View web client.
 
