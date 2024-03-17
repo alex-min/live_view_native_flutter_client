@@ -9,11 +9,17 @@ class LiveCenter extends LiveStateWidget<LiveCenter> {
 }
 
 class _LiveCenterState extends StateWidget<LiveCenter> {
+  final attributes = ['widthFactor', 'heightFactor'];
+
   @override
-  void onStateChange(Map<String, dynamic> diff) {}
+  void onStateChange(Map<String, dynamic> diff) =>
+      reloadAttributes(node, attributes);
 
   @override
   Widget render(BuildContext context) {
-    return Center(child: singleChild());
+    return Center(
+        widthFactor: doubleAttribute('widthFactor'),
+        heightFactor: doubleAttribute('heightFactor'),
+        child: singleChild());
   }
 }

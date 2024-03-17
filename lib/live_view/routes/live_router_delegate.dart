@@ -3,20 +3,26 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/routes/live_custom_page.dart';
 import 'package:liveview_flutter/live_view/routes/no_transition_page.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
+import 'package:liveview_flutter/live_view/ui/errors/missing_page_component.dart';
+import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
 
 class LivePage {
   MaterialPage page;
   List<Widget> widgets;
   bool junk = false;
+  NodeState? rootState;
 
-  LivePage({required this.page, required this.widgets});
+  LivePage(
+      {required this.page, required this.widgets, required this.rootState});
 
   @override
   String toString() => "LivePage(${page.name})";
 
   bool get notSuitableToGoBack =>
       junk == true || page.name?.startsWith('/') == false;
+
+  bool get containsGlobalNavigationWidgets => widgets.length > 1;
 }
 
 class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
@@ -81,13 +87,20 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
 
   void notify() => notifyListeners();
 
-  void pushPage({required String url, required List<Widget> widget}) {
+  void pushPage(
+      {required String url,
+      required List<Widget> widget,
+      required NodeState? rootState}) {
     history[url] = widget;
-    pages.add(_createPage(RouteSettings(name: url), List<Widget>.from(widget)));
+    pages.add(_createPage(
+        RouteSettings(name: url), List<Widget>.from(widget), rootState));
     notifyListeners();
   }
 
-  void updatePage({required String url, required List<Widget> widget}) {
+  void updatePage(
+      {required String url,
+      required List<Widget> widget,
+      required NodeState? rootState}) {
     history[url] = widget;
     if (pages.isNotEmpty && pages.last.page.name == url) {
       // we don't remove the page now because the router only keeps track of the number of pages
@@ -95,7 +108,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       // this code is triggered on page refresh
       pages.last.junk = true;
     }
-    pages.add(_createPage(RouteSettings(name: url), widget));
+    pages.add(_createPage(RouteSettings(name: url), widget, rootState));
     notifyListeners();
   }
 
@@ -103,7 +116,8 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     return history[url];
   }
 
-  LivePage _createPage(RouteSettings routeSettings, List<Widget> widgets) {
+  LivePage _createPage(
+      RouteSettings routeSettings, List<Widget> widgets, NodeState? rootState) {
     var content = Builder(builder: (context) {
       if (widgets.length == 1) {
         return widgets.first;
@@ -120,21 +134,24 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
         }
       }
       // TODO: not found page + body error page
-      return body ?? const Text('not found');
+      return body ??
+          MissingPageComponent(
+              url: routeSettings.name ?? '(url is null)',
+              html: rootState?.node.outerXml ?? '');
     });
 
     return LivePage(
-      page: routeSettings.name?.startsWith('/') == true
-          ? LiveCustomPage(
-              child: content,
-              name: routeSettings.name,
-              arguments: routeSettings.arguments,
-            )
-          : NoTransitionPage(
-              child: content,
-              name: routeSettings.name,
-              arguments: routeSettings.arguments),
-      widgets: widgets,
-    );
+        page: routeSettings.name?.startsWith('/') == true
+            ? LiveCustomPage(
+                child: content,
+                name: routeSettings.name,
+                arguments: routeSettings.arguments,
+              )
+            : NoTransitionPage(
+                child: content,
+                name: routeSettings.name,
+                arguments: routeSettings.arguments),
+        widgets: widgets,
+        rootState: rootState);
   }
 }

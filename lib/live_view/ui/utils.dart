@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart';
 
+const defaultIconData = Icons.crop_square_sharp;
+const defaultIcon = Icon(defaultIconData);
+
 extension NonEmptyChildren on XmlNode {
   List<XmlNode> get nonEmptyChildren {
     return children.where((c) {

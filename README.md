@@ -73,7 +73,7 @@ This is an example of the code on the server:
 
 ```elixir
   @impl true
-  def render(%{platform_id: :flutter} = assigns) do
+  def render(%{format: :flutter} = assigns) do
     # This UI renders on flutter
     ~FLUTTER"""
       <flutter>
@@ -94,13 +94,14 @@ This is an example of the code on the server:
             </Row>
           </Container>
         </viewBody>
-        <BottomNavigationBar currentIndex="0" selectedItemColor="blue-500">
-          <BottomNavigationBarIcon name="home" label="Page 1" />
-          <BottomNavigationBarIcon live-patch="/second-page" name="home" label="Page 2" />
-          <BottomNavigationBarIcon phx-click="inc" name="arrow_upward" label="Increment" />
-          <BottomNavigationBarIcon phx-click="dec" name="arrow_downward" label="Decrement" />
+        <BottomNavigationBar initialValue="0" selectedItemColor="blue-500">
+          <BottomNavigationBarItem icon="home" label="Page 1" />
+          <BottomNavigationBarItem live-patch="/second-page" icon="home" label="Page 2" />
+          <BottomNavigationBarItem phx-click="inc" icon="arrow_upward" label="Increment" />
+          <BottomNavigationBarItem phx-click="dec" icon="arrow_downward" label="Decrement" />
         </BottomNavigationBar>
       </flutter>
     """
   end
 ```
+

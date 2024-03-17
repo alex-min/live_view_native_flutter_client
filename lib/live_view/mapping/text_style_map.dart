@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
+import 'package:liveview_flutter/live_view/mapping/material_state.dart';
 
 Map<String, TextStyle?> getTextStyleMap(BuildContext context) => {
       'headlineLarge': Theme.of(context).textTheme.headlineLarge,
@@ -34,7 +35,41 @@ Map<String, FontStyle?> getFontStyleMap(BuildContext context) => {
       'normal': FontStyle.normal,
     };
 
-TextStyle? textStyle(String? style, BuildContext context) {
+MaterialStateProperty<TextStyle?>? getMaterialTextStyle(
+    String? style, BuildContext context) {
+  if (style == null) {
+    return null;
+  }
+  // this is there so you can do things like
+  // buttonStyle: { textStyle: bold }
+  if (!style.contains('{')) {
+    return MaterialStateProperty.resolveWith((states) {
+      return getTextStyle(style, context);
+    });
+    // this is for things like
+    // buttonStyle: { pressed: { textStyle: bold }, disabled: { textStyle: w100 }}
+  } else {
+    Map<MaterialState, TextStyle?> ret = {};
+    for (var (key, val) in parseCss(style)) {
+      var state = getMaterialState(key);
+      if (state != null) {
+        ret[state] = getTextStyle(val, context);
+      }
+    }
+    Set<MaterialState> existingKeys = ret.keys.toSet();
+
+    return MaterialStateProperty.resolveWith((states) {
+      var statesDefined = (states.intersection(existingKeys));
+      if (statesDefined.isNotEmpty) {
+        return ret[statesDefined.first];
+      }
+
+      return const TextStyle();
+    });
+  }
+}
+
+TextStyle? getTextStyle(String? style, BuildContext context) {
   if (style != null) {
     var finalStyle = const TextStyle();
     var textThemeMap = getTextStyleMap(context);

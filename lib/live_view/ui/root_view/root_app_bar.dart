@@ -43,6 +43,7 @@ class _RootAppBarState extends State<RootAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    bar ??= extractChild<LiveAppBar>(widget.view.router.pages.last.widgets);
     return bar != null
         ? Container(key: const Key('main_app_bar'), child: bar)
         : const SizedBox.shrink();

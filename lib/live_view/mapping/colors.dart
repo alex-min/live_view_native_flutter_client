@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 Map<String, Color> getColorMap() {
   return {
+    'transparent': Colors.transparent,
     'red': Colors.red,
     'redAccent': Colors.redAccent,
     'redShade50': Colors.red.shade50,
@@ -219,7 +220,6 @@ Map<String, Color> getColorMap() {
     'blueGreyShade900': Colors.blueGrey.shade900,
     'black': Colors.black,
     'white': Colors.white,
-    'transparent': Colors.transparent,
   };
 }
 
@@ -328,6 +328,12 @@ Color? _parseVarColor(BuildContext context, String? color) {
       return Theme.of(context).splashColor;
     case '@theme.unselectedWidgetColor':
       return Theme.of(context).unselectedWidgetColor;
+    case '@theme.navigationRailTheme.backgroundColor':
+      return Theme.of(context).navigationRailTheme.backgroundColor;
+    case '@theme.appBarTheme.backgroundColor':
+      return Theme.of(context).appBarTheme.backgroundColor;
+    case '@theme.appBarTheme.foregroundColor':
+      return Theme.of(context).appBarTheme.foregroundColor;
     default:
       return null;
   }
@@ -337,6 +343,7 @@ Color? getColor(BuildContext context, String? color) {
   if (color == null) {
     return null;
   }
+
   if (color.trim().startsWith('@')) {
     return _parseVarColor(context, color.trim());
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 
 import '../test_helpers.dart';
 
@@ -11,7 +10,7 @@ main() async {
       ..handleRenderedMessage({
         's': ['<TextField ', '', '></TextField>'],
         '0': 'name="myfield"',
-        '1': 'value="content"',
+        '1': 'initialValue="content"',
       });
 
     await tester.runLiveView(view);
@@ -22,7 +21,7 @@ main() async {
 
     view.handleDiffMessage({
       '0': 'name="new name"',
-      '1': 'value="new content"',
+      '1': 'initialValue="new content"',
     });
     await tester.pumpAndSettle();
 

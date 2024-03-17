@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http_query_string/http_query_string.dart' as queryString;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
@@ -6,7 +7,7 @@ enum FormFieldEventType { initField, change, submit }
 
 class FormFieldEvent extends Notification {
   final String name;
-  final String? data;
+  final dynamic data;
   final FormFieldEventType type;
 
   const FormFieldEvent(
@@ -37,11 +38,11 @@ class LiveForm extends LiveStateWidget<LiveForm> {
 
 class _LiveFormState extends StateWidget<LiveForm> {
   final _formKey = GlobalKey<FormState>();
-  Map<String, String?> formValues = {};
+  Map<String, dynamic> formValues = {};
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['phx-change', 'phx-submit']);
+    reloadAttributes(node, ['phx-change', 'phx-submit', 'method']);
   }
 
   @override
@@ -54,21 +55,24 @@ class _LiveFormState extends StateWidget<LiveForm> {
     if (getAttribute(eventKind) == null) {
       return;
     }
-    Map<String, String> eventData = Map<String, String>.from(formValues);
+    var nonNullValues = Map<String, dynamic>.from(formValues)
+      ..removeWhere((_, value) => value == null);
+
     if (target != null) {
-      eventData['_target'] = target;
+      nonNullValues['_target'] = target;
     }
+
     liveView.sendEvent(ExecLiveEvent(
         type: 'form',
         name: getAttribute(eventKind)!,
-        value: Uri(host: 'localhost', queryParameters: eventData).query));
+        value: queryString.Encoder().convert(nonNullValues)));
   }
 
   @override
   Widget render(BuildContext context) {
     return Form(
-      key: _formKey,
-      child: NotificationListener<FormFieldEvent>(
+        key: _formKey,
+        child: NotificationListener<FormFieldEvent>(
           onNotification: (event) {
             if (event.type == FormFieldEventType.change ||
                 event.type == FormFieldEventType.initField) {
@@ -78,13 +82,15 @@ class _LiveFormState extends StateWidget<LiveForm> {
             if (event.type == FormFieldEventType.change) {
               sendFormEvent('phx-change', target: event.name);
             } else if (event.type == FormFieldEventType.submit) {
+              var method = getAttribute('method');
+              if (method == 'POST') {
+                widget.state.liveView.postForm(formValues);
+              }
               sendFormEvent('phx-submit', target: event.name);
             }
             return true;
           },
-          child: singleChild(
-              state: widget.state
-                  .copyWith(formEvents: FormEvents(onSave: () {})))),
-    );
+          child: singleChild(),
+        ));
   }
 }

@@ -1,5 +1,5 @@
+import 'package:flutter/widgets.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/live_view_ui_parser.dart';
 import 'package:xml/xml.dart';
 
@@ -9,8 +9,8 @@ class NodeState {
   final LiveViewUiParser parser;
   final List<int> nestedState;
   final LiveView liveView;
-  final FormEvents? formEvents;
   final String urlPath;
+  List<Widget> dynamicWidget;
 
   bool get isOnTheCurrentPage => urlPath == liveView.currentUrl;
 
@@ -20,8 +20,8 @@ class NodeState {
       required this.parser,
       required this.nestedState,
       required this.liveView,
-      required this.formEvents,
-      required this.urlPath});
+      required this.urlPath,
+      this.dynamicWidget = const []});
 
   NodeState copyWith(
           {XmlNode? node,
@@ -29,15 +29,14 @@ class NodeState {
           LiveViewUiParser? parser,
           List<int>? nestedState,
           LiveView? liveView,
-          FormEvents? formEvents,
-          String? urlPath}) =>
+          String? urlPath,
+          List<Widget>? dynamicWidget}) =>
       NodeState(
-        node: node ?? this.node,
-        formEvents: formEvents ?? this.formEvents,
-        variables: variables ?? this.variables,
-        parser: parser ?? this.parser,
-        nestedState: nestedState ?? this.nestedState,
-        liveView: liveView ?? this.liveView,
-        urlPath: urlPath ?? this.urlPath,
-      );
+          node: node ?? this.node,
+          variables: variables ?? this.variables,
+          parser: parser ?? this.parser,
+          nestedState: nestedState ?? this.nestedState,
+          liveView: liveView ?? this.liveView,
+          urlPath: urlPath ?? this.urlPath,
+          dynamicWidget: dynamicWidget ?? this.dynamicWidget);
 }

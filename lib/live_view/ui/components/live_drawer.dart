@@ -17,6 +17,7 @@ class _LiveDrawerState extends StateWidget<LiveDrawer> {
         'surfaceTintColor',
         'width',
         'semanticLabel',
+        'clipBehavior'
       ]);
 
   @override
@@ -28,6 +29,7 @@ class _LiveDrawerState extends StateWidget<LiveDrawer> {
         surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
         width: doubleAttribute('width'),
         semanticLabel: getAttribute('semanticLabel'),
+        clipBehavior: clipAttribute('clipBehavior'),
         child: singleChild());
   }
 }

@@ -49,6 +49,7 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
           child = widget.state.parser
               .parseHtml(List<String>.from(lastLiveDiff[key]['s']),
                   Map<String, dynamic>.from(lastLiveDiff[key]), newState)
+              .$1
               .first;
           return child!;
         } else {

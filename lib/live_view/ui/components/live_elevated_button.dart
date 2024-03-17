@@ -15,7 +15,13 @@ class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['type', 'name']);
+    reloadAttributes(node, [
+      'type',
+      'name',
+      'style',
+      'autofocus',
+      'clipBehavior',
+    ]);
   }
 
   @override
@@ -24,6 +30,9 @@ class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
   @override
   Widget render(BuildContext context) {
     return ElevatedButton(
+        style: buttonStyleAttribute(context, 'style'),
+        autofocus: booleanAttribute('autofocus') ?? false,
+        clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
         onPressed: () {
           if (getAttribute('type') == 'submit') {
             FormFieldEvent(

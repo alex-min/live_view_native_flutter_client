@@ -2,6 +2,9 @@ double? getDouble(String? property) {
   if (property == null) {
     return null;
   }
+  if (property == 'infinity') {
+    return double.infinity;
+  }
   return double.tryParse(property);
 }
 

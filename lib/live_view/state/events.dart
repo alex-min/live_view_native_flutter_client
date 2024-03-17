@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/exec/exec.dart';
+import 'package:liveview_flutter/exec/exec_phx_href.dart';
+import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/exec/exec_go_back.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
@@ -7,6 +9,7 @@ import 'package:liveview_flutter/exec/exec_live_patch.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
+import 'package:liveview_flutter/live_view/ui/root_view/root_scaffold.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 
 class StateEvents {
@@ -18,7 +21,7 @@ class StateEvents {
         if (action is ExecHideAction && action.conditions.isNotEmpty) {
           var showAction = ExecShowAction(
               to: action.to, timeInMilliseconds: action.timeInMilliseconds);
-          events.add((BuildContext context) {
+          events.add((_) {
             if (showAction.to != null) {
               liveView.eventHub.fire('globalAction', showAction);
             } else {
@@ -28,7 +31,7 @@ class StateEvents {
         } else if (action is ExecShowAction && action.conditions.isNotEmpty) {
           var hideAction = ExecHideAction(
               to: action.to, timeInMilliseconds: action.timeInMilliseconds);
-          events.add((BuildContext context) {
+          events.add((_) {
             if (hideAction.to != null) {
               liveView.eventHub.fire('globalAction', hideAction);
             } else {
@@ -40,30 +43,24 @@ class StateEvents {
       }
       switch (action) {
         case final ExecLivePatch event:
-          events.add((_) {
-            liveView.router.pushPage(
-                url: 'loading;${event.url}', widget: liveView.loadingWidget());
-            liveView.redirectTo(event.url);
+          events.add((_) => liveView.livePatch(event.url));
+        case final ExecPhxHrefModal event:
+          events.add((context) {
+            Navigator.of(context).pop();
+            liveView.execHrefClick(event.url);
           });
+        case final ExecPhxHref event:
+          events.add((_) => liveView.execHrefClick(event.url));
         case final ExecLiveEvent event:
-          events.add((_) {
-            liveView.sendEvent(event);
-          });
+          events.add((_) => liveView.sendEvent(event));
         case final ExecGoBack _:
-          events.add((BuildContext context) {
-            liveView.router.navigatorKey?.currentState?.maybePop();
-            liveView.router.notify();
-          });
+          events.add((_) => liveView.goBack());
         case final ExecSwitchTheme event:
-          events.add((BuildContext context) {
-            liveView.switchTheme(event.theme, event.mode);
-          });
+          events.add((_) => liveView.switchTheme(event.theme, event.mode));
         case final ExecSaveCurrentTheme _:
-          events.add((BuildContext context) {
-            liveView.saveCurrentTheme();
-          });
+          events.add((_) => liveView.saveCurrentTheme());
         case final ExecShowAction event:
-          events.add((BuildContext context) {
+          events.add((_) {
             if (event.to != null) {
               liveView.eventHub.fire('globalAction', event);
             } else {
@@ -71,13 +68,16 @@ class StateEvents {
             }
           });
         case final ExecHideAction event:
-          events.add((BuildContext context) {
+          events.add((_) {
             if (event.to != null) {
               liveView.eventHub.fire('globalAction', event);
             } else {
               widget.hide(event);
             }
           });
+        case final ExecShowBottomSheet _:
+          events.add(
+              (context) => ShowBottomSheetNotification().dispatch(context));
         default:
           reportError("unknown action $action");
       }

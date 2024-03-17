@@ -9,10 +9,17 @@ class LiveDrawerHeader extends LiveStateWidget<LiveDrawerHeader> {
 }
 
 class _LiveDrawerHeaderState extends StateWidget<LiveDrawerHeader> {
+  final attributes = [
+    'decoration',
+    'margin',
+    'padding',
+    'duration',
+    'curve',
+  ];
+
   @override
-  void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
-        'decoration',
-      ]);
+  void onStateChange(Map<String, dynamic> diff) =>
+      reloadAttributes(node, attributes);
 
   @override
   Widget render(BuildContext context) {
@@ -24,6 +31,7 @@ class _LiveDrawerHeaderState extends StateWidget<LiveDrawerHeader> {
           const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
       duration:
           Duration(milliseconds: (doubleAttribute('duration') ?? 250).toInt()),
+      curve: curveAttribute('curve') ?? Curves.fastOutSlowIn,
       child: singleChild(),
     );
   }

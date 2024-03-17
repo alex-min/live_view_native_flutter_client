@@ -11,17 +11,30 @@ class StateChild {
       case 0:
         return const SizedBox.shrink();
       case 1:
-        return LiveViewUiParser.traverse(state.copyWith(node: children[0]))
-            .first;
+        var components =
+            (LiveViewUiParser.traverse(state.copyWith(node: children[0])));
+        if (components.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        if (components.length == 1) {
+          return components.first;
+        }
+        return Column(
+            crossAxisAlignment: CrossAxisAlignment.start, children: components);
       default:
-        return Column(children: multipleChildren(state));
+        return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: multipleChildren(state));
     }
   }
 
   static List<Widget> multipleChildren(NodeState state) {
-    return state.node.nonEmptyChildren.map((child) {
-      return LiveViewUiParser.traverse(state.copyWith(node: child)).first;
-    }).toList();
+    List<Widget> ret = [];
+
+    for (var node in state.node.nonEmptyChildren) {
+      ret.addAll(LiveViewUiParser.traverse(state.copyWith(node: node)));
+    }
+    return ret;
   }
 
   static List<LiveStateWidget> extractChildren<Type extends LiveStateWidget>(

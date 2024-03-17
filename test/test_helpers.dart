@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 http.Response jsonHttpResponse(dynamic data) {
@@ -33,7 +34,7 @@ extension TakeKeys on Map {
 extension FindText on CommonFinders {
   String? firstText() => allTexts().firstOrNull;
 
-  T firstOf<T>() => byType(T).evaluate().single.widget as T;
+  T firstOf<T>() => byType(T).evaluate().first.widget as T;
   List<String> allTexts() =>
       (byType(Text).evaluate().map((e) => (e.widget as Text).data ?? ''))
           .toList();
@@ -55,6 +56,18 @@ extension RunLiveView on WidgetTester {
   void setScreenSize(Size size) {
     view.physicalSize = size;
     view.devicePixelRatio = 1;
+  }
+
+  Future<void> checkScreenshot(String content, String filename) async {
+    await loadAppFonts();
+    var (view, _) = await connect(LiveView(), rendered: {
+      's': [content],
+    });
+
+    await runLiveView(view);
+    await pumpAndSettle();
+
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile(filename));
   }
 }
 
@@ -249,6 +262,8 @@ class BaseActions {
         FlutterExecAction(
             name: 'switchTheme', value: {'mode': mode, 'theme': theme})
       ]);
+  String showBottomSheet =
+      FlutterExec.encode([FlutterExecAction(name: 'showBottomSheet')]);
 }
 
 var liveEvents = const BaseEvents();

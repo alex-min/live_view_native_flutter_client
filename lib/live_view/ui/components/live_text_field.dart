@@ -1,8 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:liveview_flutter/live_view/mapping/inputDecoration.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -18,11 +20,36 @@ class LiveTextField extends LiveStateWidget<LiveTextField> {
 class _LiveTextFieldState extends StateWidget<LiveTextField> {
   List<String> attributes = [
     'name',
-    'value',
+    'initialValue',
     'decoration',
     'obscureText',
-    'errors'
+    'errors',
+    'keyboardType',
+    'maxLines',
+    'minLines',
+    'maxLength',
+    'expands',
+    'readOnly',
+    'autocorrect',
+    'enableSuggestions',
+    'showCursor',
+    'obscuringCharacter',
+    'icon',
+    'textAlign',
+    'enabled',
+    'cursorWidth',
+    'cursorHeight',
+    'cursorColor',
+    'cursorOpacityAnimates',
+    'scrollPadding',
+    'enableInteractiveSelection',
+    'scribbleEnabled',
+    'enableIMEPersonalizedLearning',
+    'canRequestFocus',
+    'selectionHeightStyle'
   ];
+  @override
+  handleClickState() => HandleClickState.manual;
   final key = GlobalKey<FormFieldState>();
   var unamedInput = const Uuid().v4();
   List<FormError> errors = [];
@@ -55,7 +82,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
     reloadAttributes(node, attributes);
     FormFieldEvent(
       name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
-      data: getAttribute('value') ?? '',
+      data: getAttribute('initialValue') ?? '',
       type: FormFieldEventType.initField,
     ).dispatch(context);
   }
@@ -77,8 +104,25 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
-    var icon = StateChild.extractChild<LiveIconAttribute>(children);
+    Widget? icon = StateChild.extractChild<LiveIconAttribute>(children);
+    icon ??= StateChild.extractChild<LiveIcon>(children);
+    icon ??= iconWidgetFromAttribute('icon');
+
     return TextFormField(
+        selectionHeightStyle: boxHeightStyleAttribute('selectionHeightStyle') ??
+            BoxHeightStyle.tight,
+        obscuringCharacter: getAttribute('obscuringCharacter') ?? '•',
+        showCursor: booleanAttribute('showCursor'),
+        enableSuggestions: booleanAttribute('enableSuggestions') ?? true,
+        autocorrect: booleanAttribute('autocorrect') ?? false,
+        expands: booleanAttribute('expands') ?? false,
+        readOnly: booleanAttribute('readOnly') ?? false,
+        keyboardType: textInputTypeAttribute('keyboardType'),
+        maxLength: intAttribute('maxLength'),
+        minLines: intAttribute('minLines'),
+        maxLines: getAttribute('maxLines') == 'unlimited'
+            ? null
+            : intAttribute('maxLines') ?? 1,
         autovalidateMode: AutovalidateMode.disabled,
         validator: (_) {
           var message = errors.map((e) => e.message).join('\n');
@@ -91,6 +135,8 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
           getAttribute('decoration'),
           icon: icon,
         ),
+        onTapOutside: (_) => executeOnTapOutsideEventsManually(),
+        onTap: () => executeTapEventsManually(),
         onChanged: (value) {
           FormFieldEvent(
             name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
@@ -98,7 +144,21 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
             type: FormFieldEventType.change,
           ).dispatch(context);
         },
-        //name: getAttribute('name') ?? "unamed-attribute-${const Uuid().v4()}",
-        initialValue: getAttribute('value'));
+        initialValue: getAttribute('initialValue'),
+        textAlign: textAlignAttribute('textAlign') ?? TextAlign.start,
+        enabled: booleanAttribute('enabled'),
+        cursorWidth: doubleAttribute('cursorWidth') ?? 2.0,
+        cursorHeight: doubleAttribute('cursorHeight'),
+        cursorRadius: null, // TODO: Radius
+        cursorColor: colorAttribute(context, 'cursorColor'),
+        cursorOpacityAnimates: booleanAttribute('cursorOpacityAnimates'),
+        scrollPadding: marginOrPaddingAttribute('scrollPadding') ??
+            const EdgeInsets.all(20.0),
+        enableInteractiveSelection:
+            booleanAttribute('enableInteractiveSelection'),
+        scribbleEnabled: booleanAttribute('scribbleEnabled') ?? true,
+        enableIMEPersonalizedLearning:
+            booleanAttribute('enableIMEPersonalizedLearning') ?? true,
+        canRequestFocus: booleanAttribute('canRequestFocus') ?? true);
   }
 }

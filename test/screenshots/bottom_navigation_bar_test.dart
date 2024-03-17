@@ -13,10 +13,10 @@ main() async {
         """
       <Scaffold>
         <BottomNavigationBar>
-          <BottomNavigationBarIcon live-patch="/second-page" name="display_settings" label="Display Settings" />
-          <BottomNavigationBarIcon phx-click="inc" name="work" label="Second option" />
-          <BottomNavigationBarIcon name="done" label="Done" />
-          <BottomNavigationBarIcon name="drafts" label="Drafts" />
+          <BottomNavigationBarItem live-patch="/second-page" icon="display_settings" label="Display Settings" />
+          <BottomNavigationBarItem phx-click="inc" icon="work" label="Second option" />
+          <BottomNavigationBarItem icon="done" label="Done" />
+          <BottomNavigationBarItem icon="drafts" label="Drafts" />
         </BottomNavigationBar>
       </Scaffold>
       """
