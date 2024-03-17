@@ -89,7 +89,7 @@ main() async {
 
     expect(server.httpRequestsMade.map(((t) => t.toString())), [
       // connect
-      'GET http://localhost:9999?_lvn%5Bformat%5D=flutter',
+      'GET http://localhost:9999/?_lvn%5Bformat%5D=flutter',
       'GET http://localhost:9999/flutter/themes/default/light.json',
 
       // reconnect after live reload

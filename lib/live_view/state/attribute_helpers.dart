@@ -6,7 +6,7 @@ import 'package:liveview_flutter/live_view/mapping/alignment_directional.dart';
 import 'package:liveview_flutter/live_view/mapping/axis_direction.dart';
 import 'package:liveview_flutter/live_view/mapping/boolean.dart';
 import 'package:liveview_flutter/live_view/mapping/box_height_style.dart';
-import 'package:liveview_flutter/live_view/mapping/buttonStyle.dart';
+import 'package:liveview_flutter/live_view/mapping/button_style.dart';
 import 'package:liveview_flutter/live_view/mapping/clip_behavior.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/curve.dart';

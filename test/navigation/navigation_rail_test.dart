@@ -52,7 +52,7 @@ main() async {
   });
 
   testWidgets('initialValue cannot be changed', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         """
         <NavigationRail labelType="all" phx-click="parent_event"

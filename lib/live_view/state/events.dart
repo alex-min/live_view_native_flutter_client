@@ -44,6 +44,11 @@ class StateEvents {
       switch (action) {
         case final ExecLivePatch event:
           events.add((_) => liveView.livePatch(event.url));
+        case final ExecPhxHrefModal event:
+          events.add((context) {
+            Navigator.of(context).pop();
+            liveView.execHrefClick(event.url);
+          });
         case final ExecPhxHref event:
           events.add((_) => liveView.execHrefClick(event.url));
         case final ExecLiveEvent event:

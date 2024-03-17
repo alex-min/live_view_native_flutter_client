@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http_query_string/http_query_string.dart' as queryString;
+import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
@@ -42,7 +42,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['phx-change', 'phx-submit']);
+    reloadAttributes(node, ['phx-change', 'phx-submit', 'method']);
   }
 
   @override
@@ -65,7 +65,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
     liveView.sendEvent(ExecLiveEvent(
         type: 'form',
         name: getAttribute(eventKind)!,
-        value: queryString.Encoder().convert(nonNullValues)));
+        value: qs.Encoder().convert(nonNullValues)));
   }
 
   @override
@@ -82,6 +82,10 @@ class _LiveFormState extends StateWidget<LiveForm> {
             if (event.type == FormFieldEventType.change) {
               sendFormEvent('phx-change', target: event.name);
             } else if (event.type == FormFieldEventType.submit) {
+              var method = getAttribute('method');
+              if (method == 'POST') {
+                widget.state.liveView.postForm(formValues);
+              }
               sendFormEvent('phx-submit', target: event.name);
             }
             return true;

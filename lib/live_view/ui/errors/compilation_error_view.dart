@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as htmlparser;
 import 'package:html/dom.dart' as dom;

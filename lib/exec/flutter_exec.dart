@@ -68,6 +68,9 @@ class FlutterExecAction {
       ..add(['phx-href'], (value, attributes) {
         return ExecPhxHref(url: value!['name']);
       })
+      ..add(['phx-href-modal'], (value, attributes) {
+        return ExecPhxHrefModal(url: value!['name']);
+      })
       ..add(['goBack'], (_, __) => ExecGoBack())
       ..add(['switchTheme'], (value, attributes) {
         return ExecSwitchTheme(theme: value!['theme'], mode: value['mode']);

@@ -1,8 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:json_theme/json_theme.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 
 class ThemeSettings extends ChangeNotifier {
   http.Client httpClient = http.Client();
@@ -67,7 +69,7 @@ class ThemeSettings extends ChangeNotifier {
           throw Exception('unreachable');
       }
     } catch (e, stack) {
-      print(stack);
+      log(e.toString(), stackTrace: stack);
     }
     notifyListeners();
   }
