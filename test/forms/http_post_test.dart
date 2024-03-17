@@ -51,7 +51,7 @@ main() async {
   });
 
   testWidgets('supports form redirects', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
+    var (view, _) = await connect(LiveView(), rendered: {
       's': [
         """
           <Form method="POST">
