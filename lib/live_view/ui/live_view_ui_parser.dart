@@ -74,6 +74,42 @@ class LiveViewUiParser {
 
   (List<Widget>, NodeState?) parse() => parseHtml(html, _htmlVariables, []);
 
+  String recursiveRender(
+    List<String> html,
+    Map<String, dynamic> variables,
+    Map<String, dynamic> components,
+    String? componentId,
+    List<int> nestedState,
+  ) {
+    return html.joinWith((i) {
+      if (variables.containsKey(i.toString())) {
+        var injectedValue = variables[i.toString()].toString().trim();
+
+        if (variables[i.toString()] is num &&
+            components.containsKey(injectedValue)) {
+          return recursiveRender(
+            List<String>.from(components[injectedValue]?["s"] ?? []),
+            Map<String, dynamic>.from(components[injectedValue]),
+            components,
+            injectedValue,
+            nestedState,
+          );
+        }
+
+        if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
+          var split = injectedValue.indexOf('="');
+          var key = injectedValue.substring(0, split);
+          return ' $key="[[flutterState key=$i]]" ';
+        }
+      }
+      if (componentId != null) {
+        return '[[flutterState key=$i component=$componentId]]';
+      }
+
+      return '[[flutterState key=$i]]';
+    }).trim();
+  }
+
   (List<Widget>, NodeState?) parseHtml(List<String> html,
       final Map<String, dynamic> variables, List<int> nestedState) {
     var htmlVariables = Map<String, dynamic>.from(variables);
@@ -81,17 +117,13 @@ class LiveViewUiParser {
       return ([const SizedBox.shrink()], null);
     }
 
-    var fullHtml = html.joinWith((i) {
-      if (variables.containsKey(i.toString())) {
-        var injectedValue = variables[i.toString()].toString().trim();
-        if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
-          var split = injectedValue.indexOf('="');
-          var key = injectedValue.substring(0, split);
-          return ' $key="[[flutterState key=$i]]" ';
-        }
-      }
-      return '[[flutterState key=$i]]';
-    }).trim();
+    var fullHtml = recursiveRender(
+      html,
+      variables,
+      variables['c'] ?? {},
+      null,
+      nestedState,
+    );
 
     late XmlDocument xml;
 

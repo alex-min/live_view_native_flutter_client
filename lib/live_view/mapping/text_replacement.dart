@@ -2,12 +2,19 @@ import 'package:html_unescape/html_unescape.dart';
 import 'package:xml/xml.dart';
 
 String replaceVariables(String content, Map<String, dynamic> variables) {
+  final components = Map<String, dynamic>.from(variables["c"] ?? {});
   for (var item in variables.entries) {
     content = content.replaceAll(
         '<flutterState key="${item.key}"></flutterState>',
         item.value.toString());
     content = content.replaceAll(
         '[[flutterState key=${item.key}]]', item.value.toString());
+
+    for (var componentId in components.keys) {
+      content = content.replaceAll(
+          "[[flutterState key=${item.key} component=$componentId]]",
+          components[componentId]?[item.key]?.toString() ?? "");
+    }
   }
   content = content.replaceAll(RegExp(r'\[\[flutterState key=\d+\]\]'), '');
   return content;
