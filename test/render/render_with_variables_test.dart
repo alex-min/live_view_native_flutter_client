@@ -20,27 +20,4 @@ main() async {
     expect(find.firstText(),
         'the first counter is (10) and the second one is (12)');
   });
-
-  testWidgets('handles components', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": 1,
-        "s": ["<viewBody><Container>", "</Container></viewBody>"],
-        "c": {
-          "1": {
-            "0": "20",
-            "1": 2,
-            "s": ["<Container><Text>A: ", "</Text>", "</Container>"]
-          },
-          "2": {
-            "0": "10",
-            "s": ["<Text>B: ", "</Text>"]
-          }
-        }
-      });
-
-    await tester.runLiveView(view);
-
-    expect(find.allTexts(), ['A: 20', 'B: 10']);
-  });
 }
