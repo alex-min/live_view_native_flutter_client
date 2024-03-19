@@ -18,7 +18,8 @@ mixin ComputedAttributes {
 
   bool isKeyListened(String key) =>
       computedAttributes.listenedKeys.contains(key) ||
-      extraKeysListened.contains(key);
+      extraKeysListened.contains(key) ||
+      key == 'c';
 
   void addListenedKey(String key) {
     if (!extraKeysListened.contains(key)) {
