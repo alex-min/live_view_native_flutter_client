@@ -29,10 +29,19 @@ typedef EventHandler = void Function(BuildContext context);
 
 abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     with TickerProviderStateMixin, AttributeHelpers, ComputedAttributes {
+  /// What is notifying the widget of changes
+  /// When the page received a diff, this is going to be notified through the stateNotifier
   late StateNotifier stateNotifier;
+
+  /// Animation used for hiding or showing the widget (in milliseconds)
   int? animationDuration;
   Status status = Status.visible;
   late StreamSubscription _eventSubscription;
+
+  /// Dirty flag to indicate that the state needs wiping.
+  /// The state isn't wiped instantly due to some side effects when switching views.
+  /// It would make the view appear janky when we switch from one page to the other
+  /// The state is wiped on the next rerender.
   bool _dirty = false;
 
   @override
@@ -85,6 +94,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
   }
 
+  /// called on page change
   void onWipeState() {
     _dirty = true;
 
@@ -93,8 +103,21 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
   }
 
+  /// Called after a diff event from the server on the page
+  /// Widgets have to override this method.
+  ///
+  /// Usually widgets call a method ```reloadAttribute``` this way:
+  /// ```
+  /// reloadAttributes(node, ['my-attribute1', 'my-attribute2']);
+  /// ```
+  /// Since this is called on every diff event from the server and before the widget is refreshed.
   void onStateChange(Map<String, dynamic> diff);
 
+  /// Called when the form has to be reinitialized.
+  /// Mainly called on page changes.
+  ///
+  /// Widgets inheriting from this widget can override this method if needed to execute some code when the form initialize.
+  /// This can be used to reset some values for example.
   void onFormInitialize() {}
 
   void onDiffUpdateEvent() {
@@ -118,6 +141,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   List<Widget> multipleChildren({NodeState? state}) =>
       StateChild.multipleChildren(state ?? widget.state);
 
+  /// This is wiping any state the widget holds
+  /// Called after changing pages
   void executeDirty() {
     if (_dirty) {
       _dirty = false;
@@ -194,6 +219,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     return actions;
   }
 
+  /// hiding the current widget with an animation
+  /// Does nothing if the widget is already hidden or not on the page
   void hide(ExecHideAction action) {
     if (status == Status.hidden ||
         !mounted ||
@@ -204,6 +231,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     animationDuration = action.timeInMilliseconds ?? 0;
   }
 
+  /// shows back the current widget with an animation
+  /// Does nothing if the widget is already fully visible or not on the page
   void show(ExecShowAction action) {
     if (status == Status.visible ||
         !mounted ||
@@ -214,6 +243,9 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     animationDuration = action.timeInMilliseconds ?? 0;
   }
 
+  /// You can call hide or show events on a id which is anywhere in the page
+  /// To support that, each widget is listening to global events and checks if the id matches the current widget itself.
+  /// The ids work exactly as the id attribute in the HTML DOM
   void handleGlobalAction(FlutterExecAction action) {
     if (!mounted) {
       return;
@@ -237,6 +269,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
   }
 
+  /// Executes a list of events which are already built before by another method
+  /// Those events can be tap events, navigation events or anything else.
   void executeAllEvents(List<EventHandler> events) {
     for (var event in events) {
       event(context);
@@ -269,6 +303,16 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     executeAllEvents(events);
   }
 
+  /// Called when the window is being resized
+  /// This is used to build responsive navigation
+  /// You can do things like this on the server side:
+  /// ```xml
+  /// <NavigationRail labelType="all" selectedIndex="0"
+  ///     phx-responsive={Dart.show()}
+  ///     phx-responsive-when="screen-md"> ...
+  /// </NavigationRail>
+  /// ```
+  /// See ```lib/when/when.dart``` for a list of all the breakpoints
   void onWindowResize() {
     if (!widget.state.isOnTheCurrentPage) {
       return;
@@ -310,6 +354,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   Widget render(BuildContext context);
 
+  /// The client handles phx-click on every widgets
+  /// For most widgets like ```<Text>```, you can just wrap it in a ```MouseRegion``` and it will handle the tap event.
+  /// This is what ```HandleClickState.automatic``` is for (and the default)
+  ///
+  /// For other widgets like ```<ElevatedButton>```, taping has a specific meaning.
+  /// The widget has to handle the tap events itself and call ```executeTapEventsManually();``` when needed
+  /// This is ```HandleClickState.manual``` is for
   HandleClickState handleClickState() {
     return HandleClickState.automatic;
   }
@@ -322,6 +373,31 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
   }
 
+  /// In Flutter, components can accept either a single child or multiple children but not both.
+  /// How the client reconciles this is to add a `Column` widget if needed to behave more like HTML.
+  /// Raw text elements in the xml payload are transformed into a basic Flutter `Text` widget.
+  /// Those two buttons are equivalent:
+  ///
+  /// ```xml
+  /// <ElevatedButton>Click me</ElevatedButton>
+  /// <ElevatedButton><Text>Click me</Text></ElevatedButton>
+  /// ```
+  ///
+  /// And those two buttons are exactly rendered the same way as well:
+  ///
+  /// ```xml
+  /// <ElevatedButton>
+  ///     <Column>
+  ///         <Text>Click</Text>
+  ///         <Text> me</Text>
+  ///     </Column>
+  /// </ElevatedButton>
+  ///
+  /// <ElevatedButton>
+  ///     <Text>Click</Text>
+  ///     <Text> me</Text>
+  /// </ElevatedButton>
+  /// ```
   Widget body(List<Widget> children) {
     switch (children.length) {
       case 0:
