@@ -3,6 +3,9 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/live_view_ui_parser.dart';
 import 'package:xml/xml.dart';
 
+/// NodeState represents the state of an XML node
+///
+/// It contains both the node itself and the local variables associated to it
 class NodeState {
   final XmlNode node;
   final Map<String, dynamic> variables;
