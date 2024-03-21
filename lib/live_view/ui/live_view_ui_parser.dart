@@ -176,6 +176,8 @@ class LiveViewUiParser {
       ..add(['Expanded'], (state) => [LiveExpanded(state: state)])
       ..add(['FilledButton'], (state) => [LiveFilledButton(state: state)])
       ..add(['viewBody'], (state) => [LiveViewBody(state: state)])
+      // Those xml nodes are transparent and aren't rendered in the client
+      // We just traverse them
       ..add(['compiled-lvn-stylesheet', 'div', 'flutter'], (state) {
         List<Widget> ret = [];
         for (var node in state.node.nonEmptyChildren) {

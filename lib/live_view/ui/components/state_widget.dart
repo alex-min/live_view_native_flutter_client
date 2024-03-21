@@ -79,6 +79,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     super.dispose();
   }
 
+  /// Executes all the onload events registred on the widget in the xml
   void onLoad() {
     List<EventHandler> onLoadEvents = [];
 
@@ -86,6 +87,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     executeAllEvents(onLoadEvents);
   }
 
+  /// We are wiping the state when going back.
   void onGoBack() {
     _dirty = true;
     executeDirty();
@@ -133,6 +135,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
   }
 
+  // a shorthand to get the current xml node & state associated
   XmlNode get node => widget.state.node;
 
   Widget singleChild({NodeState? state}) =>
