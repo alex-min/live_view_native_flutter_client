@@ -1,4 +1,5 @@
 import 'package:html_unescape/html_unescape.dart';
+import 'package:liveview_flutter/live_view/state/listen_node.dart';
 import 'package:xml/xml.dart';
 
 String replaceVariables(String content, Map<String, dynamic> variables) {
@@ -20,21 +21,23 @@ String replaceVariables(String content, Map<String, dynamic> variables) {
   return content;
 }
 
-List<String> extractDynamicKeys(String input) {
-  var matches =
-      RegExp(r'\[\[flutterState key=(?<key>\d+)\]\]').allMatches(input);
-  List<String> ret = [];
+List<ListenNode> extractDynamicKeys(String input) {
+  var matches = RegExp(
+          r'\[\[flutterState key=(?<key>\d+)(?: component=(?<component>\d+))?\]\]')
+      .allMatches(input);
+  List<ListenNode> ret = [];
   for (var match in matches) {
     var key = match.group(1);
+    var component = match.group(2);
     if (key != null && !ret.contains(key)) {
-      ret.add(key);
+      ret.add(ListenNode(key, component));
     }
   }
 
   return ret;
 }
 
-(String?, String?) getVariableAttribute(
+(String?, ListenNode?) getVariableAttribute(
   XmlNode node,
   String attribute,
   Map<String, dynamic> variables,
@@ -56,14 +59,17 @@ List<String> extractDynamicKeys(String input) {
         content = content.substring(0, content.length - 1);
       }
     }
-    return (attr.replaceAll("[[flutterState key=$key]]", content), key);
+    return (
+      attr.replaceAll("[[flutterState key=$key]]", content),
+      ListenNode(key)
+    );
   }
   return (attr, null);
 }
 
 class VariableAttributes {
   Map<String, String?> attributes;
-  List<String> listenedKeys;
+  List<ListenNode> listenedKeys;
 
   VariableAttributes(this.attributes, this.listenedKeys);
 

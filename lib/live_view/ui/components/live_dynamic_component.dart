@@ -39,16 +39,42 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
       return child ?? const SizedBox.shrink();
     }
 
-    for (var key in extraKeysListened) {
+    for (var listenNode in extraKeysListened) {
+      var key = listenNode.key;
+      if (listenNode.isComponent && lastLiveDiff.containsKey("c")) {
+        if (lastLiveDiff['c'][listenNode.component][listenNode.key] is Map) {
+          // new component
+          if (lastLiveDiff['c'][listenNode.component][listenNode.key]
+              .containsKey('s')) {
+            var newState = List<int>.from(widget.state.nestedState);
+            newState.add(int.parse(listenNode.key));
+
+            // TODO: handle multiple children passed here and turn it into a column
+            child = widget.state.parser
+                .parseHtml(
+                    List<String>.from(lastLiveDiff['c'][listenNode.component]
+                        [listenNode.key]['s']),
+                    Map<String, dynamic>.from(lastLiveDiff['c']
+                        [listenNode.component][listenNode.key]),
+                    newState)
+                .$1
+                .first;
+            return child!;
+          }
+        }
+      }
+
       if (lastLiveDiff[key] is Map) {
         // new component
         if (lastLiveDiff[key].containsKey('s')) {
           var newState = List<int>.from(widget.state.nestedState);
-          newState.add(int.parse(key));
+          newState.add(int.parse(listenNode.key));
           // TODO: handle multiple children passed here and turn it into a column
           child = widget.state.parser
-              .parseHtml(List<String>.from(lastLiveDiff[key]['s']),
-                  Map<String, dynamic>.from(lastLiveDiff[key]), newState)
+              .parseHtml(
+                  List<String>.from(lastLiveDiff[listenNode.key]['s']),
+                  Map<String, dynamic>.from(lastLiveDiff[listenNode.key]),
+                  newState)
               .$1
               .first;
           return child!;

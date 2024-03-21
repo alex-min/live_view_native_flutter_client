@@ -42,14 +42,14 @@ List<Widget> renderDynamicComponent(NodeState state) {
   List<Widget> comps = [];
 
   var variables = state.variables;
-  for (var key in extractDynamicKeys(state.node.toString())) {
-    var currentVariables = variables[key];
+  for (var listenNode in extractDynamicKeys(state.node.toString())) {
+    var currentVariables = variables[listenNode.key];
     if (currentVariables is Map && currentVariables.containsKey('d')) {
       var html = currentVariables['s'];
 
       for (var i = 0; i < currentVariables['d'].length; i++) {
         var newState = List<int>.from(state.nestedState);
-        newState.add(int.parse(key));
+        newState.add(int.parse(listenNode.key));
         newState.add(i);
 
         comps.addAll(state.parser
