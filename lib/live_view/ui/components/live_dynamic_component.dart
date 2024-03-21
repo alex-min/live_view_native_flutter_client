@@ -61,10 +61,13 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
                 .first;
             return child!;
           }
+        } else if (lastLiveDiff['c'][listenNode.component][listenNode.key]
+                is String &&
+            lastLiveDiff['c'][listenNode.component][listenNode.key].trim() ==
+                '') {
+          return const SizedBox.shrink();
         }
-      }
-
-      if (lastLiveDiff[key] is Map) {
+      } else if (lastLiveDiff[key] is Map) {
         // new component
         if (lastLiveDiff[key].containsKey('s')) {
           var newState = List<int>.from(widget.state.nestedState);
