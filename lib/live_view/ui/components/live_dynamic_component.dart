@@ -88,7 +88,7 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
       } else {
         // in-text replacement
         if (lastLiveDiff[key] is String && lastLiveDiff[key].trim() == '') {
-          return child ?? const SizedBox.shrink();
+          return const SizedBox.shrink();
         }
 
         if (lastLiveDiff[key] == null) {
