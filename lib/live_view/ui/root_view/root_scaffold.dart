@@ -3,6 +3,7 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/mapping/floating_action_button_location.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/state/computed_attributes.dart';
+import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
@@ -61,7 +62,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     rootNode = currentRoot;
     var lastLiveDiff =
         widget.view.changeNotifier.getNestedDiff(currentRoot.nestedState);
-    if (lastLiveDiff.keys.any((key) => isKeyListened(key))) {
+    if (lastLiveDiff.keys.any((key) => isKeyListened(ElementKey(key)))) {
       currentVariables.addAll(lastLiveDiff);
       onStateChange(lastLiveDiff);
       reloadPredefinedAttributes(currentRoot.node);

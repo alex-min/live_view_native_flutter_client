@@ -39,31 +39,31 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
       return child ?? const SizedBox.shrink();
     }
 
-    for (var listenNode in extraKeysListened) {
-      var key = listenNode.key;
-      if (listenNode.isComponent && lastLiveDiff.containsKey("c")) {
-        if (lastLiveDiff['c'][listenNode.component][listenNode.key] is Map) {
+    for (var elementKey in extraKeysListened) {
+      var key = elementKey.key;
+      if (elementKey.isComponent && lastLiveDiff.containsKey("c")) {
+        if (lastLiveDiff['c'][elementKey.component][elementKey.key] is Map) {
           // new component
-          if (lastLiveDiff['c'][listenNode.component][listenNode.key]
+          if (lastLiveDiff['c'][elementKey.component][elementKey.key]
               .containsKey('s')) {
             var newState = List<int>.from(widget.state.nestedState);
-            newState.add(int.parse(listenNode.key));
+            newState.add(int.parse(elementKey.key));
 
             // TODO: handle multiple children passed here and turn it into a column
             child = widget.state.parser
                 .parseHtml(
-                    List<String>.from(lastLiveDiff['c'][listenNode.component]
-                        [listenNode.key]['s']),
+                    List<String>.from(lastLiveDiff['c'][elementKey.component]
+                        [elementKey.key]['s']),
                     Map<String, dynamic>.from(lastLiveDiff['c']
-                        [listenNode.component][listenNode.key]),
+                        [elementKey.component][elementKey.key]),
                     newState)
                 .$1
                 .first;
             return child!;
           }
-        } else if (lastLiveDiff['c'][listenNode.component][listenNode.key]
+        } else if (lastLiveDiff['c'][elementKey.component][elementKey.key]
                 is String &&
-            lastLiveDiff['c'][listenNode.component][listenNode.key].trim() ==
+            lastLiveDiff['c'][elementKey.component][elementKey.key].trim() ==
                 '') {
           return const SizedBox.shrink();
         }
@@ -71,12 +71,12 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
         // new component
         if (lastLiveDiff[key].containsKey('s')) {
           var newState = List<int>.from(widget.state.nestedState);
-          newState.add(int.parse(listenNode.key));
+          newState.add(int.parse(elementKey.key));
           // TODO: handle multiple children passed here and turn it into a column
           child = widget.state.parser
               .parseHtml(
-                  List<String>.from(lastLiveDiff[listenNode.key]['s']),
-                  Map<String, dynamic>.from(lastLiveDiff[listenNode.key]),
+                  List<String>.from(lastLiveDiff[elementKey.key]['s']),
+                  Map<String, dynamic>.from(lastLiveDiff[elementKey.key]),
                   newState)
               .$1
               .first;

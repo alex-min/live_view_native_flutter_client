@@ -1,11 +1,11 @@
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
-import 'package:liveview_flutter/live_view/state/listen_node.dart';
+import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:xml/xml.dart';
 
 mixin ComputedAttributes {
   VariableAttributes computedAttributes = VariableAttributes({}, []);
-  List<ListenNode> extraKeysListened = [];
+  List<ElementKey> extraKeysListened = [];
   var defaultListenedAttributes = [
     'phx-click',
     'id',
@@ -17,14 +17,14 @@ mixin ComputedAttributes {
   ];
   Map<String, dynamic> currentVariables = {};
 
-  bool isKeyListened(String key) =>
+  bool isKeyListened(ElementKey key) =>
       computedAttributes.listenedKeys.contains(key) ||
       extraKeysListened.contains(key) ||
-      key == 'c';
+      key.key == 'c';
 
-  void addListenedKey(ListenNode node) {
-    if (!extraKeysListened.contains(node)) {
-      extraKeysListened.add(node);
+  void addListenedKey(ElementKey key) {
+    if (!extraKeysListened.contains(key)) {
+      extraKeysListened.add(key);
     }
   }
 

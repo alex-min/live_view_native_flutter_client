@@ -1,5 +1,5 @@
-class ListenNode {
-  ListenNode(this.key, [this.component]);
+class ElementKey {
+  ElementKey(this.key, [this.component]);
 
   final String key;
   final String? component;
@@ -7,7 +7,7 @@ class ListenNode {
 
   @override
   bool operator ==(Object other) {
-    if (other is! ListenNode) return false;
+    if (other is! ElementKey) return false;
     if (key != other.key) return false;
     if (component != other.component) return false;
     return true;
@@ -23,6 +23,6 @@ class ListenNode {
 
   @override
   String toString() {
-    return 'ListenNode{key: $key, component: $component, isComponent: $isComponent}';
+    return 'ElementKey{key: $key, component: $component, isComponent: $isComponent}';
   }
 }
