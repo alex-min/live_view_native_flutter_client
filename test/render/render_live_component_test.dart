@@ -137,4 +137,53 @@ main() async {
 
     expect(find.allTexts(), ['Hello world', 'New Home']);
   });
+
+  testWidgets('handles a nested update inside a dynamic component',
+      (tester) async {
+    var view = LiveView()
+      ..handleRenderedMessage({
+        "0": 1,
+        "s": ["<Container>", "</Container>"],
+        "c": {
+          "1": {
+            "0": "world",
+            "1": "",
+            "s": ["<Container><Text>Hello ", "</Text>", "</Container>"]
+          }
+        }
+      });
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    expect(find.allTexts(), ['Hello world']);
+
+    view.handleDiffMessage({
+      "0": 1,
+      "c": {
+        "1": {
+          "0": "mars",
+          "1": {
+            "0": "1",
+            "s": ["<Text>Counter: ", "</Text>"]
+          }
+        }
+      }
+    });
+    await tester.pump();
+
+    expect(find.allTexts(), ['Hello mars', 'Counter: 1']);
+
+    view.handleDiffMessage({
+      "0": 1,
+      "c": {
+        "1": {
+          "0": "mars",
+          "1": {"0": "2"}
+        }
+      }
+    });
+    await tester.pump();
+
+    expect(find.allTexts(), ['Hello mars', 'Counter: 2']);
+  });
 }
