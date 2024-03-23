@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
@@ -34,42 +35,53 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
 
   @override
   Widget render(BuildContext context) {
-    var text = widget.state.node.toString().trim();
-    if (text == '') {
-      return child ?? const SizedBox.shrink();
-    }
-
-    for (var key in extraKeysListened) {
-      if (lastLiveDiff[key] is Map) {
-        // new component
-        if (lastLiveDiff[key].containsKey('s')) {
-          var newState = List<int>.from(widget.state.nestedState);
-          newState.add(int.parse(key));
-          // TODO: handle multiple children passed here and turn it into a column
-          child = widget.state.parser
-              .parseHtml(List<String>.from(lastLiveDiff[key]['s']),
-                  Map<String, dynamic>.from(lastLiveDiff[key]), newState)
-              .$1
-              .first;
-          return child!;
-        } else {
-          // only updating child props
-          return child ?? const SizedBox.shrink();
-        }
-      } else {
-        // in-text replacement
-        if (lastLiveDiff[key] is String && lastLiveDiff[key].trim() == '') {
-          return child ?? const SizedBox.shrink();
-        }
-
-        if (lastLiveDiff[key] == null) {
-          return child ?? const SizedBox.shrink();
-        }
-
-        return child ?? LiveText(state: widget.state);
+    for (ElementKey elementKey in extraKeysListened) {
+      var result = _handleElementKey(elementKey);
+      if (result != null) {
+        return child = result;
       }
     }
 
     return child ?? LiveText(state: widget.state);
+  }
+
+  Widget? _handleElementKey(ElementKey elementKey) {
+    var diffEntry = elementKey.isComponent
+        ? lastLiveDiff['c'][elementKey.component][elementKey.key]
+        : lastLiveDiff[elementKey.key];
+
+    if (diffEntry is String && diffEntry.trim() == '') {
+      return const SizedBox.shrink();
+    }
+
+    if (diffEntry is Map) {
+      return _handleMapDiffEntry(diffEntry, elementKey);
+    }
+    return null;
+  }
+
+  Widget? _handleMapDiffEntry(Map diffEntry, ElementKey elementKey) {
+    if (!diffEntry.containsKey('s')) {
+      // only updating child props
+      return null;
+    }
+
+    var newState = List<String>.from(widget.state.nestedState);
+
+    if (!newState.contains('c') && elementKey.isComponent) {
+      newState.add('c');
+      newState.add(elementKey.component!);
+    }
+
+    newState.add(elementKey.key);
+    // TODO: handle multiple children passed here and turn it into a column
+    return widget.state.parser
+        .parseHtml(
+          List<String>.from(diffEntry['s']),
+          Map<String, dynamic>.from(diffEntry),
+          newState,
+        )
+        .$1
+        .first;
   }
 }

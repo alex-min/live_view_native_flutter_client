@@ -41,28 +41,32 @@ Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
 List<Widget> renderDynamicComponent(NodeState state) {
   List<Widget> comps = [];
 
-  var variables = state.variables;
-  for (var key in extractDynamicKeys(state.node.toString())) {
-    var currentVariables = variables[key];
-    if (currentVariables is Map && currentVariables.containsKey('d')) {
-      var html = currentVariables['s'];
+  for (var elementKey in extractDynamicKeys(state.node.toString())) {
+    var currentVariables = state.variables[elementKey.key];
+    if (currentVariables is! Map || !currentVariables.containsKey('d')) {
+      continue;
+    }
 
-      for (var i = 0; i < currentVariables['d'].length; i++) {
-        var newState = List<int>.from(state.nestedState);
-        newState.add(int.parse(key));
-        newState.add(i);
-
-        comps.addAll(state.parser
-            .parseHtml(List<String>.from(html), currentVariables[i.toString()],
-                newState)
-            .$1);
+    for (var i = 0; i < currentVariables['d'].length; i++) {
+      var newState = List<String>.from(state.nestedState);
+      if (!newState.contains('c') && elementKey.isComponent) {
+        newState.remove('c');
+        newState.add(elementKey.component!);
       }
+      newState.add(elementKey.key);
+      newState.add(i.toString());
+
+      comps.addAll(
+        state.parser
+            .parseHtml(
+              List<String>.from(currentVariables['s']),
+              currentVariables[i.toString()],
+              newState,
+            )
+            .$1,
+      );
     }
   }
 
-  if (comps.isNotEmpty) {
-    return comps;
-  }
-
-  return [LiveDynamicComponent(state: state)];
+  return (comps.isNotEmpty) ? comps : [LiveDynamicComponent(state: state)];
 }

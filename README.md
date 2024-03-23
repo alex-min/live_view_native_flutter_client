@@ -19,7 +19,6 @@ Here is a navigation and theme switching demo (the theme is also defined server 
 
 https://github.com/alex-min/live_view_native_flutter_client/assets/1898825/a6032bfa-d696-4093-8b1b-bd0771364c87
 
-
 Please see the announcement here: https://alex-min.fr/live-view-native-flutter-release/
 
 ## Getting Started
@@ -43,6 +42,7 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 - Live reloading
 - Responsive navigation
 - Basic Images support
+- Live Components
 
 ## What is missing?
 
@@ -63,9 +63,8 @@ As you see on this list, the client isn't fully usable for a real app yet.
 ## Philosophy
 
 - The Flutter client should support absolutely everything to make a real app
-- Users of this client should almost never dive into the flutter code, the client should be as complete and extensive as possible. 
+- Users of this client should almost never dive into the flutter code, the client should be as complete and extensive as possible.
 - The client should be extendable in the future and available as a flutter package
-
 
 ## What does the code looks like?
 
@@ -104,4 +103,3 @@ This is an example of the code on the server:
     """
   end
 ```
-

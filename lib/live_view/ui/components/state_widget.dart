@@ -9,6 +9,7 @@ import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
 import 'package:liveview_flutter/live_view/state/attribute_helpers.dart';
 import 'package:liveview_flutter/live_view/state/computed_attributes.dart';
+import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/state/events.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
@@ -127,7 +128,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       return;
     }
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
-    if (lastLiveDiff.keys.any((key) => isKeyListened(key))) {
+    if (lastLiveDiff.keys.any((key) => isKeyListened(ElementKey(key)))) {
       currentVariables.addAll(lastLiveDiff);
       onStateChange(lastLiveDiff);
       reloadPredefinedAttributes(node);

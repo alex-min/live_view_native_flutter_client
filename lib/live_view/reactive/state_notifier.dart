@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 
 Map<String, dynamic> nestedDiff(
-    Map<String, dynamic> diff, List<int> nestedState) {
+    Map<String, dynamic> diff, List<String> nestedState) {
   var fullDiff = diff;
   var currentDiff = fullDiff;
   for (var state in nestedState) {
-    if (currentDiff.containsKey(state.toString())) {
-      if (currentDiff[state.toString()] == '') {
+    if (currentDiff.containsKey(state)) {
+      if (currentDiff[state] == '') {
         currentDiff = {};
       } else {
-        currentDiff = Map<String, dynamic>.from(currentDiff[state.toString()]);
+        currentDiff = Map<String, dynamic>.from(currentDiff[state]);
       }
     }
   }
@@ -34,6 +34,6 @@ class StateNotifier extends ChangeNotifier {
 
   Map<String, dynamic> getDiff() => _diff;
 
-  Map<String, dynamic> getNestedDiff(List<int> nestedState) =>
+  Map<String, dynamic> getNestedDiff(List<String> nestedState) =>
       nestedDiff(_diff, nestedState);
 }
