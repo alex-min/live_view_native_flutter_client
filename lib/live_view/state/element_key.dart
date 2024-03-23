@@ -1,3 +1,5 @@
+import 'package:quiver/core.dart';
+
 class ElementKey {
   ElementKey(this.key, [this.component]);
 
@@ -14,12 +16,7 @@ class ElementKey {
   }
 
   @override
-  int get hashCode {
-    var result = 17;
-    result = 37 * result + key.hashCode;
-    result = 37 * result + component.hashCode;
-    return result;
-  }
+  int get hashCode => hash2(key, component);
 
   @override
   String toString() {
