@@ -147,7 +147,11 @@ main() async {
         "c": {
           "1": {
             "0": "world",
-            "1": "",
+            "1": {
+              "0": "1",
+              "1": "2",
+              "s": ["<Text>Counter: ", " - ", "</Text>"]
+            },
             "s": ["<Container><Text>Hello ", "</Text>", "</Container>"]
           }
         }
@@ -155,35 +159,20 @@ main() async {
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
-    expect(find.allTexts(), ['Hello world']);
+
+    expect(find.allTexts(), ['Hello world', 'Counter: 1 - 2']);
 
     view.handleDiffMessage({
       "0": 1,
       "c": {
         "1": {
           "0": "mars",
-          "1": {
-            "0": "1",
-            "s": ["<Text>Counter: ", "</Text>"]
-          }
+          "1": {"0": "2", "1": "3"}
         }
       }
     });
     await tester.pump();
 
-    expect(find.allTexts(), ['Hello mars', 'Counter: 1']);
-
-    view.handleDiffMessage({
-      "0": 1,
-      "c": {
-        "1": {
-          "0": "mars",
-          "1": {"0": "2"}
-        }
-      }
-    });
-    await tester.pump();
-
-    expect(find.allTexts(), ['Hello mars', 'Counter: 2']);
+    expect(find.allTexts(), ['Hello mars', 'Counter: 2 - 3']);
   });
 }
