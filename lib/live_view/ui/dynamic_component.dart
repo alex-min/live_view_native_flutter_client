@@ -58,6 +58,7 @@ List<Widget> renderDynamicComponent(NodeState state) {
               List<String>.from(currentVariables['s']),
               currentVariables[i.toString()],
               newState,
+              elementKey,
             )
             .$1,
       );

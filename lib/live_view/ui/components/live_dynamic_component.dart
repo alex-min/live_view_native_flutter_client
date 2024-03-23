@@ -74,6 +74,7 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
           List<String>.from(diffEntry['s']),
           Map<String, dynamic>.from(diffEntry),
           newState,
+          elementKey,
         )
         .$1
         .first;

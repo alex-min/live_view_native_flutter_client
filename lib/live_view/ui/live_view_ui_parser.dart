@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_action_chip.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_autocomplete.dart';
@@ -110,8 +111,12 @@ class LiveViewUiParser {
     }).trim();
   }
 
-  (List<Widget>, NodeState?) parseHtml(List<String> html,
-      final Map<String, dynamic> variables, List<int> nestedState) {
+  (List<Widget>, NodeState?) parseHtml(
+    List<String> html,
+    final Map<String, dynamic> variables,
+    List<int> nestedState, [
+    ElementKey? key,
+  ]) {
     var htmlVariables = Map<String, dynamic>.from(variables);
     if (html.isEmpty) {
       return ([const SizedBox.shrink()], null);
@@ -138,12 +143,14 @@ class LiveViewUiParser {
     }
 
     var state = NodeState(
-        urlPath: urlPath,
-        liveView: liveView,
-        node: xml.nonEmptyChildren.first,
-        variables: htmlVariables,
-        nestedState: nestedState,
-        parser: this);
+      urlPath: urlPath,
+      liveView: liveView,
+      node: xml.nonEmptyChildren.first,
+      variables: htmlVariables,
+      nestedState: nestedState,
+      componentId: key?.component,
+      parser: this,
+    );
     return (traverse(state), state);
   }
 
