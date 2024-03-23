@@ -10,10 +10,9 @@ class NodeState {
   final XmlNode node;
   final Map<String, dynamic> variables;
   final LiveViewUiParser parser;
-  final List<int> nestedState;
+  final List<String> nestedState;
   final LiveView liveView;
   final String urlPath;
-  final String? componentId;
   List<Widget> dynamicWidget;
 
   bool get isOnTheCurrentPage => urlPath == liveView.currentUrl;
@@ -25,7 +24,6 @@ class NodeState {
     required this.nestedState,
     required this.liveView,
     required this.urlPath,
-    this.componentId,
     this.dynamicWidget = const [],
   });
 
@@ -33,7 +31,7 @@ class NodeState {
     XmlNode? node,
     final Map<String, dynamic>? variables,
     LiveViewUiParser? parser,
-    List<int>? nestedState,
+    List<String>? nestedState,
     LiveView? liveView,
     String? urlPath,
     List<Widget>? dynamicWidget,
@@ -46,7 +44,6 @@ class NodeState {
         nestedState: nestedState ?? this.nestedState,
         liveView: liveView ?? this.liveView,
         urlPath: urlPath ?? this.urlPath,
-        componentId: componentId ?? this.componentId,
         dynamicWidget: dynamicWidget ?? this.dynamicWidget,
       );
 }

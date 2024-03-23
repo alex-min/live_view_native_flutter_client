@@ -48,9 +48,13 @@ List<Widget> renderDynamicComponent(NodeState state) {
     }
 
     for (var i = 0; i < currentVariables['d'].length; i++) {
-      var newState = List<int>.from(state.nestedState);
-      newState.add(int.parse(elementKey.key));
-      newState.add(i);
+      var newState = List<String>.from(state.nestedState);
+      if (!newState.contains('c') && elementKey.isComponent) {
+        newState.remove('c');
+        newState.add(elementKey.component!);
+      }
+      newState.add(elementKey.key);
+      newState.add(i.toString());
 
       comps.addAll(
         state.parser
@@ -58,7 +62,6 @@ List<Widget> renderDynamicComponent(NodeState state) {
               List<String>.from(currentVariables['s']),
               currentVariables[i.toString()],
               newState,
-              elementKey,
             )
             .$1,
       );

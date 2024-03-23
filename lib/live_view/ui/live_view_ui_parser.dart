@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
-import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_action_chip.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_autocomplete.dart';
@@ -80,7 +79,7 @@ class LiveViewUiParser {
     Map<String, dynamic> variables,
     Map<String, dynamic> components,
     String? componentId,
-    List<int> nestedState,
+    List<String> nestedState,
   ) {
     return html.joinWith((i) {
       if (variables.containsKey(i.toString())) {
@@ -114,9 +113,8 @@ class LiveViewUiParser {
   (List<Widget>, NodeState?) parseHtml(
     List<String> html,
     final Map<String, dynamic> variables,
-    List<int> nestedState, [
-    ElementKey? key,
-  ]) {
+    List<String> nestedState,
+  ) {
     var htmlVariables = Map<String, dynamic>.from(variables);
     if (html.isEmpty) {
       return ([const SizedBox.shrink()], null);
@@ -148,7 +146,6 @@ class LiveViewUiParser {
       node: xml.nonEmptyChildren.first,
       variables: htmlVariables,
       nestedState: nestedState,
-      componentId: key?.component,
       parser: this,
     );
     return (traverse(state), state);

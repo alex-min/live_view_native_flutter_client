@@ -66,15 +66,20 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
       return null;
     }
 
-    var newState = List<int>.from(widget.state.nestedState)
-      ..add(int.parse(elementKey.key));
+    var newState = List<String>.from(widget.state.nestedState);
+
+    if (!newState.contains('c') && elementKey.isComponent) {
+      newState.add('c');
+      newState.add(elementKey.component!);
+    }
+
+    newState.add(elementKey.key);
     // TODO: handle multiple children passed here and turn it into a column
     return widget.state.parser
         .parseHtml(
           List<String>.from(diffEntry['s']),
           Map<String, dynamic>.from(diffEntry),
           newState,
-          elementKey,
         )
         .$1
         .first;
