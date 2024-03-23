@@ -175,4 +175,62 @@ main() async {
 
     expect(find.allTexts(), ['Hello mars', 'Counter: 2 - 3']);
   });
+
+  testWidgets('handles a nested live_component update', (tester) async {
+    var view = LiveView()
+      ..handleRenderedMessage({
+        "0": 1,
+        "s": ["<Container>", "</Container>"],
+        "c": {
+          "1": {
+            "0": "world",
+            "1": {
+              "0": "1",
+              "1": "2",
+              "s": ["<Text>Counter1: ", " - ", "</Text>"]
+            },
+            "2": 2,
+            "s": ["<Container><Text>Hello ", "</Text>", "", "</Container>"]
+          },
+          "2": {
+            "0": {
+              "0": "1",
+              "1": "2",
+              "s": ["<Text>Counter2: ", " - ", "</Text>"]
+            },
+            "s": ["<Container>", "</Container>"]
+          }
+        }
+      });
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(find.allTexts(), [
+      'Hello world',
+      'Counter1: 1 - 2',
+      'Counter2: 1 - 2',
+    ]);
+
+    view.handleDiffMessage({
+      "0": 1,
+      "c": {
+        "1": {
+          "0": "mars",
+          "1": {"0": "2", "1": "3"},
+          "2": 2
+        },
+        "2": {
+          "0": {"0": "2", "1": "3"}
+        }
+      }
+    });
+    await tester.pump();
+
+    expect(find.allTexts(), [
+      'Hello mars',
+      'Counter1: 2 - 3',
+      'Counter2: 2 - 3',
+    ]);
+  });
 }
