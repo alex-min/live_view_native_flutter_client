@@ -8,7 +8,7 @@ main() async {
       (tester) async {
     var view = LiveView()
       ..handleRenderedMessage({
-        's': ['<div data-phx-main><Text>works</Text></div>'],
+        's': ['<div data-phx-main id="live_view_id"><Text>works</Text></div>'],
       });
 
     await tester.runLiveView(view);

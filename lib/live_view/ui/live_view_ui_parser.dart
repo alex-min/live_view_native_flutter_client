@@ -133,7 +133,7 @@ class LiveViewUiParser {
 
     // this is always injected in the xml and breaks the xml parser
     // the xml parser doesn't support html-like attributes without a property
-    fullHtml = fullHtml.replaceFirst(RegExp('<div.*data-phx-main'), '<div');
+    fullHtml = fullHtml.replaceFirst(RegExp('<div.*data-phx-main '), '<div ');
 
     try {
       xml = XmlDocument.parse(fullHtml);
