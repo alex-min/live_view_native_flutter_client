@@ -131,13 +131,17 @@ class LiveViewUiParser {
 
     late XmlDocument xml;
 
+    // this is always injected in the xml and breaks the xml parser
+    // the xml parser doesn't support html-like attributes without a property
+    fullHtml = fullHtml.replaceFirst(RegExp('<div.*data-phx-main '), '<div ');
+
     try {
       xml = XmlDocument.parse(fullHtml);
     } catch (e) {
       try {
         xml = XmlDocument.parse("<flutter>$fullHtml</flutter>");
       } catch (e) {
-        return ([ParsingErrorView(xml: html.join(), url: urlPath)], null);
+        return ([ParsingErrorView(xml: fullHtml, url: urlPath)], null);
       }
     }
 

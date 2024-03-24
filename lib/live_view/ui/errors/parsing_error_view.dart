@@ -39,6 +39,7 @@ class _ParsingErrorViewState extends State<ParsingErrorView> {
                   : widget.xml,
               style: const TextStyle(color: Colors.black, fontSize: 15))),
     ]);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: ListView(children: doc),
