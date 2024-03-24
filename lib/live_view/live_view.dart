@@ -172,6 +172,7 @@ class LiveView {
           .toList()
           .join(', '),
       'User-Agent': 'Flutter Live View - ${getPlatformName()}',
+      'Accept': 'text/flutter',
     };
 
     if (_cookie != null) {
@@ -229,6 +230,7 @@ class LiveView {
         '_mounts': mount.toString(),
         'client_id': _clientId,
         '_platform': 'flutter',
+        '_format': 'flutter',
         '_lvn': {'format': 'flutter', 'os': getPlatformName()},
         'vsn': '2.0.0'
       };
@@ -282,8 +284,14 @@ class LiveView {
 
     _liveReloadSocket = liveSocket.create(
         url: "$websocketScheme://$host/phoenix/live_reload/socket/websocket",
-        params: {'_platform': 'flutter', 'vsn': '2.0.0'},
-        headers: {});
+        params: {
+          '_platform': 'flutter',
+          'vsn': '2.0.0',
+          '_lvn': {'format': 'flutter', 'os': getPlatformName()}
+        },
+        headers: {
+          'Accept': 'text/flutter'
+        });
     var liveReload = _liveReloadSocket
         .addChannel(topic: "phoenix:live_reload", parameters: {});
     liveReload.messages.listen(handleLiveReloadMessage);
@@ -457,7 +465,10 @@ class LiveView {
   }
 
   Future<http.Response> deadViewGetQuery(String url) async {
-    var r = await httpClient.get(shortUrlToUri(url));
+    var r = await httpClient.get(
+      shortUrlToUri(url),
+      headers: {'accept': 'text/flutter'},
+    );
     if (r.headers['set-cookie'] != null) {
       _cookie = r.headers['set-cookie']!.split(' ')[0];
       if (_cookie?.endsWith(';') == true) {
