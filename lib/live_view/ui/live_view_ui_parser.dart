@@ -36,6 +36,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_tile.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_material_banner.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_modal.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
@@ -212,6 +213,7 @@ class LiveViewUiParser {
       ..add(['Expanded'], (state) => [LiveExpanded(state: state)])
       ..add(['FilledButton'], (state) => [LiveFilledButton(state: state)])
       ..add(['viewBody'], (state) => [LiveViewBody(state: state)])
+      ..add(['modal'], (state) => [LiveModal(state: state)])
       // Those xml nodes are transparent and aren't rendered in the client
       // We just traverse them
       ..add(['compiled-lvn-stylesheet', 'div', 'flutter'], (state) {
