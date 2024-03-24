@@ -66,7 +66,7 @@ class LiveView {
   late String? _phxStatic;
   late String _liveViewId;
   late String currentUrl;
-  String? _cookie;
+  String? cookie;
   late String endpointScheme;
   int mount = 0;
   EventHub eventHub = EventHub();
@@ -175,8 +175,8 @@ class LiveView {
       'Accept': 'text/flutter',
     };
 
-    if (_cookie != null) {
-      headers['Cookie'] = _cookie!;
+    if (cookie != null) {
+      headers['Cookie'] = cookie!;
     }
 
     return headers;
@@ -274,6 +274,7 @@ class LiveView {
 
   Future<void> redirectTo(String path) async {
     _channel?.push('phx_leave', {}).future;
+
     redirectToUrl = path;
   }
 
@@ -441,12 +442,10 @@ class LiveView {
         headers: httpHeaders(), body: formValues);
 
     if (r.headers['set-cookie'] != null) {
-      _cookie = r.headers['set-cookie']!.split(' ')[0];
-      if (_cookie?.endsWith(';') == true) {
-        _cookie = _cookie!.substring(0, _cookie!.length - 1);
-      }
+      cookie = Cookie.fromSetCookieValue(r.headers['set-cookie']!).toString();
     }
-    if (r.statusCode == 200) {
+
+    if (r.statusCode >= 200 && r.statusCode < 300) {
       var content = html.parse(r.body);
       _readInitialSession(content);
     }
@@ -465,15 +464,9 @@ class LiveView {
   }
 
   Future<http.Response> deadViewGetQuery(String url) async {
-    var r = await httpClient.get(
-      shortUrlToUri(url),
-      headers: {'accept': 'text/flutter'},
-    );
+    var r = await httpClient.get(shortUrlToUri(url), headers: httpHeaders());
     if (r.headers['set-cookie'] != null) {
-      _cookie = r.headers['set-cookie']!.split(' ')[0];
-      if (_cookie?.endsWith(';') == true) {
-        _cookie = _cookie!.substring(0, _cookie!.length - 1);
-      }
+      cookie = Cookie.fromSetCookieValue(r.headers['set-cookie']!).toString();
     }
 
     if (r.statusCode == 200) {
@@ -489,6 +482,7 @@ class LiveView {
         widget: loadingWidget(),
         rootState: router.pages.lastOrNull?.rootState);
     var response = await deadViewGetQuery(url);
+
     handleRenderedMessage({
       's': [response.body]
     });

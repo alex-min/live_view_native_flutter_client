@@ -229,7 +229,7 @@ Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
         <div data-phx-session="phx-session" data-phx-static="static" data-phx-main id="live_view_id"></div>
       """,
         200,
-        headers: {'set-cookie': 'live_view=session something'});
+        headers: {'set-cookie': 'live_view=session'});
   });
 
   view.liveSocket = socket;

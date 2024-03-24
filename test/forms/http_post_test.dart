@@ -13,7 +13,9 @@ var thanksPage = http.Response(
               <Text>thanks for sign-in in</Text>
             </viewBody>
           </flutter></div>
-        """, 200);
+        """,
+    200,
+    headers: {'set-cookie': 'live_view=session2'});
 
 main() async {
   testWidgets('supports http form posts', (tester) async {
@@ -48,6 +50,7 @@ main() async {
         'user%5Bemail%5D=contact%40example.org&_csrf_token=csrf');
     expect(formPost.url.toString(),
         'http://localhost:9999/?_lvn%5Bformat%5D=flutter');
+    expect(view.cookie, 'live_view=session2');
   });
 
   testWidgets('supports form redirects', (tester) async {
