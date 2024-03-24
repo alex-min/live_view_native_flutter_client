@@ -133,6 +133,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
           break;
         }
       }
+
       // TODO: not found page + body error page
       return body ??
           MissingPageComponent(
