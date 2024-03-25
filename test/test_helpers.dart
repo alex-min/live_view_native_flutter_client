@@ -251,6 +251,8 @@ class BaseEvents {
       EventSent('event', {'type': 'form', 'event': name, 'value': value});
   EventSent event(String event) =>
       EventSent('event', {'type': 'event', 'event': event, 'value': {}});
+  EventSent click(dynamic value, {String eventName = 'click_event'}) =>
+      EventSent('event', {'type': 'click', 'event': eventName, 'value': value});
 
   const BaseEvents();
 }

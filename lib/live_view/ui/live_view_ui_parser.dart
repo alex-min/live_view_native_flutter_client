@@ -42,6 +42,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_
 import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_scaffold_message.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_segmented_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_stack.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_subtitle_attribute.dart';
@@ -248,6 +249,7 @@ class LiveViewUiParser {
       ..add(['subtitle'], (state) => [LiveSubtitleAttribute(state: state)])
       ..add(['trailing'], (state) => [LiveTrailingAttribute(state: state)])
       ..add(['ListTile'], (state) => [LiveListTile(state: state)])
+      ..add(['ScaffoldMessage'], (state) => [LiveScaffoldMessage(state: state)])
       ..add(['meta', 'csrf-token', 'iframe'],
           (state) => [const SizedBox.shrink()]);
   }
