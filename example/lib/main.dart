@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/liveview_flutter.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
+}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -14,27 +17,28 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late LiveView view;
+  final LiveView view = LiveView();
 
   @override
   initState() {
-    boot();
+    Future.microtask(boot);
     super.initState();
   }
 
-  boot() async {
-    view = LiveView();
-
+  void boot() async {
     if (kIsWeb) {
       view.connectToDocs();
-    } else {
-      await view.connect(Platform.isAndroid
+      return;
+    }
+
+    await view.connect(
+      Platform.isAndroid
           ?
           // android emulator
           'http://10.0.2.2:4000'
           // computer
-          : 'http://localhost:4000/');
-    }
+          : 'http://localhost:4000/',
+    );
   }
 
   // This widget is the root of your application.
