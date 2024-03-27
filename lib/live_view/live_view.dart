@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
@@ -38,15 +39,26 @@ import 'package:uuid/uuid.dart';
 import './ui/live_view_ui_parser.dart';
 
 class LiveSocket {
-  PhoenixSocket create(
-          {required String url,
-          required Map<String, dynamic>? params,
-          required Map<String, String>? headers}) =>
-      PhoenixSocket(url,
-          socketOptions: PhoenixSocketOptions(
-            params: params,
-            headers: headers,
-          ));
+  PhoenixSocket create({
+    required String url,
+    required Map<String, dynamic>? params,
+    required Map<String, String>? headers,
+  }) {
+    return PhoenixSocket(
+      url,
+      socketOptions: PhoenixSocketOptions(
+        params: params,
+        headers: headers,
+        reconnectDelays: const [
+          Duration.zero,
+          Duration(milliseconds: 1000),
+          Duration(milliseconds: 2000),
+          Duration(milliseconds: 4000),
+          Duration(milliseconds: 8000),
+        ],
+      ),
+    );
+  }
 }
 
 class LiveView {
@@ -118,49 +130,65 @@ class LiveView {
     host = "${endpoint.host}:${endpoint.port}";
     themeSettings.httpClient = httpClient;
     themeSettings.host = "${endpoint.scheme}://$host";
+    bool initialized = false;
 
     currentUrl = endpoint.path == "" ? "/" : endpoint.path;
     endpointScheme = endpoint.scheme;
     try {
       var response = await deadViewGetQuery(currentUrl);
+      initialized = true;
 
       if (response.statusCode != 200) {
         _setupLiveReload();
         if (response.statusCode == 404) {
           router.pushPage(
-              url: 'error',
-              widget: [Error404(url: endpoint.toString())],
-              rootState: null);
+            url: 'error',
+            widget: [Error404(url: endpoint.toString())],
+            rootState: null,
+          );
         } else {
           router.pushPage(
-              url: 'error',
-              widget: [CompilationErrorView(html: response.body)],
-              rootState: null);
+            url: 'error',
+            widget: [CompilationErrorView(html: response.body)],
+            rootState: null,
+          );
         }
         return null;
       }
     } on SocketException catch (e, stack) {
       router.pushPage(
-          url: 'error',
-          widget: [
-            NoServerError(
-                error: FlutterErrorDetails(exception: e, stack: stack)),
-          ],
-          rootState: null);
+        url: 'error',
+        widget: [
+          NoServerError(
+            error: FlutterErrorDetails(exception: e, stack: stack),
+          ),
+        ],
+        rootState: null,
+      );
+
+      if (!initialized) autoReconnect(address);
     } catch (e, stack) {
       router.pushPage(
-          url: 'error',
-          widget: [
-            FlutterErrorView(
-                error: FlutterErrorDetails(exception: e, stack: stack))
-          ],
-          rootState: null);
+        url: 'error',
+        widget: [
+          FlutterErrorView(
+            error: FlutterErrorDetails(exception: e, stack: stack),
+          )
+        ],
+        rootState: null,
+      );
+
+      if (!initialized) autoReconnect(address);
       rethrow;
     }
 
     await reconnect();
 
     return _csrf;
+  }
+
+  void autoReconnect(String address) {
+    Timer(const Duration(seconds: 5), () => connect(address));
   }
 
   Map<String, String> httpHeaders() {
@@ -211,28 +239,35 @@ class LiveView {
           (content.querySelector('[data-phx-main]')?.attributes['id'])!;
     } catch (e, stack) {
       router.pushPage(
-          url: 'error',
-          widget: [
-            FlutterErrorView(
-                error: FlutterErrorDetails(
-                    exception: Exception(
-                        "unable to load the meta tags, please add the csrf-token, data-phx-session and data-phx-static tags in ${content.outerHtml}"),
-                    stack: stack))
-          ],
-          rootState: null);
+        url: 'error',
+        widget: [
+          FlutterErrorView(
+            error: FlutterErrorDetails(
+              exception: Exception(
+                "unable to load the meta tags, please add the csrf-token, data-phx-session and data-phx-static tags in ${content.outerHtml}",
+              ),
+              stack: stack,
+            ),
+          )
+        ],
+        rootState: null,
+      );
     }
   }
 
   String get websocketScheme => endpointScheme == 'https' ? 'wss' : 'ws';
 
+  Map<String, dynamic> _commonParams() => {
+        '_format': 'flutter',
+        '_lvn': {'os': getPlatformName()},
+        'vsn': '2.0.0',
+      };
+
   Map<String, dynamic> _socketParams() => {
+        ..._commonParams(),
         '_csrf_token': _csrf,
         '_mounts': mount.toString(),
         'client_id': _clientId,
-        '_platform': 'flutter',
-        '_format': 'flutter',
-        '_lvn': {'format': 'flutter', 'os': getPlatformName()},
-        'vsn': '2.0.0'
       };
 
   Map<String, dynamic> _fullsocketParams({bool redirect = false}) {
@@ -262,8 +297,9 @@ class LiveView {
 
   _setupPhoenixChannel({bool redirect = false}) async {
     _channel = _socket!.addChannel(
-        topic: "lv:$_liveViewId",
-        parameters: _fullsocketParams(redirect: redirect));
+      topic: "lv:$_liveViewId",
+      parameters: _fullsocketParams(redirect: redirect),
+    );
 
     _channel?.messages.listen(handleMessage);
 
@@ -273,9 +309,8 @@ class LiveView {
   }
 
   Future<void> redirectTo(String path) async {
-    _channel?.push('phx_leave', {}).future;
-
     redirectToUrl = path;
+    await _channel?.push('phx_leave', {}).future;
   }
 
   Future<void> _setupLiveReload() async {
@@ -284,15 +319,12 @@ class LiveView {
     }
 
     _liveReloadSocket = liveSocket.create(
-        url: "$websocketScheme://$host/phoenix/live_reload/socket/websocket",
-        params: {
-          '_platform': 'flutter',
-          'vsn': '2.0.0',
-          '_lvn': {'format': 'flutter', 'os': getPlatformName()}
-        },
-        headers: {
-          'Accept': 'text/flutter'
-        });
+      url: "$websocketScheme://$host/phoenix/live_reload/socket/websocket",
+      params: _commonParams(),
+      headers: {
+        'Accept': 'text/flutter',
+      },
+    );
     var liveReload = _liveReloadSocket
         .addChannel(topic: "phoenix:live_reload", parameters: {});
     liveReload.messages.listen(handleLiveReloadMessage);
@@ -332,11 +364,11 @@ class LiveView {
     var elements = List<String>.from(rendered['s']);
 
     var render = LiveViewUiParser(
-            html: elements,
-            htmlVariables: expandVariables(rendered),
-            liveView: this,
-            urlPath: currentUrl)
-        .parse();
+      html: elements,
+      htmlVariables: expandVariables(rendered),
+      liveView: this,
+      urlPath: currentUrl,
+    ).parse();
     lastRender = render.$1;
     connectionNotifier.wipeState();
     router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);
@@ -383,12 +415,17 @@ class LiveView {
 
     List<Widget> ret = [
       InternalView(
-          child: Builder(
-              builder: (context) => Container(
-                  color: m.Theme.of(context).colorScheme.background,
-                  child: Center(
-                      child: m.CircularProgressIndicator(
-                          value: disableAnimations == false ? null : 1)))))
+        child: Builder(
+          builder: (context) => Container(
+            color: m.Theme.of(context).colorScheme.background,
+            child: Center(
+              child: m.CircularProgressIndicator(
+                value: disableAnimations == false ? null : 1,
+              ),
+            ),
+          ),
+        ),
+      )
     ];
 
     // we keep the previous navigation items to avoid flickering with the load screen
@@ -425,9 +462,10 @@ class LiveView {
           ?.postMessage({'type': 'live-patch', 'url': url}, "*");
     }
     router.pushPage(
-        url: 'loading;$url',
-        widget: loadingWidget(),
-        rootState: router.pages.lastOrNull?.rootState);
+      url: 'loading;$url',
+      widget: loadingWidget(),
+      rootState: router.pages.lastOrNull?.rootState,
+    );
     redirectTo(url);
   }
 
@@ -478,9 +516,10 @@ class LiveView {
 
   Future<void> execHrefClick(String url) async {
     router.pushPage(
-        url: 'loading;$url',
-        widget: loadingWidget(),
-        rootState: router.pages.lastOrNull?.rootState);
+      url: 'loading;$url',
+      widget: loadingWidget(),
+      rootState: router.pages.lastOrNull?.rootState,
+    );
     var response = await deadViewGetQuery(url);
 
     handleRenderedMessage({
