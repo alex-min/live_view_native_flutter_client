@@ -257,14 +257,15 @@ class LiveView {
 
   String get websocketScheme => endpointScheme == 'https' ? 'wss' : 'ws';
 
-  Map<String, dynamic> _commonParams() => {
+  Map<String, dynamic> _requiredSocketParams() => {
+        '_platform': 'flutter',
         '_format': 'flutter',
         '_lvn': {'os': getPlatformName()},
         'vsn': '2.0.0',
       };
 
   Map<String, dynamic> _socketParams() => {
-        ..._commonParams(),
+        ..._requiredSocketParams(),
         '_csrf_token': _csrf,
         '_mounts': mount.toString(),
         'client_id': _clientId,
@@ -320,7 +321,7 @@ class LiveView {
 
     _liveReloadSocket = liveSocket.create(
       url: "$websocketScheme://$host/phoenix/live_reload/socket/websocket",
-      params: _commonParams(),
+      params: _requiredSocketParams(),
       headers: {
         'Accept': 'text/flutter',
       },
