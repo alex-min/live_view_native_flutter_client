@@ -66,12 +66,14 @@ class LiveViewUiParser {
   final Map<String, dynamic> _htmlVariables;
   LiveView liveView;
   String urlPath;
+  ViewType viewType;
 
   LiveViewUiParser(
       {required this.html,
       required Map<String, dynamic> htmlVariables,
       required this.liveView,
-      required this.urlPath})
+      required this.urlPath,
+      required this.viewType})
       : _htmlVariables = htmlVariables;
 
   (List<Widget>, NodeState?) parse() => parseHtml(html, _htmlVariables, []);
@@ -153,6 +155,7 @@ class LiveViewUiParser {
       variables: htmlVariables,
       nestedState: nestedState,
       parser: this,
+      viewType: viewType,
     );
     return (traverse(state), state);
   }

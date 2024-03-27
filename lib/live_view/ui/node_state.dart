@@ -13,6 +13,7 @@ class NodeState {
   final List<String> nestedState;
   final LiveView liveView;
   final String urlPath;
+  final ViewType viewType;
   List<Widget> dynamicWidget;
 
   bool get isOnTheCurrentPage => urlPath == liveView.currentUrl;
@@ -24,6 +25,7 @@ class NodeState {
     required this.nestedState,
     required this.liveView,
     required this.urlPath,
+    required this.viewType,
     this.dynamicWidget = const [],
   });
 
@@ -36,6 +38,7 @@ class NodeState {
     String? urlPath,
     List<Widget>? dynamicWidget,
     String? componentId,
+    ViewType? viewType,
   }) =>
       NodeState(
         node: node ?? this.node,
@@ -45,5 +48,6 @@ class NodeState {
         liveView: liveView ?? this.liveView,
         urlPath: urlPath ?? this.urlPath,
         dynamicWidget: dynamicWidget ?? this.dynamicWidget,
+        viewType: viewType ?? this.viewType,
       );
 }

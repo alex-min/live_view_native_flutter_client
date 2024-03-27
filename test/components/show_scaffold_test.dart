@@ -30,6 +30,53 @@ main() async {
     await tester.pumpAndSettle(const Duration(seconds: 5));
   });
 
+  testWidgets('does not show the scaffold on dead view', (tester) async {
+    await loadAppFonts();
+    var (view, _) = await connect(LiveView(),
+        rendered: {
+          's': [
+            """
+          <flutter>
+            <viewBody>
+              <ScaffoldMessage kind="info">
+                <Text>Scaffold Message</Text> 
+              </ScaffoldMessage>
+            </viewBody>
+          </flutter>
+        """
+          ]
+        },
+        viewType: ViewType.deadView);
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    expect(find.allTexts(), []);
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+  });
+
+  testWidgets('Show the scaffold on dead view on the documentation',
+      (tester) async {
+    await loadAppFonts();
+    var (view, _) = await connect(LiveView()..clientType = ClientType.webDocs,
+        rendered: {
+          's': [
+            """
+          <flutter>
+            <viewBody>
+              <ScaffoldMessage kind="info">
+                <Text>Scaffold Message</Text> 
+              </ScaffoldMessage>
+            </viewBody>
+          </flutter>
+        """
+          ]
+        },
+        viewType: ViewType.deadView);
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    expect(find.allTexts(), ['Scaffold Message']);
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+  });
+
   testWidgets('remove scaffold after 5 seconds', (tester) async {
     await loadAppFonts();
     var (view, server) = await connect(LiveView(), rendered: {

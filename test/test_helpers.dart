@@ -210,7 +210,8 @@ class FakeLiveSocket extends LiveSocket {
 
 Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
     {Map<String, dynamic>? rendered,
-    http.Response? Function(http.Request)? onRequest}) async {
+    http.Response? Function(http.Request)? onRequest,
+    ViewType viewType = ViewType.liveView}) async {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
@@ -236,7 +237,7 @@ Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
   view.httpClient = client;
   await view.connect('http://localhost:9999');
   if (rendered != null) {
-    view.handleRenderedMessage(rendered);
+    view.handleRenderedMessage(rendered, viewType: viewType);
   }
   return (view, socket);
 }
