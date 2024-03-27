@@ -100,14 +100,18 @@ class ThemeSettings extends ChangeNotifier {
 
   Future<void> fetchCurrentTheme() async {
     await loadCurrentTheme();
-    await httpClient
-        .get(Uri.parse(
-            '$host/flutter/themes/$_themeName/${getDisplayedThemeMode().modeAsString()}.json'))
-        .then((response) {
-      if (response.statusCode == 200) {
-        saveJsonCurrentTheme(response.body);
-        loadCurrentTheme();
-      }
-    });
+    try {
+      await httpClient
+          .get(Uri.parse(
+              '$host/flutter/themes/$_themeName/${getDisplayedThemeMode().modeAsString()}.json'))
+          .then((response) {
+        if (response.statusCode == 200) {
+          saveJsonCurrentTheme(response.body);
+          loadCurrentTheme();
+        }
+      });
+    } catch (e) {
+      // We don't care if fetching the theme fails
+    }
   }
 }

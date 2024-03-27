@@ -124,7 +124,7 @@ class LiveView {
     bindWebDocs(this);
   }
 
-  Future<String?> connect(String address) async {
+  Future<void> connect(String address) async {
     _clientId = const Uuid().v4();
     var endpoint = Uri.parse(address);
     host = "${endpoint.host}:${endpoint.port}";
@@ -138,8 +138,7 @@ class LiveView {
       var response = await deadViewGetQuery(currentUrl);
       initialized = true;
 
-      if (response.statusCode != 200) {
-        _setupLiveReload();
+      if (response.statusCode > 300) {
         if (response.statusCode == 404) {
           router.pushPage(
             url: 'error',
@@ -153,7 +152,6 @@ class LiveView {
             rootState: null,
           );
         }
-        return null;
       }
     } on SocketException catch (e, stack) {
       router.pushPage(
@@ -165,8 +163,6 @@ class LiveView {
         ],
         rootState: null,
       );
-
-      if (!initialized) autoReconnect(address);
     } catch (e, stack) {
       router.pushPage(
         url: 'error',
@@ -177,14 +173,12 @@ class LiveView {
         ],
         rootState: null,
       );
-
-      if (!initialized) autoReconnect(address);
-      rethrow;
     }
 
+    if (!initialized) {
+      return autoReconnect(address);
+    }
     await reconnect();
-
-    return _csrf;
   }
 
   void autoReconnect(String address) {
