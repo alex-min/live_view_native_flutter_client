@@ -38,6 +38,8 @@ import 'package:uuid/uuid.dart';
 
 import './ui/live_view_ui_parser.dart';
 
+enum ViewType { deadView, liveView }
+
 class LiveSocket {
   PhoenixSocket create({
     required String url,
@@ -61,10 +63,12 @@ class LiveSocket {
   }
 }
 
+enum ClientType { liveView, httpOnly, webDocs }
+
 class LiveView {
   bool catchExceptions = true;
   bool disableAnimations = false;
-  bool webDocsMode = false;
+  ClientType clientType = ClientType.liveView;
 
   http.Client httpClient = http.Client();
   var liveSocket = LiveSocket();
@@ -349,13 +353,15 @@ class LiveView {
       return;
     }
     if (event.payload!['response']?.containsKey('rendered') ?? false) {
-      handleRenderedMessage(event.payload!['response']!['rendered']);
+      handleRenderedMessage(event.payload!['response']!['rendered'],
+          viewType: ViewType.liveView);
     } else if (event.payload!['response']?.containsKey('diff') ?? false) {
       handleDiffMessage(event.payload!['response']!['diff']);
     }
   }
 
-  handleRenderedMessage(Map<String, dynamic> rendered) {
+  handleRenderedMessage(Map<String, dynamic> rendered,
+      {ViewType viewType = ViewType.liveView}) {
     var elements = List<String>.from(rendered['s']);
 
     var render = LiveViewUiParser(
@@ -363,6 +369,7 @@ class LiveView {
       htmlVariables: expandVariables(rendered),
       liveView: this,
       urlPath: currentUrl,
+      viewType: viewType,
     ).parse();
     lastRender = render.$1;
     connectionNotifier.wipeState();
@@ -395,7 +402,7 @@ class LiveView {
       'value': event.value
     };
 
-    if (webDocsMode) {
+    if (clientType == ClientType.webDocs) {
       web_html.window.parent
           ?.postMessage({'type': 'event', 'data': eventData}, "*");
     } else if (_channel?.state != PhoenixChannelState.closed) {
@@ -452,7 +459,7 @@ class LiveView {
   Future<void> saveCurrentTheme() => themeSettings.save();
 
   Future<void> livePatch(String url) async {
-    if (webDocsMode) {
+    if (clientType == ClientType.webDocs) {
       web_html.window.parent
           ?.postMessage({'type': 'live-patch', 'url': url}, "*");
     }
@@ -491,7 +498,7 @@ class LiveView {
 
     handleRenderedMessage({
       's': [r.body]
-    });
+    }, viewType: ViewType.deadView);
 
     return r;
   }
@@ -519,7 +526,7 @@ class LiveView {
 
     handleRenderedMessage({
       's': [response.body]
-    });
+    }, viewType: ViewType.deadView);
 
     redirectToUrl = url;
     _channel?.push('phx_leave', {}).future;
@@ -534,7 +541,7 @@ class LiveView {
   }
 
   Future<void> goBack() async {
-    if (webDocsMode) {
+    if (clientType == ClientType.webDocs) {
       web_html.window.parent?.postMessage({'type': 'go-back'}, "*");
     }
     router.navigatorKey?.currentState?.maybePop();

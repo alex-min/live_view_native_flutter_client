@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
+import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class LiveScaffoldMessage extends LiveStateWidget<LiveScaffoldMessage> {
@@ -15,8 +16,12 @@ class _LiveScaffoldMessageState extends StateWidget<LiveScaffoldMessage> {
   Timer? timer;
 
   @override
-  void initState() {
-    super.initState();
+  void onFormInitialize() {
+    if (widget.state.viewType == ViewType.deadView &&
+        widget.state.liveView.clientType == ClientType.liveView) {
+      return;
+    }
+
     Future.microtask(() {
       ScaffoldMessenger.of(context).clearSnackBars();
       showScaffold();
