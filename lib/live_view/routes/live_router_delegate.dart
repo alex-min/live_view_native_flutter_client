@@ -6,7 +6,6 @@ import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/errors/missing_page_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
-import 'package:xml/xml.dart';
 
 class LivePage {
   MaterialPage page;
