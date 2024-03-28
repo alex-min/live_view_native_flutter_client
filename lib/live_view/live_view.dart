@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html;
 import 'package:http/http.dart' as http;
+import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
@@ -35,6 +36,7 @@ import 'package:liveview_flutter/platform_name.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 import "package:universal_html/html.dart" as web_html;
 import 'package:uuid/uuid.dart';
+import 'package:web_socket_channel/io.dart';
 
 import './ui/live_view_ui_parser.dart';
 
@@ -43,14 +45,20 @@ enum ViewType { deadView, liveView }
 class LiveSocket {
   PhoenixSocket create({
     required String url,
-    required Map<String, dynamic>? params,
-    required Map<String, String>? headers,
+    Map<String, dynamic>? params,
+    Map<String, String>? headers,
   }) {
     return PhoenixSocket(
       url,
+      webSocketChannelFactory: (uri) {
+        final queryParams = qs.Decoder().convert(uri.query).entries.toList();
+        queryParams.addAll(params?.entries.toList() ?? []);
+        final query = qs.Encoder().convert(Map.fromEntries(queryParams));
+        final newUri = uri.replace(query: query).toString();
+
+        return IOWebSocketChannel.connect(newUri, headers: headers);
+      },
       socketOptions: PhoenixSocketOptions(
-        params: params,
-        headers: headers,
         reconnectDelays: const [
           Duration.zero,
           Duration(milliseconds: 1000),
