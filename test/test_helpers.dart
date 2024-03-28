@@ -207,9 +207,10 @@ class FakeLiveSocket extends LiveSocket {
 Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
     {Map<String, dynamic>? rendered,
     http.Response? Function(http.Request)? onRequest,
-    ViewType viewType = ViewType.liveView}) async {
+    ViewType viewType = ViewType.liveView,
+    Map<String, Object> sharedPreferences = const {}}) async {
   TestWidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues(sharedPreferences);
 
   var socket = FakeLiveSocket();
   final MockClient client = MockClient((request) async {

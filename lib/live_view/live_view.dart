@@ -34,6 +34,7 @@ import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
 import 'package:liveview_flutter/live_view/webdocs.dart';
 import 'package:liveview_flutter/platform_name.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import "package:universal_html/html.dart" as web_html;
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
@@ -137,6 +138,8 @@ class LiveView {
   }
 
   Future<void> connect(String address) async {
+    await _loadCookies();
+
     _clientId = const Uuid().v4();
     var endpoint = Uri.parse(address);
     host = "${endpoint.host}:${endpoint.port}";
@@ -222,6 +225,17 @@ class LiveView {
     await _websocketConnect();
     await _setupLiveReload();
     await _setupPhoenixChannel();
+  }
+
+  Future<void> _loadCookies() async {
+    var prefs = await SharedPreferences.getInstance();
+    cookie = prefs.getString('cookie');
+  }
+
+  Future<void> _parseAndSaveCookie(String cookieValue) async {
+    cookie = Cookie.fromSetCookieValue(cookieValue).toString();
+    var prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cookie', cookie.toString());
   }
 
   void _readInitialSession(Document content) {
@@ -490,7 +504,7 @@ class LiveView {
         headers: httpHeaders(), body: formValues);
 
     if (r.headers['set-cookie'] != null) {
-      cookie = Cookie.fromSetCookieValue(r.headers['set-cookie']!).toString();
+      _parseAndSaveCookie(r.headers['set-cookie']!);
     }
 
     if (r.statusCode >= 200 && r.statusCode < 300) {
@@ -514,7 +528,7 @@ class LiveView {
   Future<http.Response> deadViewGetQuery(String url) async {
     var r = await httpClient.get(shortUrlToUri(url), headers: httpHeaders());
     if (r.headers['set-cookie'] != null) {
-      cookie = Cookie.fromSetCookieValue(r.headers['set-cookie']!).toString();
+      _parseAndSaveCookie(r.headers['set-cookie']!);
     }
 
     if (r.statusCode == 200) {
