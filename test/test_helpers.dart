@@ -180,16 +180,12 @@ class FakeLiveSocket extends LiveSocket {
   List<http.Request> httpRequestsMade = [];
 
   @override
-  PhoenixSocket create(
-      {required String url,
-      required Map<String, dynamic>? params,
-      required Map<String, String>? headers}) {
-    var socket = FakePhoenixSocket(
-        url,
-        PhoenixSocketOptions(
-          params: params,
-          headers: headers,
-        ));
+  PhoenixSocket create({
+    required String url,
+    required Map<String, dynamic> params,
+    required Map<String, String> headers,
+  }) {
+    var socket = FakePhoenixSocket(url, PhoenixSocketOptions());
     socketsOpened.add(socket);
     return socket;
   }
