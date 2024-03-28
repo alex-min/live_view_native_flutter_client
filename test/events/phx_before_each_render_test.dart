@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/socket/message.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
-import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
 
@@ -21,7 +21,7 @@ main() async {
         reason: "the theme has been set to white by phx-before-each-render");
 
     await tester.tap(find.byType(LiveLink));
-    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleMessage(LiveMessage(event: 'phx_close'));
 
     view.handleRenderedMessage({
       's': [

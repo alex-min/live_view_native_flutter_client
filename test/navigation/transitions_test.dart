@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/socket/message.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
-import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
 
@@ -46,7 +46,7 @@ main() async {
     expect(view.router.pages.map((p) => p.page.name),
         ['loading', '/', 'loading;/second-page']);
 
-    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleMessage(LiveMessage(event: 'phx_close'));
     view.handleRenderedMessage({
       's': [
         """

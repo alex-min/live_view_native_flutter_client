@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/socket/message.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
-import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
 
@@ -16,8 +16,7 @@ main() async {
 
     expect(find.firstText(), 'my page');
 
-    view.handleLiveReloadMessage(
-        Message(event: PhoenixChannelEvent.custom('assets_change')));
+    view.handleLiveReloadMessage(LiveMessage(event: 'assets_change'));
 
     await tester.pumpAndSettle();
 
@@ -61,7 +60,7 @@ main() async {
 
     await tester.tap(find.byType(LiveLink));
 
-    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleMessage(LiveMessage(event: 'phx_close'));
 
     view.handleRenderedMessage({
       's': ['<Text>second page</Text>']
@@ -73,8 +72,7 @@ main() async {
 
     // we receive this event 3 times from the server
     for (var i = 0; i < 3; i++) {
-      view.handleLiveReloadMessage(
-          Message(event: PhoenixChannelEvent.custom('assets_change')));
+      view.handleLiveReloadMessage(LiveMessage(event: 'assets_change'));
     }
 
     await tester.pumpAndSettle();
@@ -97,8 +95,11 @@ main() async {
       'GET http://localhost:9999/flutter/themes/default/light.json'
     ]);
 
-    expect(server.lastChannel?.parameters['redirect'],
-        'http://localhost:9999/second-page');
+    expect(server.navigationLogs, [
+      {'url': 'http://localhost:9999/', 'redirect': null},
+      {'url': null, 'redirect': 'http://localhost:9999/second-page'},
+      {'url': 'http://localhost:9999/second-page', 'redirect': null},
+    ]);
     expect(view.router.pages.last.page.name, '/second-page');
   });
 }

@@ -10,11 +10,15 @@ import 'package:html/parser.dart' as html;
 import 'package:http/http.dart' as http;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
+import 'package:liveview_flutter/live_view/live_socket.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
 import 'package:liveview_flutter/live_view/routes/live_router_delegate.dart';
+import 'package:liveview_flutter/live_view/socket/channel.dart';
+import 'package:liveview_flutter/live_view/socket/message.dart';
+import 'package:liveview_flutter/live_view/socket/socket.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
@@ -32,36 +36,12 @@ import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
 import 'package:liveview_flutter/live_view/webdocs.dart';
 import 'package:liveview_flutter/platform_name.dart';
-import 'package:phoenix_socket/phoenix_socket.dart';
 import "package:universal_html/html.dart" as web_html;
 import 'package:uuid/uuid.dart';
 
 import './ui/live_view_ui_parser.dart';
 
 enum ViewType { deadView, liveView }
-
-class LiveSocket {
-  PhoenixSocket create({
-    required String url,
-    required Map<String, dynamic>? params,
-    required Map<String, String>? headers,
-  }) {
-    return PhoenixSocket(
-      url,
-      socketOptions: PhoenixSocketOptions(
-        params: params,
-        headers: headers,
-        reconnectDelays: const [
-          Duration.zero,
-          Duration(milliseconds: 1000),
-          Duration(milliseconds: 2000),
-          Duration(milliseconds: 4000),
-          Duration(milliseconds: 8000),
-        ],
-      ),
-    );
-  }
-}
 
 enum ClientType { liveView, httpOnly, webDocs }
 
@@ -71,7 +51,8 @@ class LiveView {
   ClientType clientType = ClientType.liveView;
 
   http.Client httpClient = http.Client();
-  var liveSocket = LiveSocket();
+  late LiveSocket liveSocket;
+  late LiveSocket liveReloadSocket;
 
   Widget? onErrorWidget;
   late LiveRootView rootView;
@@ -90,10 +71,7 @@ class LiveView {
 
   String? redirectToUrl;
 
-  PhoenixSocket? _socket;
-  late PhoenixSocket _liveReloadSocket;
-
-  PhoenixChannel? _channel;
+  LiveChannel? _channel;
 
   List<m.Widget>? lastRender;
 
@@ -105,7 +83,9 @@ class LiveView {
   late LiveRouterDelegate router;
   bool throttleSpammyCalls = true;
 
-  LiveView() {
+  LiveView({
+    LiveSocket Function() socketClient = LiveSocketImpl.new,
+  }) {
     currentUrl = '/';
     router = LiveRouterDelegate(this);
     changeNotifier = StateNotifier();
@@ -113,12 +93,17 @@ class LiveView {
     themeSettings = ThemeSettings();
     themeSettings.httpClient = httpClient;
     rootView = LiveRootView(view: this);
+    liveReloadSocket = socketClient();
+    liveSocket = socketClient();
 
     LiveViewUiParser.registerDefaultComponents();
     FlutterExecAction.registerDefaultExecs();
 
     router.pushPage(
-        url: 'loading', widget: connectingWidget(), rootState: null);
+      url: 'loading',
+      widget: connectingWidget(),
+      rootState: null,
+    );
   }
 
   void connectToDocs() {
@@ -285,31 +270,29 @@ class LiveView {
   }
 
   Future<void> _websocketConnect() async {
-    _socket = liveSocket.create(
+    liveSocket.create(
       url: "$websocketScheme://$host/live/websocket",
       params: _socketParams(),
       headers: httpHeaders(),
     );
 
-    await _socket?.connect();
+    await liveSocket.connect();
   }
 
   _setupPhoenixChannel({bool redirect = false}) async {
-    _channel = _socket!.addChannel(
+    _channel = liveSocket.addChannel(
       topic: "lv:$_liveViewId",
       parameters: _fullsocketParams(redirect: redirect),
     );
 
     _channel?.messages.listen(handleMessage);
 
-    if (_channel?.state != PhoenixChannelState.joined) {
-      await _channel?.join().future;
-    }
+    await _channel?.join();
   }
 
   Future<void> redirectTo(String path) async {
     redirectToUrl = path;
-    await _channel?.push('phx_leave', {}).future;
+    await _channel?.push('phx_leave', {});
   }
 
   Future<void> _setupLiveReload() async {
@@ -317,36 +300,34 @@ class LiveView {
       return;
     }
 
-    _liveReloadSocket = liveSocket.create(
+    liveReloadSocket.create(
       url: "$websocketScheme://$host/phoenix/live_reload/socket/websocket",
       params: _requiredSocketParams(),
       headers: {
         'Accept': 'text/flutter',
       },
     );
-    var liveReload = _liveReloadSocket
+    var liveReload = liveReloadSocket
         .addChannel(topic: "phoenix:live_reload", parameters: {});
     liveReload.messages.listen(handleLiveReloadMessage);
 
     try {
-      await _liveReloadSocket.connect();
-      if (liveReload.state != PhoenixChannelState.joined) {
-        await liveReload.join().future;
-      }
+      await liveReloadSocket.connect();
+      await liveReload.join();
     } catch (e) {
       debugPrint('no live reload available');
     }
   }
 
-  handleMessage(Message event) {
-    if (event.event.value == 'phx_close') {
+  handleMessage(LiveMessage event) {
+    if (event.event == 'phx_close') {
       if (redirectToUrl != null) {
         currentUrl = redirectToUrl!;
         _setupPhoenixChannel(redirect: true);
       }
       return;
     }
-    if (event.event.value == 'diff') {
+    if (event.event == 'diff') {
       return handleDiffMessage(event.payload!);
     }
     if (event.payload == null || !event.payload!.containsKey('response')) {
@@ -380,12 +361,12 @@ class LiveView {
     changeNotifier.setDiff(diff);
   }
 
-  Future<void> handleLiveReloadMessage(Message event) async {
-    if (event.event.value == 'assets_change' && isLiveReloading == false) {
+  Future<void> handleLiveReloadMessage(LiveMessage event) async {
+    if (event.event == 'assets_change' && isLiveReloading == false) {
       eventHub.fire('live-reload:start');
       isLiveReloading = true;
 
-      _socket?.close();
+      liveSocket.close();
       _channel?.close();
       connectionNotifier.wipeState();
       redirectToUrl = null;
@@ -405,7 +386,7 @@ class LiveView {
     if (clientType == ClientType.webDocs) {
       web_html.window.parent
           ?.postMessage({'type': 'event', 'data': eventData}, "*");
-    } else if (_channel?.state != PhoenixChannelState.closed) {
+    } else {
       _channel?.push('event', eventData);
     }
   }
@@ -529,7 +510,7 @@ class LiveView {
     }, viewType: ViewType.deadView);
 
     redirectToUrl = url;
-    _channel?.push('phx_leave', {}).future;
+    _channel?.push('phx_leave', {});
   }
 
   Uri shortUrlToUri(String url) {

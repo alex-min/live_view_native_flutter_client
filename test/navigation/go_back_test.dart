@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/socket/message.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
-import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
 
@@ -27,7 +27,7 @@ main() async {
     await tester.tap(find.byType(LiveLink));
 
     expect(server.lastChannelActions, [liveEvents.join, liveEvents.phxLeave]);
-    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleMessage(LiveMessage(event: 'phx_close'));
     expect(server.lastChannelActions, [liveEvents.join]);
 
     view.handleRenderedMessage({
@@ -38,10 +38,10 @@ main() async {
     await tester.tap(find.byType(LiveText));
 
     expect(server.lastChannelActions, [liveEvents.join, liveEvents.phxLeave]);
-    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleMessage(LiveMessage(event: 'phx_close'));
     expect(server.lastChannelActions, [liveEvents.join]);
 
-    expect((server.liveSocket?.navigationLogs), [
+    expect((server.navigationLogs), [
       {'url': 'http://localhost:9999/', 'redirect': null},
       {'url': null, 'redirect': 'http://localhost:9999/second-page'},
       {'url': null, 'redirect': 'http://localhost:9999/'},

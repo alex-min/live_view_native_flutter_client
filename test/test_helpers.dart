@@ -10,6 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/socket/channel.dart';
+import 'package:liveview_flutter/live_view/socket/message.dart';
+import 'package:liveview_flutter/live_view/socket/socket.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -73,16 +76,6 @@ extension RunLiveView on WidgetTester {
   }
 }
 
-class FakePushMessage extends Push {
-  FakePhoenixChannel channel;
-  FakePushMessage(this.channel) : super(channel);
-
-  @override
-  Future<PushResponse> get future async {
-    return PushResponse(status: '200', response: '');
-  }
-}
-
 class EventSent {
   final String eventName;
   final Map<String, dynamic>? payload;
@@ -104,97 +97,52 @@ class EventSent {
   int get hashCode => Object.hashAll([toString()]);
 }
 
-class FakePhoenixChannel extends PhoenixChannel {
-  @override
-  final PhoenixSocket socket;
+class FakePhoenixChannel extends LiveChannel {
+  FakePhoenixChannel({
+    required this.topic,
+    required this.parameters,
+  });
+
   @override
   final String topic;
+  @override
+  final Map<String, dynamic> parameters;
   List<EventSent> actions = [];
   Map<String, dynamic>? params = {};
   PhoenixChannelState currentState = PhoenixChannelState.closed;
 
-  FakePhoenixChannel(this.socket, this.topic, this.params)
-      : super.fromSocket(socket, topic: topic, parameters: params);
-
   @override
-  PhoenixChannelState get state => currentState;
-
-  @override
-  Push join([Duration? newTimeout]) {
+  Future<void> join() async {
     actions.add(const EventSent('join', null));
-    currentState = PhoenixChannelState.joined;
-
-    return FakePushMessage(this);
   }
 
   @override
-  Push push(String eventName, Map<String, dynamic> payload,
-      [Duration? newTimeout]) {
+  Future<void> push(
+    String eventName, [
+    Map<String, dynamic> payload = const {},
+  ]) async {
     if (eventName == 'phx_leave') {
       currentState = PhoenixChannelState.closed;
     }
     actions.add(EventSent(eventName, payload));
-    return FakePushMessage(this);
   }
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Stream<LiveMessage> get messages => const Stream.empty();
 }
 
-class FakePhoenixSocket extends PhoenixSocket {
-  String url;
-  PhoenixSocketOptions? socketOptions;
-  List<EventSent> actions = [];
-  List<FakePhoenixChannel> channelsAdded = [];
-
-  FakePhoenixSocket(this.url, this.socketOptions) : super(url);
-
-  @override
-  Future<PhoenixSocket?> connect() async {
-    actions.add(const EventSent('connect', null));
-    return null;
-  }
-
-  @override
-  PhoenixChannel addChannel(
-      {required String topic,
-      Map<String, dynamic>? parameters,
-      Duration? timeout}) {
-    actions.add(EventSent('addChannel', parameters));
-    var channel = FakePhoenixChannel(this, topic, parameters);
-    channelsAdded.add(channel);
-    return channel;
-  }
-
-  @override
-  String toString() => 'FakePhoenixSocket($url)';
-
-  List<EventSent> get addChannelEvents =>
-      actions.where((a) => a.eventName == 'addChannel').toList();
-
-  List<Map<String, String?>> get navigationLogs => addChannelEvents
-      .map((e) => Map<String, String?>.from(
-          e.payload?.takeKeys(['url', 'redirect']) ?? {}))
-      .toList();
-}
-
-class FakeLiveSocket extends LiveSocket {
-  List<FakePhoenixSocket> socketsOpened = [];
+class FakeServer {
+  List<FakeLiveSocket> socketsOpened = [];
   List<http.Request> httpRequestsMade = [];
 
-  @override
-  PhoenixSocket create(
-      {required String url,
-      required Map<String, dynamic>? params,
-      required Map<String, String>? headers}) {
-    var socket = FakePhoenixSocket(
-        url,
-        PhoenixSocketOptions(
-          params: params,
-          headers: headers,
-        ));
+  Future<void> addSocket(FakeLiveSocket socket) async {
     socketsOpened.add(socket);
-    return socket;
   }
 
-  FakePhoenixSocket? get liveSocket {
+  FakeLiveSocket? get liveSocket {
     for (var socket in socketsOpened) {
       if (socket.url.endsWith('/live/websocket')) {
         return socket;
@@ -206,18 +154,84 @@ class FakeLiveSocket extends LiveSocket {
   FakePhoenixChannel? get lastChannel => liveSocket?.channelsAdded.last;
   List<EventSent>? get lastChannelActions => lastChannel?.actions;
   EventSent? get lastChannelAction => lastChannelActions?.last;
+
+  List<EventSent> get addChannelEvents =>
+      liveSocket?.actions.where((a) => a.eventName == 'addChannel').toList() ??
+      [];
+
+  List<Map<String, String?>> get navigationLogs => addChannelEvents
+      .map((e) => Map<String, String?>.from(
+          e.payload?.takeKeys(['url', 'redirect']) ?? {}))
+      .toList();
 }
 
-Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
-    {Map<String, dynamic>? rendered,
-    http.Response? Function(http.Request)? onRequest,
-    ViewType viewType = ViewType.liveView}) async {
+class FakeLiveSocket extends LiveSocket {
+  List<EventSent> actions = [];
+  List<FakePhoenixChannel> channelsAdded = [];
+  @override
+  String url = '';
+  late FakeServer server;
+
+  @override
+  Future<void> create({
+    required String url,
+    Map<String, dynamic>? params,
+    Map<String, String>? headers,
+  }) async {
+    this.url = url;
+    server.addSocket(this);
+  }
+
+  FakePhoenixChannel? get lastChannel => channelsAdded.last;
+  List<EventSent>? get lastChannelActions => lastChannel?.actions;
+  EventSent? get lastChannelAction => lastChannelActions?.last;
+
+  List<EventSent> get addChannelEvents =>
+      actions.where((a) => a.eventName == 'addChannel').toList();
+
+  List<Map<String, String?>> get navigationLogs => addChannelEvents
+      .map((e) => Map<String, String?>.from(
+          e.payload?.takeKeys(['url', 'redirect']) ?? {}))
+      .toList();
+
+  @override
+  LiveChannel addChannel({
+    required String topic,
+    Map<String, dynamic>? parameters,
+  }) {
+    actions.add(EventSent('addChannel', parameters));
+    var channel = FakePhoenixChannel(
+      topic: topic,
+      parameters: parameters ?? {},
+    );
+    channelsAdded.add(channel);
+    return channel;
+  }
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Future<void> connect() async {
+    actions.add(const EventSent('connect', null));
+  }
+}
+
+Future<(LiveView, FakeServer)> connect(
+  LiveView view, {
+  Map<String, dynamic>? rendered,
+  http.Response? Function(http.Request)? onRequest,
+  ViewType viewType = ViewType.liveView,
+}) async {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
-  var socket = FakeLiveSocket();
+  var server = FakeServer();
+  view.liveSocket = FakeLiveSocket()..server = server;
+  view.liveReloadSocket = FakeLiveSocket()..server = server;
+
   final MockClient client = MockClient((request) async {
-    socket.httpRequestsMade.add(request);
+    server.httpRequestsMade.add(request);
     if (onRequest != null) {
       var response = onRequest(request);
       if (response != null) {
@@ -225,21 +239,21 @@ Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
       }
     }
     return http.Response(
-        """
+      """
         <meta name="csrf-token" content="csrf" />
         <div data-phx-session="phx-session" data-phx-static="static" data-phx-main id="live_view_id"></div>
       """,
-        200,
-        headers: {'set-cookie': 'live_view=session'});
+      200,
+      headers: {'set-cookie': 'live_view=session'},
+    );
   });
 
-  view.liveSocket = socket;
   view.httpClient = client;
   await view.connect('http://localhost:9999');
   if (rendered != null) {
     view.handleRenderedMessage(rendered, viewType: viewType);
   }
-  return (view, socket);
+  return (view, server);
 }
 
 class BaseEvents {
