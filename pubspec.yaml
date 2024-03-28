@@ -27,7 +27,7 @@ dependencies:
       ref: 1309a1a
   xml: "5.4.1"
   provider: ^6.0.5
-  flutter_form_builder: ^9.1.1
+  flutter_form_builder: "9.1.1"
   json_annotation: ^4.8.1
   json_theme: "6.3.0"
   shared_preferences: ^2.2.2
