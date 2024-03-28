@@ -22,7 +22,7 @@ dependencies:
   web_socket_channel: ^2.4.0
   uuid: ^4.1.0
   phoenix_socket: ^0.7.1
-  xml:
+  xml: "5.4.1"
   provider: ^6.0.5
   flutter_form_builder: "9.1.1"
   json_annotation: ^4.8.1
