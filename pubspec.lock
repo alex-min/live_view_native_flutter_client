@@ -114,7 +114,7 @@ packages:
     source: hosted
     version: "0.2.1"
   fake_async:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: fake_async
       sha256: "511392330127add0b769b75a987850d136345d9227c6b94c96a04cf4a391bf78"
@@ -411,12 +411,11 @@ packages:
   phoenix_socket:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "1309a1a"
-      resolved-ref: "1309a1a69a681a43bf8fde46eae3c410c6241965"
-      url: "https://github.com/alex-min/phoenix-socket-dart.git"
-    source: git
-    version: "0.6.4"
+      name: phoenix_socket
+      sha256: "21c0ed733db29a74d54f676aaab4800d8b7278bc0e4e95a7a7c5d7773464a2bf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.1"
   platform:
     dependency: transitive
     description:

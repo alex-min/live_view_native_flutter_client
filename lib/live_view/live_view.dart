@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html;
 import 'package:http/http.dart' as http;
+import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
@@ -33,8 +34,10 @@ import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
 import 'package:liveview_flutter/live_view/webdocs.dart';
 import 'package:liveview_flutter/platform_name.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import "package:universal_html/html.dart" as web_html;
 import 'package:uuid/uuid.dart';
+import 'package:web_socket_channel/io.dart';
 
 import './ui/live_view_ui_parser.dart';
 
@@ -43,14 +46,20 @@ enum ViewType { deadView, liveView }
 class LiveSocket {
   PhoenixSocket create({
     required String url,
-    required Map<String, dynamic>? params,
-    required Map<String, String>? headers,
+    required Map<String, dynamic> params,
+    required Map<String, String> headers,
   }) {
     return PhoenixSocket(
       url,
+      webSocketChannelFactory: (uri) {
+        final queryParams = qs.Decoder().convert(uri.query).entries.toList();
+        queryParams.addAll(params.entries.toList());
+        final query = qs.Encoder().convert(Map.fromEntries(queryParams));
+        final newUri = uri.replace(query: query).toString();
+
+        return IOWebSocketChannel.connect(newUri, headers: headers);
+      },
       socketOptions: PhoenixSocketOptions(
-        params: params,
-        headers: headers,
         reconnectDelays: const [
           Duration.zero,
           Duration(milliseconds: 1000),
@@ -129,6 +138,8 @@ class LiveView {
   }
 
   Future<void> connect(String address) async {
+    await _loadCookies();
+
     _clientId = const Uuid().v4();
     var endpoint = Uri.parse(address);
     host = "${endpoint.host}:${endpoint.port}";
@@ -214,6 +225,17 @@ class LiveView {
     await _websocketConnect();
     await _setupLiveReload();
     await _setupPhoenixChannel();
+  }
+
+  Future<void> _loadCookies() async {
+    var prefs = await SharedPreferences.getInstance();
+    cookie = prefs.getString('cookie');
+  }
+
+  Future<void> _parseAndSaveCookie(String cookieValue) async {
+    cookie = Cookie.fromSetCookieValue(cookieValue).toString();
+    var prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cookie', cookie.toString());
   }
 
   void _readInitialSession(Document content) {
@@ -482,7 +504,7 @@ class LiveView {
         headers: httpHeaders(), body: formValues);
 
     if (r.headers['set-cookie'] != null) {
-      cookie = Cookie.fromSetCookieValue(r.headers['set-cookie']!).toString();
+      _parseAndSaveCookie(r.headers['set-cookie']!);
     }
 
     if (r.statusCode >= 200 && r.statusCode < 300) {
@@ -506,7 +528,7 @@ class LiveView {
   Future<http.Response> deadViewGetQuery(String url) async {
     var r = await httpClient.get(shortUrlToUri(url), headers: httpHeaders());
     if (r.headers['set-cookie'] != null) {
-      cookie = Cookie.fromSetCookieValue(r.headers['set-cookie']!).toString();
+      _parseAndSaveCookie(r.headers['set-cookie']!);
     }
 
     if (r.statusCode == 200) {

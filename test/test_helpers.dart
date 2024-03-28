@@ -180,16 +180,12 @@ class FakeLiveSocket extends LiveSocket {
   List<http.Request> httpRequestsMade = [];
 
   @override
-  PhoenixSocket create(
-      {required String url,
-      required Map<String, dynamic>? params,
-      required Map<String, String>? headers}) {
-    var socket = FakePhoenixSocket(
-        url,
-        PhoenixSocketOptions(
-          params: params,
-          headers: headers,
-        ));
+  PhoenixSocket create({
+    required String url,
+    required Map<String, dynamic> params,
+    required Map<String, String> headers,
+  }) {
+    var socket = FakePhoenixSocket(url, PhoenixSocketOptions());
     socketsOpened.add(socket);
     return socket;
   }
@@ -211,9 +207,10 @@ class FakeLiveSocket extends LiveSocket {
 Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
     {Map<String, dynamic>? rendered,
     http.Response? Function(http.Request)? onRequest,
-    ViewType viewType = ViewType.liveView}) async {
+    ViewType viewType = ViewType.liveView,
+    Map<String, Object> sharedPreferences = const {}}) async {
   TestWidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues(sharedPreferences);
 
   var socket = FakeLiveSocket();
   final MockClient client = MockClient((request) async {
