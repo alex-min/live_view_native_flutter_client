@@ -45,14 +45,14 @@ enum ViewType { deadView, liveView }
 class LiveSocket {
   PhoenixSocket create({
     required String url,
-    required Map<String, dynamic>? params,
-    required Map<String, String>? headers,
+    required Map<String, dynamic> params,
+    required Map<String, String> headers,
   }) {
     return PhoenixSocket(
       url,
       webSocketChannelFactory: (uri) {
         final queryParams = qs.Decoder().convert(uri.query).entries.toList();
-        queryParams.addAll(params?.entries.toList() ?? []);
+        queryParams.addAll(params.entries.toList());
         final query = qs.Encoder().convert(Map.fromEntries(queryParams));
         final newUri = uri.replace(query: query).toString();
 

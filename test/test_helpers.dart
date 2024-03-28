@@ -182,8 +182,8 @@ class FakeLiveSocket extends LiveSocket {
   @override
   PhoenixSocket create({
     required String url,
-    required Map<String, dynamic>? params,
-    required Map<String, String>? headers,
+    required Map<String, dynamic> params,
+    required Map<String, String> headers,
   }) {
     var socket = FakePhoenixSocket(url, PhoenixSocketOptions());
     socketsOpened.add(socket);
