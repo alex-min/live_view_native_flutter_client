@@ -45,8 +45,8 @@ enum ViewType { deadView, liveView }
 class LiveSocket {
   PhoenixSocket create({
     required String url,
-    Map<String, dynamic>? params,
-    Map<String, String>? headers,
+    required Map<String, dynamic>? params,
+    required Map<String, String>? headers,
   }) {
     return PhoenixSocket(
       url,
