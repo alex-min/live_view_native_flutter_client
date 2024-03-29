@@ -58,9 +58,19 @@ class FlutterExecAction {
     LiveViewExecRegistry.instance
       ..add(['phx-click'], (value, attributes) {
         return ExecLiveEvent(
-            type: 'phx-click',
-            name: value!['name'],
-            value: getPhxValues(attributes));
+          type: 'phx-click',
+          name: value!['name'],
+          value: getPhxValues(attributes),
+          dataConfirm:
+              (attributes?['data-confirm'] as String?)?.isNotEmpty == true
+                  ? DataConfirm(
+                      message: attributes!['data-confirm'],
+                      title: attributes['data-confirm-title'],
+                      cancel: attributes['data-confirm-cancel'],
+                      confirm: attributes['data-confirm-confirm'],
+                    )
+                  : null,
+        );
       })
       ..add(['live-patch'], (value, attributes) {
         return ExecLivePatch(url: value!['name']);
@@ -73,16 +83,23 @@ class FlutterExecAction {
       })
       ..add(['goBack'], (_, __) => ExecGoBack())
       ..add(['switchTheme'], (value, attributes) {
-        return ExecSwitchTheme(theme: value!['theme'], mode: value['mode']);
+        return ExecSwitchTheme(
+          theme: value!['theme'],
+          mode: value['mode'],
+        );
       })
       ..add(['saveCurrentTheme'], (_, __) => ExecSaveCurrentTheme())
       ..add(['show'], (value, attributes) {
         return ExecShowAction(
-            to: value?['to'], timeInMilliseconds: value?['time']);
+          to: value?['to'],
+          timeInMilliseconds: value?['time'],
+        );
       })
       ..add(['hide'], (value, attributes) {
         return ExecHideAction(
-            to: value?['to'], timeInMilliseconds: value?['time']);
+          to: value?['to'],
+          timeInMilliseconds: value?['time'],
+        );
       })
       ..add(['showBottomSheet'], (_, __) => ExecShowBottomSheet());
   }

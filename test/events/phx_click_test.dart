@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 
@@ -56,5 +57,41 @@ main() async {
     await tester.tap(find.text("Page 4"));
     expect(server.lastChannelActions?.last,
         liveEvents.phxClick({'something': 'hello'}, eventName: 'my_event'));
+  });
+
+  testWidgets('phx click on a text component', (tester) async {
+    await loadAppFonts();
+    var (view, server) = await connect(LiveView());
+
+    await tester.runLiveView(view);
+
+    view.handleRenderedMessage({
+      's': [
+        """<Text
+              phx-click="click_event"
+              data-confirm="This action cannot be undone!"
+              data-confirm-title="Are you sure?"
+              data-confirm-confirm="Confirm"
+              data-confirm-cancel="Cancel"
+          >hello</Text>"""
+      ]
+    });
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(LiveText));
+    await tester.pumpAndSettle();
+    expect(server.lastChannelActions?.last, isNot(liveEvents.phxClick({})));
+
+    await tester.tap(find.text("Cancel"));
+    await tester.pumpAndSettle();
+    expect(server.lastChannelActions?.last, isNot(liveEvents.phxClick({})));
+
+    await tester.tap(find.byType(LiveText));
+    await tester.pumpAndSettle();
+    expect(server.lastChannelActions?.last, isNot(liveEvents.phxClick({})));
+
+    await tester.tap(find.text("Confirm"));
+    await tester.pumpAndSettle();
+    expect(server.lastChannelActions?.last, liveEvents.phxClick({}));
   });
 }
