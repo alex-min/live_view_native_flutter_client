@@ -7,4 +7,10 @@ class Exec {
   When conditions = When();
 }
 
+class ExecConfirmable extends Exec {
+  /// This is responsible for show an alert before executing this action
+  final String? dataConfirm;
+  ExecConfirmable({this.dataConfirm});
+}
+
 class ExecNoAction extends Exec {}

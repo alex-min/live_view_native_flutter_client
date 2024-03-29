@@ -12,6 +12,7 @@ mixin ComputedAttributes {
     'live-patch',
     'phx-href',
     'phx-before-each-render',
+    'data-confirm',
     'self-padding',
     'self-margin'
   ];

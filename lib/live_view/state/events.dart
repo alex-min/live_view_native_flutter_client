@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/exec/exec.dart';
-import 'package:liveview_flutter/exec/exec_phx_href.dart';
-import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
-import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/exec/exec_go_back.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/exec_live_patch.dart';
+import 'package:liveview_flutter/exec/exec_phx_href.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
+import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
+import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_scaffold.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 
@@ -52,7 +52,10 @@ class StateEvents {
         case final ExecPhxHref event:
           events.add((_) => liveView.execHrefClick(event.url));
         case final ExecLiveEvent event:
-          events.add((_) => liveView.sendEvent(event));
+          events.add(confirmationWrapper(
+            action,
+            (_) => liveView.sendEvent(event),
+          ));
         case final ExecGoBack _:
           events.add((_) => liveView.goBack());
         case final ExecSwitchTheme event:
@@ -82,5 +85,35 @@ class StateEvents {
           reportError("unknown action $action");
       }
     }
+  }
+
+  static EventHandler confirmationWrapper(Exec action, EventHandler handler) {
+    if (action is ExecConfirmable && action.dataConfirm?.isNotEmpty == true) {
+      return (context) => showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Confirm?"),
+              content: Text(action.dataConfirm!),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('Confirm'),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            ),
+          ).then((result) {
+            if (result == true) return handler(context);
+          });
+    }
+
+    return handler;
   }
 }
