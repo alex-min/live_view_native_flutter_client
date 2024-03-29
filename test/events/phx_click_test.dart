@@ -67,7 +67,13 @@ main() async {
 
     view.handleRenderedMessage({
       's': [
-        '<Text phx-click="click_event" data-confirm="Are you sure?">hello</Text>'
+        """<Text
+              phx-click="click_event"
+              data-confirm="This action cannot be undone!"
+              data-confirm-title="Are you sure?"
+              data-confirm-confirm="Confirm"
+              data-confirm-cancel="Cancel"
+          >hello</Text>"""
       ]
     });
     await tester.pumpAndSettle();

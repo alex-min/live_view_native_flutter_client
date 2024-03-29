@@ -61,7 +61,15 @@ class FlutterExecAction {
           type: 'phx-click',
           name: value!['name'],
           value: getPhxValues(attributes),
-          dataConfirm: attributes?['data-confirm'],
+          dataConfirm:
+              (attributes?['data-confirm'] as String?)?.isNotEmpty == true
+                  ? DataConfirm(
+                      message: attributes!['data-confirm'],
+                      title: attributes['data-confirm-title'],
+                      cancel: attributes['data-confirm-cancel'],
+                      confirm: attributes['data-confirm-confirm'],
+                    )
+                  : null,
         );
       })
       ..add(['live-patch'], (value, attributes) {

@@ -13,6 +13,9 @@ mixin ComputedAttributes {
     'phx-href',
     'phx-before-each-render',
     'data-confirm',
+    'data-confirm-title',
+    'data-confirm-cancel',
+    'data-confirm-confirm',
     'self-padding',
     'self-margin'
   ];

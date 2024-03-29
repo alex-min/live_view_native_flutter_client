@@ -88,21 +88,21 @@ class StateEvents {
   }
 
   static EventHandler confirmationWrapper(Exec action, EventHandler handler) {
-    if (action is ExecConfirmable && action.dataConfirm?.isNotEmpty == true) {
+    if (action is ExecConfirmable && action.dataConfirm != null) {
       return (context) => showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text("Confirm?"),
-              content: Text(action.dataConfirm!),
+              title: Text(action.dataConfirm!.title),
+              content: Text(action.dataConfirm!.message),
               actions: [
                 TextButton(
-                  child: const Text('Cancel'),
+                  child: Text(action.dataConfirm!.cancel),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
-                  child: const Text('Confirm'),
+                  child: Text(action.dataConfirm!.confirm),
                   onPressed: () {
                     Navigator.of(context).pop(true);
                   },

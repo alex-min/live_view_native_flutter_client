@@ -7,9 +7,25 @@ class Exec {
   When conditions = When();
 }
 
+class DataConfirm {
+  final String title;
+  final String message;
+  final String confirm;
+  final String cancel;
+
+  DataConfirm({
+    required this.message,
+    String? title,
+    String? confirm,
+    String? cancel,
+  })  : title = title ?? 'Confirm?',
+        confirm = confirm ?? 'Ok',
+        cancel = cancel ?? 'Cancel';
+}
+
 class ExecConfirmable extends Exec {
   /// This is responsible for show an alert before executing this action
-  final String? dataConfirm;
+  final DataConfirm? dataConfirm;
   ExecConfirmable({this.dataConfirm});
 }
 
