@@ -18,7 +18,7 @@ class _LiveRootViewState extends State<LiveRootView> {
   Widget build(BuildContext context) {
     if (liveView.catchExceptions) {
       ErrorWidget.builder = (err) {
-        return liveView.fallbackWidgets.buildFlutterError(
+        return liveView.fallbackPages.buildFlutterError(
           liveView,
           FlutterErrorDetails(
             exception: err,

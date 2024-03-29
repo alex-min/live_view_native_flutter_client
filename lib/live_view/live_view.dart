@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
-import 'package:liveview_flutter/live_view/live_view_fallback_widgets.dart';
+import 'package:liveview_flutter/live_view/live_view_fallback_pages.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
@@ -111,10 +111,10 @@ class LiveView {
   bool throttleSpammyCalls = true;
 
   /// Holds all fallback widgets that will be used in the live view lifecycle
-  LiveViewFallbackWidgets fallbackWidgets;
+  LiveViewFallbackPages fallbackPages;
 
   LiveView({
-    this.fallbackWidgets = const LiveViewFallbackWidgets(),
+    this.fallbackPages = const LiveViewFallbackPages(),
   }) {
     currentUrl = '/';
     router = LiveRouterDelegate(this);
@@ -161,13 +161,13 @@ class LiveView {
         if (response.statusCode == 404) {
           router.pushPage(
             url: 'error',
-            widget: [fallbackWidgets.buildNotFoundError(this, endpoint)],
+            widget: [fallbackPages.buildNotFoundError(this, endpoint)],
             rootState: null,
           );
         } else {
           router.pushPage(
             url: 'error',
-            widget: [fallbackWidgets.buildCompilationError(this, response)],
+            widget: [fallbackPages.buildCompilationError(this, response)],
             rootState: null,
           );
         }
@@ -176,7 +176,7 @@ class LiveView {
       router.pushPage(
         url: 'error',
         widget: [
-          fallbackWidgets.buildNoServerError(
+          fallbackPages.buildNoServerError(
             this,
             FlutterErrorDetails(exception: e, stack: stack),
           )
@@ -187,7 +187,7 @@ class LiveView {
       router.pushPage(
         url: 'error',
         widget: [
-          fallbackWidgets.buildFlutterError(
+          fallbackPages.buildFlutterError(
             this,
             FlutterErrorDetails(exception: e, stack: stack),
           )
@@ -267,7 +267,7 @@ class LiveView {
       router.pushPage(
         url: 'error',
         widget: [
-          fallbackWidgets.buildFlutterError(
+          fallbackPages.buildFlutterError(
             this,
             FlutterErrorDetails(
               exception: Exception(
@@ -440,14 +440,14 @@ class LiveView {
   }
 
   List<Widget> connectingWidget() {
-    return [InternalView(child: fallbackWidgets.buildConnecting(this))];
+    return [InternalView(child: fallbackPages.buildConnecting(this))];
   }
 
   List<Widget> loadingWidget(String url) {
     var previousWidgets = router.lastRealPage?.widgets ?? [];
 
     List<Widget> ret = [
-      InternalView(child: fallbackWidgets.buildLoading(this, url))
+      InternalView(child: fallbackPages.buildLoading(this, url))
     ];
 
     // we keep the previous navigation items to avoid flickering with the load screen

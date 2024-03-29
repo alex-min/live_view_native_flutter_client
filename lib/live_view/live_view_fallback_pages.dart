@@ -7,7 +7,7 @@ import 'package:liveview_flutter/live_view/ui/errors/error_404.dart';
 import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/errors/no_server_error_view.dart';
 
-class LiveViewFallbackWidgets {
+class LiveViewFallbackPages {
   final bool _debugMode;
   final Widget Function(LiveView, [String?])? _connectingBuilder;
   final Widget Function(LiveView, String)? _loadingBuilder;
@@ -19,7 +19,7 @@ class LiveViewFallbackWidgets {
   /// Constructs the fallback widgets
   ///
   /// [debugMode] determines if the fallback widget should be ignored in debug mode
-  const LiveViewFallbackWidgets({
+  const LiveViewFallbackPages({
     bool debugMode = kDebugMode,
     Widget Function(LiveView, [String?])? connectingBuilder,
     Widget Function(LiveView, String)? loadingBuilder,
