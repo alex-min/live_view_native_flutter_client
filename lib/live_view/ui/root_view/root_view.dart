@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
-import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_material_app.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +18,13 @@ class _LiveRootViewState extends State<LiveRootView> {
   Widget build(BuildContext context) {
     if (liveView.catchExceptions) {
       ErrorWidget.builder = (err) {
-        return FlutterErrorView(error: err);
+        return liveView.fallbackPages.buildFlutterError(
+          liveView,
+          FlutterErrorDetails(
+            exception: err,
+            stack: StackTrace.current,
+          ),
+        );
       };
     }
     return MultiProvider(providers: [
