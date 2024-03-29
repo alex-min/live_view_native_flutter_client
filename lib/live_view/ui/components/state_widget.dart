@@ -10,7 +10,6 @@ import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
 import 'package:liveview_flutter/live_view/state/attribute_helpers.dart';
 import 'package:liveview_flutter/live_view/state/computed_attributes.dart';
 import 'package:liveview_flutter/live_view/state/element_key.dart';
-import 'package:liveview_flutter/live_view/state/events.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:provider/provider.dart';
@@ -168,9 +167,9 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
     if (handleClickState() == HandleClickState.automatic) {
       return handleBeforeEachRenderEvents(handleTapEvents(child));
-    } else {
-      return handleBeforeEachRenderEvents(child);
     }
+
+    return handleBeforeEachRenderEvents(child);
   }
 
   Widget handleMarginPadding(Widget child) {
@@ -183,41 +182,57 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
 
     return AnimatedSwitcher(
-        duration: Duration(milliseconds: animationDuration ?? 0),
-        child: status == Status.hidden
-            ? SizedBox.shrink(
-                key: Key("${node.hashCode}-invisible"),
-              )
-            : child);
+      duration: Duration(milliseconds: animationDuration ?? 0),
+      child: status == Status.hidden
+          ? SizedBox.shrink(key: Key("${node.hashCode}-invisible"))
+          : child,
+    );
   }
 
-  void gatherAllEvents(List<String> attributes, List<EventHandler> events,
-      {Map<String, dynamic>? fromAttributes}) {
-    var actions = convertAttributesToExecs(attributes, events,
-        fromAttributes: fromAttributes);
-    StateEvents.convertExecsToEventHandler(context, events, actions, this);
+  void gatherAllEvents(
+    List<String> attributes,
+    List<EventHandler> events, {
+    Map<String, dynamic>? fromAttributes,
+  }) {
+    convertAttributesToExecs(
+      attributes,
+      events,
+      fromAttributes: fromAttributes,
+    ).forEach((e) => events.add((c) => e.conditionalHandler(c, this)));
   }
 
-  void gatherAllTapEvents(List<EventHandler> events,
-          {Map<String, dynamic>? fromAttributes}) =>
+  void gatherAllTapEvents(
+    List<EventHandler> events, {
+    Map<String, dynamic>? fromAttributes,
+  }) =>
       gatherAllEvents(
-          ['phx-click', 'live-patch', 'phx-href', 'phx-href-modal'], events,
-          fromAttributes: fromAttributes);
+        ['phx-click', 'live-patch', 'phx-href', 'phx-href-modal'],
+        events,
+        fromAttributes: fromAttributes,
+      );
 
   List<Exec> convertAttributesToExecs(
-      List<String> attributes, List<EventHandler> events,
-      {Map<String, dynamic>? fromAttributes}) {
+    List<String> attributes,
+    List<EventHandler> events, {
+    Map<String, dynamic>? fromAttributes,
+  }) {
     List<Exec> actions = [];
 
     for (var eventName in attributes) {
       if (fromAttributes != null) {
         if (fromAttributes[eventName] != null) {
           actions.addAll(FlutterExec.parse(
-              fromAttributes[eventName], eventName, fromAttributes));
+            fromAttributes[eventName],
+            eventName,
+            fromAttributes,
+          ));
         }
       } else if (getAttribute(eventName) != null) {
         actions.addAll(FlutterExec.parse(
-            getAttribute(eventName), eventName, computedAttributes.attributes));
+          getAttribute(eventName),
+          eventName,
+          computedAttributes.attributes,
+        ));
       }
     }
     return actions;
@@ -293,7 +308,11 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     List<EventHandler> events = [];
 
     reloadPredefinedAttributes(node);
-    gatherAllEvents(['phx-on-trigger'], events, fromAttributes: fromAttributes);
+    gatherAllEvents(
+      ['phx-on-trigger'],
+      events,
+      fromAttributes: fromAttributes,
+    );
     executeAllEvents(events);
   }
 
@@ -302,8 +321,11 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     List<EventHandler> events = [];
 
     reloadPredefinedAttributes(node);
-    gatherAllEvents(['phx-click-outside'], events,
-        fromAttributes: fromAttributes);
+    gatherAllEvents(
+      ['phx-click-outside'],
+      events,
+      fromAttributes: fromAttributes,
+    );
     executeAllEvents(events);
   }
 
@@ -348,12 +370,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
 
     return MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () => executeAllEvents(tapEvents),
-          child: AbsorbPointer(child: child),
-        ));
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => executeAllEvents(tapEvents),
+        child: AbsorbPointer(child: child),
+      ),
+    );
   }
 
   Widget render(BuildContext context);
