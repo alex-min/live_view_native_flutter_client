@@ -9,7 +9,7 @@ import 'package:liveview_flutter/live_view/ui/errors/no_server_error_view.dart';
 
 class LiveViewFallbackWidgets {
   final bool _debugMode;
-  final Widget Function(LiveView)? _connectingBuilder;
+  final Widget Function(LiveView, [String?])? _connectingBuilder;
   final Widget Function(LiveView, String)? _loadingBuilder;
   final Widget Function(LiveView, Uri)? _notFoundErrorBuilder;
   final Widget Function(LiveView, Response)? _compilationErrorBuilder;
@@ -21,7 +21,7 @@ class LiveViewFallbackWidgets {
   /// [debugMode] determines if the fallback widget should be ignored in debug mode
   const LiveViewFallbackWidgets({
     bool debugMode = kDebugMode,
-    Widget Function(LiveView)? connectingBuilder,
+    Widget Function(LiveView, [String?])? connectingBuilder,
     Widget Function(LiveView, String)? loadingBuilder,
     Widget Function(LiveView, Uri)? notFoundErrorBuilder,
     Widget Function(LiveView, Response)? compilationErrorBuilder,
@@ -37,16 +37,17 @@ class LiveViewFallbackWidgets {
 
   /// Returns the widget to be displayed when the page is loading
   Widget buildLoading(LiveView liveView, String url) {
-    if (_loadingBuilder != null) {
-      return _loadingBuilder(liveView, url);
-    }
-
-    return Builder(
-      builder: (context) => Container(
-        color: Theme.of(context).colorScheme.background,
-        child: Center(
-          child: CircularProgressIndicator(
-            value: liveView.disableAnimations == false ? null : 1,
+    return _wrapper(
+      liveView,
+      customBuilder: _loadingBuilder,
+      param: url,
+      defaultBuilder: () => Builder(
+        builder: (context) => Container(
+          color: Theme.of(context).colorScheme.background,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: liveView.disableAnimations == false ? null : 1,
+            ),
           ),
         ),
       ),
@@ -54,17 +55,18 @@ class LiveViewFallbackWidgets {
   }
 
   /// Returns the widget to be displayed when the client is connecting
-  Widget buildConnecting(LiveView liveView) {
-    if (_connectingBuilder != null) {
-      return _connectingBuilder(liveView);
-    }
-
-    return Builder(
-      builder: (context) => Container(
-        color: Theme.of(context).colorScheme.background,
-        child: Center(
-          child: CircularProgressIndicator(
-            value: liveView.disableAnimations == false ? null : 1,
+  Widget buildConnecting(LiveView liveView, [String? url]) {
+    return _wrapper(
+      liveView,
+      customBuilder: _connectingBuilder,
+      param: url,
+      defaultBuilder: () => Builder(
+        builder: (context) => Container(
+          color: Theme.of(context).colorScheme.background,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: liveView.disableAnimations == false ? null : 1,
+            ),
           ),
         ),
       ),
@@ -77,38 +79,55 @@ class LiveViewFallbackWidgets {
     LiveView liveView,
     Response response,
   ) {
-    if (!_debugMode && _compilationErrorBuilder != null) {
-      return _compilationErrorBuilder(liveView, response);
-    }
-
-    return CompilationErrorView(html: response.body);
+    return _wrapper(
+      liveView,
+      customBuilder: _compilationErrorBuilder,
+      param: response,
+      defaultBuilder: () => CompilationErrorView(html: response.body),
+    );
   }
 
   /// Returns the widget to be displayed in case when the requested
   /// page is not found
   Widget buildNotFoundError(LiveView liveView, Uri endpoint) {
-    if (!_debugMode && _notFoundErrorBuilder != null) {
-      return _notFoundErrorBuilder(liveView, endpoint);
-    }
-
-    return Error404(url: endpoint.toString());
+    return _wrapper(
+      liveView,
+      customBuilder: _notFoundErrorBuilder,
+      param: endpoint,
+      defaultBuilder: () => Error404(url: endpoint.toString()),
+    );
   }
 
   /// Returns the widget to be displayed in case of an error in the server
   Widget buildNoServerError(LiveView liveView, FlutterErrorDetails details) {
-    if (!_debugMode && _noServerErrorBuilder != null) {
-      return _noServerErrorBuilder(liveView, details);
-    }
-
-    return NoServerError(error: details);
+    return _wrapper(
+      liveView,
+      customBuilder: _noServerErrorBuilder,
+      param: details,
+      defaultBuilder: () => NoServerError(error: details),
+    );
   }
 
   /// Returns the widget to be displayed in case of an error in the Flutter
   Widget buildFlutterError(LiveView liveView, FlutterErrorDetails details) {
-    if (!_debugMode && _flutterErrorBuilder != null) {
-      return _flutterErrorBuilder(liveView, details);
+    return _wrapper(
+      liveView,
+      customBuilder: _flutterErrorBuilder,
+      param: details,
+      defaultBuilder: () => FlutterErrorView(error: details),
+    );
+  }
+
+  Widget _wrapper<T>(
+    LiveView liveView, {
+    required Widget Function(LiveView, T)? customBuilder,
+    required T param,
+    required Widget Function() defaultBuilder,
+  }) {
+    if (!_debugMode && customBuilder != null) {
+      return customBuilder(liveView, param);
     }
 
-    return FlutterErrorView(error: details);
+    return defaultBuilder();
   }
 }
