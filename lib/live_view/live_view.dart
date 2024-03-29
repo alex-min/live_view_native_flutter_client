@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' as m;
 import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html;
@@ -11,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
+import 'package:liveview_flutter/live_view/live_view_fallback_widgets.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
@@ -25,10 +25,6 @@ import 'package:liveview_flutter/live_view/ui/components/live_floating_action_bu
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
-import 'package:liveview_flutter/live_view/ui/errors/compilation_error_view.dart';
-import 'package:liveview_flutter/live_view/ui/errors/error_404.dart';
-import 'package:liveview_flutter/live_view/ui/errors/flutter_error_view.dart';
-import 'package:liveview_flutter/live_view/ui/errors/no_server_error_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
 import 'package:liveview_flutter/live_view/webdocs.dart';
@@ -104,7 +100,7 @@ class LiveView {
 
   PhoenixChannel? _channel;
 
-  List<m.Widget>? lastRender;
+  List<Widget>? lastRender;
 
   // dynamic global state
   late StateNotifier changeNotifier;
@@ -114,7 +110,12 @@ class LiveView {
   late LiveRouterDelegate router;
   bool throttleSpammyCalls = true;
 
-  LiveView() {
+  /// Holds all fallback widgets that will be used in the live view lifecycle
+  LiveViewFallbackWidgets fallbackWidgets;
+
+  LiveView({
+    this.fallbackWidgets = const LiveViewFallbackWidgets(),
+  }) {
     currentUrl = '/';
     router = LiveRouterDelegate(this);
     changeNotifier = StateNotifier();
@@ -127,7 +128,10 @@ class LiveView {
     FlutterExecAction.registerDefaultExecs();
 
     router.pushPage(
-        url: 'loading', widget: connectingWidget(), rootState: null);
+      url: 'loading',
+      widget: connectingWidget(),
+      rootState: null,
+    );
   }
 
   void connectToDocs() {
@@ -157,13 +161,13 @@ class LiveView {
         if (response.statusCode == 404) {
           router.pushPage(
             url: 'error',
-            widget: [Error404(url: endpoint.toString())],
+            widget: [fallbackWidgets.buildNotFoundError(this, endpoint)],
             rootState: null,
           );
         } else {
           router.pushPage(
             url: 'error',
-            widget: [CompilationErrorView(html: response.body)],
+            widget: [fallbackWidgets.buildCompilationError(this, response)],
             rootState: null,
           );
         }
@@ -172,9 +176,10 @@ class LiveView {
       router.pushPage(
         url: 'error',
         widget: [
-          NoServerError(
-            error: FlutterErrorDetails(exception: e, stack: stack),
-          ),
+          fallbackWidgets.buildNoServerError(
+            this,
+            FlutterErrorDetails(exception: e, stack: stack),
+          )
         ],
         rootState: null,
       );
@@ -182,8 +187,9 @@ class LiveView {
       router.pushPage(
         url: 'error',
         widget: [
-          FlutterErrorView(
-            error: FlutterErrorDetails(exception: e, stack: stack),
+          fallbackWidgets.buildFlutterError(
+            this,
+            FlutterErrorDetails(exception: e, stack: stack),
           )
         ],
         rootState: null,
@@ -261,14 +267,15 @@ class LiveView {
       router.pushPage(
         url: 'error',
         widget: [
-          FlutterErrorView(
-            error: FlutterErrorDetails(
+          fallbackWidgets.buildFlutterError(
+            this,
+            FlutterErrorDetails(
               exception: Exception(
-                "unable to load the meta tags, please add the csrf-token, data-phx-session and data-phx-static tags in ${content.outerHtml}",
+                "Unable to load the meta tags, please add the csrf-token, data-phx-session and data-phx-static tags in ${content.outerHtml}",
               ),
               stack: stack,
             ),
-          )
+          ),
         ],
         rootState: null,
       );
@@ -438,18 +445,7 @@ class LiveView {
     var previousWidgets = router.lastRealPage?.widgets ?? [];
 
     List<Widget> ret = [
-      InternalView(
-        child: Builder(
-          builder: (context) => Container(
-            color: m.Theme.of(context).colorScheme.background,
-            child: Center(
-              child: m.CircularProgressIndicator(
-                value: disableAnimations == false ? null : 1,
-              ),
-            ),
-          ),
-        ),
-      )
+      InternalView(child: fallbackWidgets.buildLoading(this))
     ];
 
     // we keep the previous navigation items to avoid flickering with the load screen
