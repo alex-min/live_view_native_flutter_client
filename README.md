@@ -1,7 +1,7 @@
 # Live View Native Flutter Client
 
 > [!WARNING]
-> This client is a tech preview, it's not ready to be usable for your own app
+> This client is in beta, some features might be missing for your own app
 >
 > APIs might break and features might be missing
 
@@ -25,70 +25,8 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 
 - [Install Flutter](https://docs.flutter.dev/get-started/install)
 - clone [the demo live view flutter server](https://github.com/alex-min/live_view_flutter_demo)
-- create a new flutter package
-- install this client
-
-```yml
-liveview_flutter:
-  git:
-    url: git@github.com:alex-min/live_view_native_flutter_client.git
-```
-
-- replace your lib/main.dart content with this:
-
-```dart
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:liveview_flutter/liveview_flutter.dart';
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  final LiveView view = LiveView();
-
-  @override
-  initState() {
-    Future.microtask(boot);
-    super.initState();
-  }
-
-  void boot() async {
-    if (kIsWeb) {
-      view.connectToDocs();
-      return;
-    }
-
-    await view.connect(
-      Platform.isAndroid
-          ?
-          // android emulator
-          'http://10.0.2.2:4000'
-          // computer
-          : 'http://localhost:4000/',
-    );
-  }
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return view.rootView;
-  }
-}
-```
-
-- Use "flutter run" to run the client
+- clone this repository
+- Use "flutter run" in the examples folder to run the client
 - You can modify the live view url in lib/main.dart, by default it uses localhost:4000 and 10.0.2.2:4000 for the android emulator
 
 ## What is there already?
@@ -105,17 +43,16 @@ class _MyAppState extends State<MyApp> {
 - Responsive navigation
 - Basic Images support
 - Live Components
+- Confirm modals
 
 ## What is missing?
 
 - Documentation
 - A full API support of all the components
-- Modclasses (same as live view swift native)
 - Hooks similar as web hooks
 - Animations
 - Local storage
 - Better Image support & Video
-- More server side-events, something like "flutter-onrender"
 - Responsive navigation & desktop support (like windows title)
 - Sessions & Session storage events
 - ...
