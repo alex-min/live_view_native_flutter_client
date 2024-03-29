@@ -9,7 +9,8 @@ import 'package:liveview_flutter/live_view/ui/errors/no_server_error_view.dart';
 
 class LiveViewFallbackWidgets {
   final bool _debugMode;
-  final Widget Function(LiveView)? _loadingBuilder;
+  final Widget Function(LiveView)? _connectingBuilder;
+  final Widget Function(LiveView, String)? _loadingBuilder;
   final Widget Function(LiveView, Uri)? _notFoundErrorBuilder;
   final Widget Function(LiveView, Response)? _compilationErrorBuilder;
   final Widget Function(LiveView, FlutterErrorDetails)? _noServerErrorBuilder;
@@ -20,12 +21,14 @@ class LiveViewFallbackWidgets {
   /// [debugMode] determines if the fallback widget should be ignored in debug mode
   const LiveViewFallbackWidgets({
     bool debugMode = kDebugMode,
-    Widget Function(LiveView)? loadingBuilder,
+    Widget Function(LiveView)? connectingBuilder,
+    Widget Function(LiveView, String)? loadingBuilder,
     Widget Function(LiveView, Uri)? notFoundErrorBuilder,
     Widget Function(LiveView, Response)? compilationErrorBuilder,
     Widget Function(LiveView, FlutterErrorDetails)? noServerErrorBuilder,
     Widget Function(LiveView, FlutterErrorDetails)? flutterErrorBuilder,
   })  : _debugMode = debugMode,
+        _connectingBuilder = connectingBuilder,
         _loadingBuilder = loadingBuilder,
         _notFoundErrorBuilder = notFoundErrorBuilder,
         _noServerErrorBuilder = noServerErrorBuilder,
@@ -33,9 +36,27 @@ class LiveViewFallbackWidgets {
         _flutterErrorBuilder = flutterErrorBuilder;
 
   /// Returns the widget to be displayed when the page is loading
-  Widget buildLoading(LiveView liveView) {
+  Widget buildLoading(LiveView liveView, String url) {
     if (_loadingBuilder != null) {
-      return _loadingBuilder(liveView);
+      return _loadingBuilder(liveView, url);
+    }
+
+    return Builder(
+      builder: (context) => Container(
+        color: Theme.of(context).colorScheme.background,
+        child: Center(
+          child: CircularProgressIndicator(
+            value: liveView.disableAnimations == false ? null : 1,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Returns the widget to be displayed when the client is connecting
+  Widget buildConnecting(LiveView liveView) {
+    if (_connectingBuilder != null) {
+      return _connectingBuilder(liveView);
     }
 
     return Builder(

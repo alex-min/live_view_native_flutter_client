@@ -439,13 +439,15 @@ class LiveView {
     }
   }
 
-  List<Widget> connectingWidget() => loadingWidget();
+  List<Widget> connectingWidget() {
+    return [InternalView(child: fallbackWidgets.buildConnecting(this))];
+  }
 
-  List<Widget> loadingWidget() {
+  List<Widget> loadingWidget(String url) {
     var previousWidgets = router.lastRealPage?.widgets ?? [];
 
     List<Widget> ret = [
-      InternalView(child: fallbackWidgets.buildLoading(this))
+      InternalView(child: fallbackWidgets.buildLoading(this, url))
     ];
 
     // we keep the previous navigation items to avoid flickering with the load screen
@@ -483,7 +485,7 @@ class LiveView {
     }
     router.pushPage(
       url: 'loading;$url',
-      widget: loadingWidget(),
+      widget: loadingWidget(url),
       rootState: router.pages.lastOrNull?.rootState,
     );
     redirectTo(url);
@@ -537,7 +539,7 @@ class LiveView {
   Future<void> execHrefClick(String url) async {
     router.pushPage(
       url: 'loading;$url',
-      widget: loadingWidget(),
+      widget: loadingWidget(url),
       rootState: router.pages.lastOrNull?.rootState,
     );
     var response = await deadViewGetQuery(url);
