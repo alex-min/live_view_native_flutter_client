@@ -23,6 +23,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.da
 import 'package:liveview_flutter/live_view/ui/components/live_end_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_expanded.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_filled_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_flex.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hint_attribute.dart';
@@ -201,6 +202,7 @@ class LiveViewUiParser {
       ..add(['Icon'], (state) => [LiveIcon(state: state)])
       ..add(['Column'], (state) => [LiveColumn(state: state)])
       ..add(['Row'], (state) => [LiveRow(state: state)])
+      ..add(['Flex'], (state) => [LiveFlex(state: state)])
       ..add(['PersistentFooterButton'],
           (state) => [LivePersistentFooterButton(state: state)])
       ..add(['BottomSheet'], (state) => [LiveBottomSheet(state: state)])
