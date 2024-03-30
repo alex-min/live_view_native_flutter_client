@@ -4,14 +4,14 @@ import 'package:liveview_flutter/live_view/mapping/text_baseline.dart';
 import 'package:liveview_flutter/live_view/mapping/text_direction.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-class LiveRow extends LiveStateWidget<LiveRow> {
-  const LiveRow({super.key, required super.state});
+class LiveFlex extends LiveStateWidget<LiveFlex> {
+  const LiveFlex({super.key, required super.state});
 
   @override
-  State<LiveRow> createState() => _LiveColState();
+  State<LiveFlex> createState() => _LiveColState();
 }
 
-class _LiveColState extends StateWidget<LiveRow> {
+class _LiveColState extends StateWidget<LiveFlex> {
   @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
         'mainAxisAlignment',
@@ -19,12 +19,16 @@ class _LiveColState extends StateWidget<LiveRow> {
         'textDirection',
         'mainAxisSize',
         'verticalDirection',
-        'textBaseline'
+        'textBaseline',
+        'direction',
       ]);
 
   @override
   Widget render(BuildContext context) {
-    return Row(
+    return Flex(
+        direction: getAttribute('direction') == 'row'
+            ? Axis.horizontal
+            : Axis.vertical,
         mainAxisAlignment:
             getMainAxisAlignment(getAttribute('mainAxisAlignment')) ??
                 MainAxisAlignment.start,
