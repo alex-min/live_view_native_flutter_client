@@ -19,6 +19,17 @@ MainAxisAlignment? getMainAxisAlignment(String? prop) {
   }
 }
 
+MainAxisSize? getMainAxisSize(String? prop) {
+  switch (prop) {
+    case 'max':
+      return MainAxisSize.max;
+    case 'min':
+      return MainAxisSize.min;
+    default:
+      return null;
+  }
+}
+
 CrossAxisAlignment? getCrossAxisAlignment(String? prop) {
   switch (prop) {
     case 'center':

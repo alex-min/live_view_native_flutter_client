@@ -15,6 +15,7 @@ class _LiveColState extends StateWidget<LiveColumn> {
   @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
         'mainAxisAlignment',
+        'mainAxisSize',
         'crossAxisAlignment',
         'textDirection',
         'verticalDirection',
@@ -27,6 +28,8 @@ class _LiveColState extends StateWidget<LiveColumn> {
       mainAxisAlignment:
           getMainAxisAlignment(getAttribute('mainAxisAlignment')) ??
               MainAxisAlignment.start,
+      mainAxisSize:
+          getMainAxisSize(getAttribute('mainAxisSize')) ?? MainAxisSize.max,
       crossAxisAlignment:
           getCrossAxisAlignment(getAttribute('crossAxisAlignment')) ??
               CrossAxisAlignment.center,
