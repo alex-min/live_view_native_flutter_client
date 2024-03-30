@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/mapping/boolean.dart';
 import 'package:liveview_flutter/live_view/mapping/floating_action_button_location.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/state/computed_attributes.dart';
@@ -114,6 +115,18 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     }
   }
 
+  String? getRootAttribute(String name) {
+    if (widget.view.router.pages.last.rootState == null) return null;
+
+    var attributes = bindChildVariableAttributes(
+      widget.view.router.pages.last.rootState!.node,
+      [name],
+      widget.view.router.pages.last.rootState!.variables,
+    );
+
+    return attributes[name];
+  }
+
   @override
   Widget build(BuildContext context) {
     bindFloatingActionButtonLocation();
@@ -136,50 +149,60 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     }
 
     var child = SafeArea(
-        child: Router(
-      routerDelegate: widget.view.router,
-      backButtonDispatcher: RootBackButtonDispatcher(),
-    ));
-    var view = Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        key: key,
-        drawer: drawer,
-        endDrawer: endDrawer,
-        appBar: RootAppBar(view: widget.view),
-        body: NotificationListener<SizeChangedLayoutNotification>(
-            onNotification: (_) {
-              if (widget.view.throttleSpammyCalls) {
-                throttle('window_resize',
-                    () => widget.view.eventHub.fire('phx:window:resize'),
-                    cooldown: const Duration(milliseconds: 50));
-              } else {
-                widget.view.eventHub.fire('phx:window:resize');
-              }
-              return true;
-            },
-            child: NotificationListener<ShowBottomSheetNotification>(
-                onNotification: (_) {
-                  var widgets =
-                      List<Widget>.from(widget.view.router.pages.last.widgets);
-                  var bottomSheet =
-                      StateChild.extractWidgetChild<LiveBottomSheet>(widgets);
-                  if (bottomSheet == null) {
-                    debugPrint('no bottomsheet to show');
-                    return true;
-                  }
+      child: Router(
+        routerDelegate: widget.view.router,
+        backButtonDispatcher: RootBackButtonDispatcher(),
+      ),
+    );
 
-                  key.currentState!.showBottomSheet((context) => bottomSheet);
-                  return true;
-                },
-                child: mapRailBar(SizeChangedLayoutNotifier(
-                    child: widget.view.isLiveReloading
-                        ? Stack(children: [child, const ReloadWidget()])
-                        : child)))),
-        bottomNavigationBar: RootBottomNavigationBar(view: widget.view),
-        floatingActionButtonLocation: floatingActionButtonLocation,
-        floatingActionButton: floatingActionButton,
-        persistentFooterButtons:
-            persistentButtons.isEmpty ? null : persistentButtons);
-    return view;
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      key: key,
+      drawer: drawer,
+      endDrawer: endDrawer,
+      primary: getBoolean(getRootAttribute('primary')) ?? true,
+      appBar: RootAppBar(view: widget.view),
+      body: NotificationListener<SizeChangedLayoutNotification>(
+        onNotification: (_) {
+          if (widget.view.throttleSpammyCalls) {
+            throttle(
+              'window_resize',
+              () => widget.view.eventHub.fire('phx:window:resize'),
+              cooldown: const Duration(milliseconds: 50),
+            );
+          } else {
+            widget.view.eventHub.fire('phx:window:resize');
+          }
+          return true;
+        },
+        child: NotificationListener<ShowBottomSheetNotification>(
+          onNotification: (_) {
+            var widgets =
+                List<Widget>.from(widget.view.router.pages.last.widgets);
+            var bottomSheet =
+                StateChild.extractWidgetChild<LiveBottomSheet>(widgets);
+            if (bottomSheet == null) {
+              debugPrint('No bottomsheet to show');
+              return true;
+            }
+
+            key.currentState!.showBottomSheet((context) => bottomSheet);
+            return true;
+          },
+          child: mapRailBar(
+            SizeChangedLayoutNotifier(
+              child: widget.view.isLiveReloading
+                  ? Stack(children: [child, const ReloadWidget()])
+                  : child,
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: RootBottomNavigationBar(view: widget.view),
+      floatingActionButtonLocation: floatingActionButtonLocation,
+      floatingActionButton: floatingActionButton,
+      persistentFooterButtons:
+          persistentButtons.isEmpty ? null : persistentButtons,
+    );
   }
 }
