@@ -17,6 +17,7 @@ class _LiveColState extends StateWidget<LiveRow> {
         'mainAxisAlignment',
         'crossAxisAlignment',
         'textDirection',
+        'mainAxisSize',
         'verticalDirection',
         'textBaseline'
       ]);
@@ -30,6 +31,8 @@ class _LiveColState extends StateWidget<LiveRow> {
         crossAxisAlignment:
             getCrossAxisAlignment(getAttribute('crossAxisAlignment')) ??
                 CrossAxisAlignment.center,
+        mainAxisSize:
+            getMainAxisSize(getAttribute('mainAxisSize')) ?? MainAxisSize.max,
         textDirection: getTextDirection(getAttribute('textDirection')),
         verticalDirection:
             getVerticalDirection(getAttribute('verticalDirection')) ??
