@@ -41,6 +41,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.da
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_safe_area.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold_message.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_segmented_button.dart';
@@ -232,6 +233,7 @@ class LiveViewUiParser {
         return ret;
       })
       ..add(['Checkbox'], (state) => [LiveCheckbox(state: state)])
+      ..add(['SafeArea'], (state) => [LiveSafeArea(state: state)])
       ..add(['SegmentedButton'], (state) => [LiveSegmentedButton(state: state)])
       ..add(['LiveButtonSegment'], (state) => [const SizedBox.shrink()])
       ..add(['FloatingActionButton'],
