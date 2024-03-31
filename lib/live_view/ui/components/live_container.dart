@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/decoration.dart';
-import 'package:liveview_flutter/live_view/mapping/margin.dart';
+import 'package:liveview_flutter/live_view/mapping/edge_insets.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class LiveContainer extends LiveStateWidget<LiveContainer> {
@@ -20,8 +20,8 @@ class _LiveContainerState extends StateWidget<LiveContainer> {
     return Container(
       height: doubleAttribute('height'),
       width: doubleAttribute('width'),
-      margin: getMarginOrPadding(getAttribute('margin')),
-      padding: getMarginOrPadding(getAttribute('padding')),
+      margin: getEdgeInsets(getAttribute('margin')),
+      padding: getEdgeInsets(getAttribute('padding')),
       decoration: getDecoration(context, getAttribute('decoration')),
       child: singleChild(),
     );
