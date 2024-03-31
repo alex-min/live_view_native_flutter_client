@@ -17,7 +17,7 @@ Decoration? getDecoration(BuildContext context, String? css) {
     switch (prop) {
       case 'background':
         color = getColor(context, value);
-      case 'border-radius':
+      case 'borderRadius':
         borderRadius = getBorderRadius(value);
       case 'border':
         border = getBorder(context, value);
