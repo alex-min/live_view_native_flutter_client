@@ -13,11 +13,11 @@ import 'package:liveview_flutter/live_view/mapping/curve.dart';
 import 'package:liveview_flutter/live_view/mapping/decoration.dart';
 import 'package:liveview_flutter/live_view/mapping/drag_start_behavior.dart';
 import 'package:liveview_flutter/live_view/mapping/duration.dart';
+import 'package:liveview_flutter/live_view/mapping/edge_insets.dart';
 import 'package:liveview_flutter/live_view/mapping/floating_action_button_location.dart';
 import 'package:liveview_flutter/live_view/mapping/icons.dart';
 import 'package:liveview_flutter/live_view/mapping/keyboard_type.dart';
 import 'package:liveview_flutter/live_view/mapping/list_title_alignment.dart';
-import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/mapping/material_tap_target_size.dart';
 import 'package:liveview_flutter/live_view/mapping/mouse_cursor.dart';
 import 'package:liveview_flutter/live_view/mapping/navigation_rail_label_type.dart';
@@ -52,7 +52,7 @@ mixin AttributeHelpers {
       getDecoration(context, getAttribute(attribute));
 
   EdgeInsetsGeometry? edgeInsetsAttribute(String attribute) =>
-      getMarginOrPadding(getAttribute(attribute));
+      getEdgeInsets(getAttribute(attribute));
 
   Icon getIconAttribute(String attribute) =>
       Icon(getIcon(getAttribute(attribute)));
@@ -79,7 +79,7 @@ mixin AttributeHelpers {
   Axis? axisAttribute(String attribute) => getAxis(getAttribute(attribute));
 
   EdgeInsets? marginOrPaddingAttribute(String attribute) =>
-      getMarginOrPadding(getAttribute(attribute));
+      getEdgeInsets(getAttribute(attribute));
 
   DragStartBehavior? dragStartBehaviorAttribute(String attribute) =>
       getDragStartBehavior(getAttribute(attribute));

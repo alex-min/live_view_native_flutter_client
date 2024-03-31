@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/boolean.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
+import 'package:liveview_flutter/live_view/mapping/edge_insets.dart';
 import 'package:liveview_flutter/live_view/mapping/icons.dart';
-import 'package:liveview_flutter/live_view/mapping/margin.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
@@ -65,7 +65,7 @@ class _LiveNavigationRailState extends StateWidget<LiveNavigationRail> {
       return (
         attributes,
         NavigationRailDestination(
-            padding: getMarginOrPadding(attributes['padding']),
+            padding: getEdgeInsets(attributes['padding']),
             icon: icon ?? defaultIcon,
             label: label ?? const Text(''),
             indicatorColor: getColor(
