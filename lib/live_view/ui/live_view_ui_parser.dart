@@ -141,7 +141,7 @@ class LiveViewUiParser {
     fullHtml = fullHtml.replaceFirst(RegExp('<div.*data-phx-main '), '<div ');
 
     try {
-      xml = XmlDocument.parse("$fullHtml");
+      xml = XmlDocument.parse(fullHtml);
     } catch (e) {
       return ([ParsingErrorView(xml: fullHtml, url: urlPath)], null);
     }
