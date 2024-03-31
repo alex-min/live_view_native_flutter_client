@@ -82,10 +82,13 @@ mixin ComputedAttributes {
     return ret.attributes;
   }
 
-  List<XmlNode> childrenNodesOf(XmlNode node, String componentName) =>
-      node.nonEmptyChildren
-          .where((e) =>
-              e.nodeType == XmlNodeType.ELEMENT &&
-              (e as XmlElement).name.qualified == componentName)
-          .toList();
+  List<XmlNode> childrenNodesOf(XmlNode node, String componentName) {
+    print('houhou');
+    print(node.nonEmptyChildren.map((e) => e.nodeType).toList());
+    return node.nonEmptyChildren
+        .where((e) =>
+            e.nodeType == XmlNodeType.ELEMENT &&
+            (e as XmlElement).name.qualified == componentName)
+        .toList();
+  }
 }

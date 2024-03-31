@@ -142,6 +142,7 @@ class LiveViewUiParser {
 
     try {
       xml = XmlDocument.parse(fullHtml);
+      print(xml.outerXml);
     } catch (e) {
       try {
         xml = XmlDocument.parse("<flutter>$fullHtml</flutter>");

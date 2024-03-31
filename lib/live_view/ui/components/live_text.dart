@@ -24,7 +24,7 @@ class _LiveViewTextState extends StateWidget<LiveText> {
   @override
   Widget render(BuildContext context) {
     return Text(
-      replaceVariables(widget.state.node.text, lastLiveDiff),
+      replaceVariables(widget.state.node.value ?? '', lastLiveDiff),
       style: getTextStyle(getAttribute('style'), context),
       textAlign: getTextAlign(getAttribute('textAlign')),
     );

@@ -9,12 +9,17 @@ const defaultIcon = Icon(defaultIconData);
 
 extension NonEmptyChildren on XmlNode {
   List<XmlNode> get nonEmptyChildren {
-    return children.where((c) {
+    print('R ${children}');
+    var a = children.where((c) {
       return !c.isEmpty;
     }).toList();
+
+    print('==> ${a}');
+    return a;
   }
 
-  bool get isEmpty => nodeType == XmlNodeType.TEXT && text.trim() == '';
+  bool get isEmpty =>
+      nodeType == XmlNodeType.TEXT && (value ?? '').trim() == '';
 }
 
 extension JoinMethod on List<String> {
