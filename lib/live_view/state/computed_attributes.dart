@@ -89,7 +89,7 @@ mixin ComputedAttributes {
       if (child.nodeType == XmlNodeType.ELEMENT) {
         if ((child as XmlElement).name.qualified == 'flutter') {
           ret.addAll(childrenNodesOf(child, componentName));
-        } else if ((child as XmlElement).name.qualified == componentName) {
+        } else if (child.name.qualified == componentName) {
           ret.add(child);
         }
       }
