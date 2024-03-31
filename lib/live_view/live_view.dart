@@ -10,7 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
+import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/live_view_fallback_pages.dart';
+import 'package:liveview_flutter/live_view/plugin.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/live_go_back_notifier.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
@@ -25,6 +27,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_floating_action_bu
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
+import 'package:liveview_flutter/live_view/ui/live_view_ui_registry.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/internal_view.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_view.dart';
 import 'package:liveview_flutter/live_view/webdocs.dart';
@@ -71,6 +74,7 @@ class LiveSocket {
 enum ClientType { liveView, httpOnly, webDocs }
 
 class LiveView {
+  final List<Plugin> _installedPlugins = [];
   bool catchExceptions = true;
   bool disableAnimations = false;
   ClientType clientType = ClientType.liveView;
@@ -566,5 +570,13 @@ class LiveView {
     }
     router.navigatorKey?.currentState?.maybePop();
     router.notify();
+  }
+
+  Future<void> installPlugins(List<Plugin> plugins) async {
+    for (var plugin in plugins) {
+      plugin.registerWidgets(LiveViewUiRegistry.instance);
+      plugin.registerExecs(LiveViewExecRegistry.instance);
+    }
+    _installedPlugins.addAll(plugins);
   }
 }

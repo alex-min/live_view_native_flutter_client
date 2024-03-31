@@ -72,17 +72,18 @@ class FlutterExecAction {
                     )
                   : null,
         );
-      })
+      }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['live-patch'], (value, attributes) {
         return ExecLivePatch(url: value!['name']);
-      })
+      }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['phx-href'], (value, attributes) {
         return ExecPhxHref(url: value!['name']);
-      })
+      }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['phx-href-modal'], (value, attributes) {
         return ExecPhxHrefModal(url: value!['name']);
-      })
-      ..add(['goBack'], (_, __) => ExecGoBack())
+      }, triggers: [LiveViewExecTrigger.onTap])
+      ..add(['goBack'], (_, __) => ExecGoBack(),
+          triggers: [LiveViewExecTrigger.onTap])
       ..add(['switchTheme'], (value, attributes) {
         return ExecSwitchTheme(
           theme: value!['theme'],
@@ -116,8 +117,8 @@ class FlutterExec {
       return [];
     }
 
-    List? actionList = tryJsonDecode(attribute);
-    if (actionList == null) {
+    dynamic actionList = tryJsonDecode(attribute);
+    if (actionList == null || actionList is num || actionList is String) {
       return [
         FlutterExecAction(name: attributeName, value: {'name': attribute})
             .parse(attributeName, attributes)
