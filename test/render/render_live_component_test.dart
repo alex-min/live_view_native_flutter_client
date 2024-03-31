@@ -233,4 +233,99 @@ main() async {
       'Counter2: 2 - 3',
     ]);
   });
+
+  testWidgets('handles siblings components', (tester) async {
+    var view = LiveView()
+      ..handleRenderedMessage({
+        "0": {
+          "0": {
+            "0": {
+              "0": {
+                "s": ["<Text>Text A</Text>"]
+              },
+              "s": ["<Container>", "</Container>"],
+              "r": 1
+            },
+            "s": ["", ""]
+          },
+          "s": ["<Container>", "</Container>"],
+          "r": 1
+        },
+        "1": {
+          "0": {
+            "0": {
+              "0": {
+                "s": ["<Text>Text B</Text>"]
+              },
+              "s": ["<Container>", "</Container>"],
+              "r": 1
+            },
+            "1": {
+              "0": {
+                "s": ["<Text>Text C</Text>"]
+              },
+              "s": ["<Container>", "</Container>"],
+              "r": 1
+            },
+            "s": ["", "<Container padding=\"10\"></Container>", ""]
+          },
+          "s": ["<Container>", "</Container>"],
+          "r": 1
+        },
+        "s": ["<Container>", "", "</Container>"],
+        "r": 1
+      });
+
+    await tester.runLiveView(view);
+
+    expect(find.allTexts(), ['Text A', 'Text B', 'Text C']);
+  });
+
+  testWidgets('handles siblings without attributes components', (tester) async {
+    var view = LiveView()
+      ..handleRenderedMessage({
+        "0": {
+          "0": {
+            "s": ["<Text>A</Text>"],
+            "r": 1
+          },
+          "1": {
+            "s": ["<Text>B</Text>"],
+            "r": 1
+          },
+          "2": {
+            "s": ["<Text>C</Text>"],
+            "r": 1
+          },
+          "s": ["", "", "", ""]
+        },
+        "s": ["<Container>", "</Container>"],
+        "r": 1
+      });
+
+    await tester.runLiveView(view);
+
+    expect(find.allTexts(), ['A', 'B', 'C']);
+  });
+
+  testWidgets('handles dynamics with components', (tester) async {
+    var view = LiveView()
+      ..handleRenderedMessage({
+        "0": {
+          "d": [
+            ["Text", "A"],
+            ["Text", "B"],
+            ["Text", "C"],
+          ],
+          "s": ["<Text>", " ", "</Text>"],
+          "r": 1
+        },
+        "s": ["<Container>", "</Container>"],
+        "r": 1
+      });
+
+    await tester.runLiveView(view);
+
+    expect(find.allTexts(), ['Text A', 'Text B', 'Text C']);
+  });
 }
