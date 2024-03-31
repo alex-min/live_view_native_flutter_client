@@ -74,7 +74,7 @@ class LiveSocket {
 enum ClientType { liveView, httpOnly, webDocs }
 
 class LiveView {
-  List<Plugin> _installedPlugins = [];
+  final List<Plugin> _installedPlugins = [];
   bool catchExceptions = true;
   bool disableAnimations = false;
   ClientType clientType = ClientType.liveView;
