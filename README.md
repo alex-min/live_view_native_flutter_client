@@ -44,6 +44,7 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 - Basic Images support
 - Live Components
 - Confirm modals
+- Plugins to add your own custom components
 
 ## What is missing?
 

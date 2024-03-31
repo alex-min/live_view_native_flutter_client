@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/exec/exec.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
+import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/reactive/state_notifier.dart';
@@ -204,12 +205,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   void gatherAllTapEvents(
     List<EventHandler> events, {
     Map<String, dynamic>? fromAttributes,
-  }) =>
-      gatherAllEvents(
-        ['phx-click', 'live-patch', 'phx-href', 'phx-href-modal'],
-        events,
-        fromAttributes: fromAttributes,
-      );
+  }) {
+    return gatherAllEvents(
+      LiveViewExecRegistry.instance.execsByTrigger('tap'),
+      events,
+      fromAttributes: fromAttributes,
+    );
+  }
 
   List<Exec> convertAttributesToExecs(
     List<String> attributes,

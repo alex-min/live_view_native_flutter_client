@@ -10,12 +10,25 @@ class LiveViewExecRegistry {
       LiveViewExecRegistry._internal();
 
   final Map<String, ExecBuilder> _execs = {};
+  final Map<String, List<String>> _execsByTriggers = {};
 
   static LiveViewExecRegistry get instance => _instance;
 
-  void add(List<String> execNames, ExecBuilder execBuilder) {
+  List<String> execsByTrigger(String trigger) =>
+      _execsByTriggers[trigger] ?? [];
+
+  void add(List<String> execNames, ExecBuilder execBuilder,
+      {List<String> triggers = const []}) {
     for (var execName in execNames) {
       _execs[execName] = execBuilder;
+    }
+    for (var trigger in triggers) {
+      _execsByTriggers[trigger] ??= [];
+      for (var execName in execNames) {
+        if (!_execsByTriggers[trigger]!.contains(execName)) {
+          _execsByTriggers[trigger]!.add(execName);
+        }
+      }
     }
   }
 
