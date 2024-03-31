@@ -30,6 +30,7 @@ main() {
     await setStyle(tester, """'
           pressed: {
             fontWeight: bold
+            color: #F44336
           }
           disabled: {
             fontWeight: w100
@@ -37,7 +38,7 @@ main() {
         """);
     var style = materialTextStyle()!;
     expect(style.resolve({MaterialState.pressed}),
-        const TextStyle(fontWeight: FontWeight.bold));
+        const TextStyle(fontWeight: FontWeight.bold, color: Color(0xfff44336)));
     expect(style.resolve({MaterialState.disabled}),
         const TextStyle(fontWeight: FontWeight.w100));
   });

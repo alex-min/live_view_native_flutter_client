@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
 import 'package:liveview_flutter/live_view/mapping/material_state.dart';
 
@@ -87,6 +88,11 @@ TextStyle? getTextStyle(String? style, BuildContext context) {
             debugPrint(
                 "Unknown textTheme: $styleValue, supported text styles: ${textThemeMap.keys.join(', ')}");
           }
+        case 'color':
+          finalStyle = finalStyle.merge(TextStyle(
+            color: getColor(context, styleValue),
+          ));
+
         case 'fontStyle':
           if (fontStyleMap.containsKey(styleValue)) {
             finalStyle = finalStyle.merge(TextStyle(
