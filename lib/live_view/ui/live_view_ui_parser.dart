@@ -141,20 +141,15 @@ class LiveViewUiParser {
     fullHtml = fullHtml.replaceFirst(RegExp('<div.*data-phx-main '), '<div ');
 
     try {
-      xml = XmlDocument.parse(fullHtml);
-      print(xml.outerXml);
+      xml = XmlDocument.parse("$fullHtml");
     } catch (e) {
-      try {
-        xml = XmlDocument.parse("<flutter>$fullHtml</flutter>");
-      } catch (e) {
-        return ([ParsingErrorView(xml: fullHtml, url: urlPath)], null);
-      }
+      return ([ParsingErrorView(xml: fullHtml, url: urlPath)], null);
     }
 
     var state = NodeState(
       urlPath: urlPath,
       liveView: liveView,
-      node: xml.nonEmptyChildren.first,
+      node: xml.root,
       variables: htmlVariables,
       nestedState: nestedState,
       parser: this,
@@ -168,11 +163,16 @@ class LiveViewUiParser {
   }
 
   static List<Widget> buildWidget(NodeState state) {
-    if (state.node.nodeType == XmlNodeType.COMMENT) {
+    if (state.node.nodeType == XmlNodeType.DOCUMENT) {
+      List<Widget> ret = [];
+      for (var node in state.node.nonEmptyChildren) {
+        ret.addAll(traverse(state.copyWith(node: node)));
+      }
+      return ret;
+    } else if (state.node.nodeType == XmlNodeType.COMMENT) {
       return [const SizedBox.shrink()];
     } else if (state.node.nodeType == XmlNodeType.ELEMENT) {
       var componentName = (state.node as XmlElement).name.qualified;
-
       return LiveViewUiRegistry.instance.buildWidget(componentName, state);
     } else if (state.node.nodeType == XmlNodeType.TEXT) {
       return renderDynamicComponent(state);
