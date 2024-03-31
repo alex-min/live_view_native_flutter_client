@@ -3,7 +3,7 @@ import 'package:liveview_flutter/exec/exec.dart';
 typedef ExecBuilder = Exec Function(
     Map<String, dynamic>? value, Map<String, dynamic>? attributes);
 
-enum LiveViewExecTrigger { onTap, onWindowResize }
+enum LiveViewExecTrigger { onTap }
 
 class LiveViewExecRegistry {
   LiveViewExecRegistry._internal();
