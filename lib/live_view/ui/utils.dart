@@ -9,10 +9,9 @@ const defaultIcon = Icon(defaultIconData);
 
 extension NonEmptyChildren on XmlNode {
   List<XmlNode> get nonEmptyChildren {
-    var a = children.where((c) {
+    return children.where((c) {
       return !c.isEmpty;
     }).toList();
-    return a;
   }
 
   bool get isEmpty =>
