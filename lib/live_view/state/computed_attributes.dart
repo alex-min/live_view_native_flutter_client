@@ -82,10 +82,18 @@ mixin ComputedAttributes {
     return ret.attributes;
   }
 
-  List<XmlNode> childrenNodesOf(XmlNode node, String componentName) =>
-      node.nonEmptyChildren
-          .where((e) =>
-              e.nodeType == XmlNodeType.ELEMENT &&
-              (e as XmlElement).name.qualified == componentName)
-          .toList();
+  List<XmlNode> childrenNodesOf(XmlNode node, String componentName) {
+    List<XmlNode> ret = [];
+
+    for (var child in node.nonEmptyChildren) {
+      if (child.nodeType == XmlNodeType.ELEMENT) {
+        if ((child as XmlElement).name.qualified == 'flutter') {
+          ret.addAll(childrenNodesOf(child, componentName));
+        } else if (child.name.qualified == componentName) {
+          ret.add(child);
+        }
+      }
+    }
+    return ret;
+  }
 }

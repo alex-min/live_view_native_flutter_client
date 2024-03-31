@@ -14,7 +14,8 @@ extension NonEmptyChildren on XmlNode {
     }).toList();
   }
 
-  bool get isEmpty => nodeType == XmlNodeType.TEXT && text.trim() == '';
+  bool get isEmpty =>
+      nodeType == XmlNodeType.TEXT && (value ?? '').trim() == '';
 }
 
 extension JoinMethod on List<String> {
