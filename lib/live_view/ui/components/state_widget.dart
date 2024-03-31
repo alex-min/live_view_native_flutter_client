@@ -207,7 +207,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     Map<String, dynamic>? fromAttributes,
   }) {
     return gatherAllEvents(
-      LiveViewExecRegistry.instance.execsByTrigger('tap'),
+      LiveViewExecRegistry.instance.execsByTrigger(LiveViewExecTrigger.onTap),
       events,
       fromAttributes: fromAttributes,
     );

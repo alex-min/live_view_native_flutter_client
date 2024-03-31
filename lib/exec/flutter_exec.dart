@@ -72,17 +72,18 @@ class FlutterExecAction {
                     )
                   : null,
         );
-      }, triggers: ['tap'])
+      }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['live-patch'], (value, attributes) {
         return ExecLivePatch(url: value!['name']);
-      }, triggers: ['tap'])
+      }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['phx-href'], (value, attributes) {
         return ExecPhxHref(url: value!['name']);
-      }, triggers: ['tap'])
+      }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['phx-href-modal'], (value, attributes) {
         return ExecPhxHrefModal(url: value!['name']);
-      }, triggers: ['tap'])
-      ..add(['goBack'], (_, __) => ExecGoBack(), triggers: ['tap'])
+      }, triggers: [LiveViewExecTrigger.onTap])
+      ..add(['goBack'], (_, __) => ExecGoBack(),
+          triggers: [LiveViewExecTrigger.onTap])
       ..add(['switchTheme'], (value, attributes) {
         return ExecSwitchTheme(
           theme: value!['theme'],

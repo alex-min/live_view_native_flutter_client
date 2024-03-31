@@ -3,6 +3,8 @@ import 'package:liveview_flutter/exec/exec.dart';
 typedef ExecBuilder = Exec Function(
     Map<String, dynamic>? value, Map<String, dynamic>? attributes);
 
+enum LiveViewExecTrigger { onTap, onWindowResize }
+
 class LiveViewExecRegistry {
   LiveViewExecRegistry._internal();
 
@@ -10,15 +12,15 @@ class LiveViewExecRegistry {
       LiveViewExecRegistry._internal();
 
   final Map<String, ExecBuilder> _execs = {};
-  final Map<String, List<String>> _execsByTriggers = {};
+  final Map<LiveViewExecTrigger, List<String>> _execsByTriggers = {};
 
   static LiveViewExecRegistry get instance => _instance;
 
-  List<String> execsByTrigger(String trigger) =>
+  List<String> execsByTrigger(LiveViewExecTrigger trigger) =>
       _execsByTriggers[trigger] ?? [];
 
   void add(List<String> execNames, ExecBuilder execBuilder,
-      {List<String> triggers = const []}) {
+      {List<LiveViewExecTrigger> triggers = const []}) {
     for (var execName in execNames) {
       _execs[execName] = execBuilder;
     }
