@@ -344,11 +344,22 @@ Color? getColor(BuildContext context, String? color) {
     return null;
   }
 
-  if (color.trim().startsWith('@')) {
-    return _parseVarColor(context, color.trim());
+  color = color.trim();
+
+  if (color.startsWith('@')) {
+    return _parseVarColor(context, color);
   }
 
-  var colors = color.trim().split('-');
+  if (color.startsWith('#')) {
+    color = color.substring(1);
+    if (color.length == 3) {
+      color = color.split('').map((e) => '$e$e').join().toUpperCase();
+    }
+
+    return Color(int.parse(color, radix: 16) + 0xFF000000);
+  }
+
+  var colors = color.split('-');
   var map = getColorMap();
   if (map.containsKey(colors[0])) {
     var color = map[colors[0]]!;
