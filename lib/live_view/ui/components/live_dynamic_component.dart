@@ -74,14 +74,13 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
     }
 
     newState.add(elementKey.key);
-    // TODO: handle multiple children passed here and turn it into a column
-    return widget.state.parser
+
+    return body(widget.state.parser
         .parseHtml(
           List<String>.from(diffEntry['s']),
           Map<String, dynamic>.from(diffEntry),
           newState,
         )
-        .$1
-        .first;
+        .$1);
   }
 }
