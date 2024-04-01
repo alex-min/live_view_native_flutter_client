@@ -13,7 +13,7 @@ class LiveDynamicComponent extends LiveStateWidget<LiveDynamicComponent> {
 class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
   Map<String, dynamic> lastLiveDiff = {};
 
-  Widget? child;
+  List<Widget>? child;
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
@@ -35,14 +35,19 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
 
   @override
   Widget render(BuildContext context) {
+    List<Widget> children = [];
     for (ElementKey elementKey in extraKeysListened) {
       var result = _handleElementKey(elementKey);
       if (result != null) {
-        return child = result;
+        children.add(result);
       }
     }
 
-    return child ?? LiveText(state: widget.state);
+    if (children.isNotEmpty) {
+      child = children;
+    }
+
+    return body(child ?? [LiveText(state: widget.state)]);
   }
 
   Widget? _handleElementKey(ElementKey elementKey) {
