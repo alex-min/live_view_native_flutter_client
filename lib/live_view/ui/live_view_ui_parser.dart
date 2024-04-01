@@ -46,6 +46,8 @@ import 'package:liveview_flutter/live_view/ui/components/live_safe_area.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold_message.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_segmented_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_single_child_scroll_view.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_sized_box.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_stack.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_subtitle_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
@@ -263,6 +265,9 @@ class LiveViewUiParser {
       ..add(['ListTile'], (state) => [LiveListTile(state: state)])
       ..add(['ScaffoldMessage'], (state) => [LiveScaffoldMessage(state: state)])
       ..add(['meta', 'csrf-token', 'iframe'],
-          (state) => [const SizedBox.shrink()]);
+          (state) => [const SizedBox.shrink()])
+      ..add(['SingleChildScrollView'],
+          (state) => [LiveSingleChildScrollView(state: state)])
+      ..add(['SizedBox'], (state) => [LiveSizedBox(state: state)]);
   }
 }
