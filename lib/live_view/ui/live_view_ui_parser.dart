@@ -143,7 +143,11 @@ class LiveViewUiParser {
     try {
       xml = XmlDocument.parse(fullHtml);
     } catch (e) {
-      return ([ParsingErrorView(xml: fullHtml, url: urlPath)], null);
+      try {
+        xml = XmlDocument.parse("<flutter>$fullHtml</flutter>");
+      } catch (e) {
+        return ([ParsingErrorView(xml: fullHtml, url: urlPath)], null);
+      }
     }
 
     var state = NodeState(
