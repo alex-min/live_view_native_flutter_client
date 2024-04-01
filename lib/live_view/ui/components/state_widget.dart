@@ -428,13 +428,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   /// </ElevatedButton>
   /// ```
   Widget body(List<Widget> children) {
-    switch (children.length) {
-      case 0:
-        return const SizedBox.shrink();
-      case 1:
-        return children[0];
-      default:
-        return Column(children: children);
-    }
+    return switch (children.length) {
+      0 => const SizedBox.shrink(),
+      1 => children[0],
+      _ => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        )
+    };
   }
 }
