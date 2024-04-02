@@ -1,5 +1,6 @@
 import 'package:html_unescape/html_unescape.dart';
 import 'package:liveview_flutter/live_view/state/element_key.dart';
+import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:xml/xml.dart';
 
 const elementBracketsPattern =
@@ -15,7 +16,14 @@ String replaceVariables(String content, Map<String, dynamic> variables) {
 
   return content.replaceAllMapped(RegExp(elementPattern), (match) {
     if (match.group(2) == null) {
-      return variables[match.group(1)]?.toString() ?? '';
+      var value = variables[match.group(1)];
+
+      if (value is Map && value.containsKey('s')) {
+        return List<String>.from(value['s'])
+            .joinWith((i) => value[i.toString()].toString());
+      }
+
+      return value?.toString() ?? '';
     }
 
     return components[match.group(2)][match.group(1)].toString();
