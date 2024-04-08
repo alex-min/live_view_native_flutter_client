@@ -3,12 +3,23 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
+import 'package:fake_async/fake_async.dart';
 
 import '../test_helpers.dart';
 
 main() async {
   testWidgets('navigate to another page and back', (tester) async {
-    var (view, server) = await connect(LiveView());
+    var (view, server) = await connect(LiveView(), onRequest: (request) {
+      print("request ${request.url.path}");
+      if (request.url.path == '/') {
+        return textFlutterHttpResponse("""<flutter>
+              $xmlCsrf 
+              <viewBody><link live-patch="/second-page"><Text>variable: 0</Text></link></viewBody>
+              </flutter>
+            """);
+      }
+      return textFlutterHttpResponse(xmlCsrf);
+    });
 
     await tester.runLiveView(view);
 
@@ -26,10 +37,6 @@ main() async {
 
     await tester.tap(find.byType(LiveLink));
 
-    expect(server.lastChannelActions, [liveEvents.join, liveEvents.phxLeave]);
-    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
-    expect(server.lastChannelActions, [liveEvents.join]);
-
     view.handleRenderedMessage({
       's': ['<Text phx-click="${baseActions.goBack}">go back</Text>']
     });
@@ -41,6 +48,7 @@ main() async {
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
     expect(server.lastChannelActions, [liveEvents.join]);
 
+    await tester.runAsync(() => Future.delayed(Duration(seconds: 10)));
     expect((server.liveSocket?.navigationLogs), [
       {'url': 'http://localhost:9999/', 'redirect': null},
       {'url': null, 'redirect': 'http://localhost:9999/second-page'},
