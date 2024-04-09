@@ -530,7 +530,7 @@ class LiveView {
   Future<http.Response> deadViewGetQuery(String url) async {
     var r = await httpClient.get(shortUrlToUri(url), headers: httpHeaders());
     if (r.headers['set-cookie'] != null) {
-      _parseAndSaveCookie(r.headers['set-cookie']!);
+      await _parseAndSaveCookie(r.headers['set-cookie']!);
     }
 
     if (r.statusCode == 200) {
@@ -548,12 +548,14 @@ class LiveView {
     );
     var response = await deadViewGetQuery(url);
 
+    currentUrl = url;
+    redirectToUrl = url;
+
     handleRenderedMessage({
       's': [response.body]
     }, viewType: ViewType.deadView);
 
-    redirectToUrl = url;
-    _channel?.push('phx_leave', {}).future;
+    await _channel?.push('phx_leave', {}).future;
   }
 
   Uri shortUrlToUri(String url) {
@@ -568,7 +570,7 @@ class LiveView {
     if (clientType == ClientType.webDocs) {
       web_html.window.parent?.postMessage({'type': 'go-back'}, "*");
     }
-    router.navigatorKey?.currentState?.maybePop();
+    await router.navigatorKey?.currentState?.maybePop();
     router.notify();
   }
 

@@ -18,6 +18,13 @@ http.Response jsonHttpResponse(dynamic data) {
       headers: {'content-type': 'application/json'});
 }
 
+http.Response textFlutterHttpResponse(String data) {
+  return http.Response(data, 200, headers: {'content-type': 'text/flutter'});
+}
+
+var xmlCsrf = """<meta name="csrf-token" content="csrf" />
+    <div data-phx-session="phx-session" data-phx-static="static" data-phx-main id="live_view_id"></div>""";
+
 class BasicColors {
   static Color red = const Color.fromARGB(255, 255, 0, 0);
   static Color blue = const Color.fromARGB(255, 0, 0, 255);
@@ -221,12 +228,7 @@ Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
         return response;
       }
     }
-    return http.Response(
-        """
-        <meta name="csrf-token" content="csrf" />
-        <div data-phx-session="phx-session" data-phx-static="static" data-phx-main id="live_view_id"></div>
-      """,
-        200,
+    return http.Response(xmlCsrf, 200,
         headers: {'set-cookie': 'live_view=session'});
   });
 

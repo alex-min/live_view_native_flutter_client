@@ -18,7 +18,8 @@ class LivePage {
       {required this.page, required this.widgets, required this.rootState});
 
   @override
-  String toString() => "LivePage(${page.name})";
+  String toString() =>
+      "LivePage(${page.name})${notSuitableToGoBack ? '[not-suitable-to-go-back]' : ''}";
 
   bool get notSuitableToGoBack =>
       junk == true || page.name?.startsWith('/') == false;
@@ -41,6 +42,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       pages.where((page) => page.page.name?.startsWith('/') == true).lastOrNull;
 
   bool _onPopPage(Route route, dynamic result) {
+    popJunkRoutes();
     if (!route.didPop(result)) return false;
     popRoute();
     return true;
@@ -68,7 +70,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
   }
 
   @override
-  Future<bool> popRoute() {
+  Future<bool> popRoute() async {
     popJunkRoutes();
     // we can't pop the last route because the app will crash
     // there's no way to programatically exit the app on some platforms (iOS)
@@ -77,13 +79,13 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       pages.removeLast();
       var pageName = pages.last.page.name;
       if (pageName != null) {
-        view.redirectTo(pageName);
+        await view.execHrefClick(pageName);
       }
       view.goBackNotifier.notify();
       notifyListeners();
-      return Future.value(true);
+      return true;
     }
-    return Future.value(true);
+    return true;
   }
 
   void notify() => notifyListeners();
@@ -103,11 +105,15 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       required List<Widget> widget,
       required NodeState? rootState}) {
     history[url] = widget;
-    if (pages.isNotEmpty && pages.last.page.name == url) {
+    var pageIndex = pages.length - 1;
+    while (pageIndex >= 0 &&
+        (pages.elementAtOrNull(pageIndex)?.page.name == url ||
+            pages.elementAtOrNull(pageIndex)?.page.name == 'loading;$url')) {
       // we don't remove the page now because the router only keeps track of the number of pages
       // if we remove the junk page directly, it won't trigger a refresh
       // this code is triggered on page refresh
-      pages.last.junk = true;
+      pages.elementAtOrNull(pageIndex)!.junk = true;
+      pageIndex--;
     }
     pages.add(_createPage(RouteSettings(name: url), widget, rootState));
     notifyListeners();
