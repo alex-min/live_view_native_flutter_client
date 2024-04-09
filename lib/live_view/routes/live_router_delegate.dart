@@ -50,7 +50,6 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
 
   @override
   Widget build(BuildContext context) {
-    print(pages.where((p) => !p.notSuitableToGoBack).toList());
     return Navigator(
       key: navigatorKey,
       pages: pages.map((p) => p.page).toList(),

@@ -10,7 +10,6 @@ import '../test_helpers.dart';
 main() async {
   testWidgets('navigate to another page and back', (tester) async {
     var (view, server) = await connect(LiveView(), onRequest: (request) {
-      print("request ${request.url.path}");
       if (request.url.path == '/') {
         return textFlutterHttpResponse("""<flutter>
               $xmlCsrf 
@@ -44,14 +43,15 @@ main() async {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(LiveText));
 
-    expect(server.lastChannelActions, [liveEvents.join, liveEvents.phxLeave]);
+    await tester.runAsync(() => Future.delayed(const Duration(seconds: 2)));
+    expect(server.lastChannelActions,
+        [liveEvents.join, liveEvents.phxLeave, liveEvents.phxLeave]);
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
     expect(server.lastChannelActions, [liveEvents.join]);
 
-    await tester.runAsync(() => Future.delayed(Duration(seconds: 10)));
+    // we don't have the second page because live patches aren't part of the navigation logs
     expect((server.liveSocket?.navigationLogs), [
       {'url': 'http://localhost:9999/', 'redirect': null},
-      {'url': null, 'redirect': 'http://localhost:9999/second-page'},
       {'url': null, 'redirect': 'http://localhost:9999/'},
     ]);
 
