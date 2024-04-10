@@ -32,6 +32,8 @@ class RootScaffold extends StatefulWidget {
 class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
   List<Widget> children = [];
   bool isLiveReloading = false;
+  bool hasBottomNavigationBar = false;
+  bool hasAppBar = false;
   LiveNavigationRail? railBar;
   LiveDrawer? drawer;
   LiveEndDrawer? endDrawer;
@@ -141,10 +143,18 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
           StateChild.extractWidgetChild<LiveFloatingActionButton>(widgets);
       persistentButtons =
           StateChild.extractChildren<LivePersistentFooterButton>(widgets);
+      hasAppBar = childrenNodesOf(rootNode!.node, 'AppBar').firstOrNull != null;
+      hasBottomNavigationBar =
+          (childrenNodesOf(rootNode!.node, 'BottomAppBar').firstOrNull ??
+                  childrenNodesOf(rootNode!.node, 'BottomNavigationBar')
+                      .firstOrNull) !=
+              null;
     } else {
       railBar = null;
       drawer = null;
       floatingActionButton = null;
+      hasAppBar = false;
+      hasBottomNavigationBar = false;
       persistentButtons = [];
     }
 
@@ -161,7 +171,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       drawer: drawer,
       endDrawer: endDrawer,
       primary: getBoolean(getRootAttribute('primary')) ?? true,
-      appBar: RootAppBar(view: widget.view),
+      appBar: hasAppBar ? RootAppBar(view: widget.view) : null,
       body: NotificationListener<SizeChangedLayoutNotification>(
         onNotification: (_) {
           if (widget.view.throttleSpammyCalls) {
@@ -198,7 +208,9 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
           ),
         ),
       ),
-      bottomNavigationBar: RootBottomNavigationBar(view: widget.view),
+      bottomNavigationBar: hasBottomNavigationBar
+          ? RootBottomNavigationBar(view: widget.view)
+          : null,
       floatingActionButtonLocation: floatingActionButtonLocation,
       floatingActionButton: floatingActionButton,
       persistentFooterButtons:
