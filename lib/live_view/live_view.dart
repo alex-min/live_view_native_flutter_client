@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
@@ -371,7 +372,27 @@ class LiveView {
     }
   }
 
-  handleMessage(Message event) {
+  handleMessage(Message event) async {
+    if (event.isReply &&
+        event.payload?["status"] == "error" &&
+        event.payload?.containsKey("response") == true) {
+      var response = Map<String, dynamic>.from(event.payload!["response"]);
+
+      if (response["reason"] == "unauthorized" ||
+          response["reason"] == "stale") {
+        log("ERROR: unauthorized live_redirect. Falling back to page request $response");
+        // Fallback to page request
+        // TODO: Handle unauthorized navigation
+        goBack();
+        return;
+      }
+
+      if (response.containsKey("redirect")) {
+        var redirect = Map<String, dynamic>.from(response["redirect"]);
+        return handleRedirect(redirect);
+      }
+    }
+
     if (event.event.value == 'phx_close') {
       if (redirectToUrl != null) {
         currentUrl = redirectToUrl!;
@@ -391,6 +412,20 @@ class LiveView {
     } else if (event.payload!['response']?.containsKey('diff') ?? false) {
       handleDiffMessage(event.payload!['response']!['diff']);
     }
+  }
+
+  handleRedirect(Map<String, dynamic> redirect) async {
+    var nextUrl = redirect["to"];
+    if (nextUrl == null) return;
+
+    log("redirecting to $nextUrl");
+    await _channel?.leave().future;
+    _channel?.close();
+    _socket?.removeChannel(_channel!);
+    _channel = null;
+    currentUrl = nextUrl;
+    _setupPhoenixChannel(redirect: true);
+    return;
   }
 
   handleRenderedMessage(Map<String, dynamic> rendered,
