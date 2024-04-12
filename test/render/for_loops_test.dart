@@ -5,6 +5,16 @@ import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import '../test_helpers.dart';
 
 main() async {
+  test('works when empty', () {
+    expect(
+        expandVariables({
+          '0': {'d': []}
+        }),
+        {
+          '0': {'d': []}
+        });
+  });
+
   test('expand variables', () {
     expect(
         expandVariables({

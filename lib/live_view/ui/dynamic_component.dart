@@ -13,6 +13,9 @@ Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
   }
   if (ret.containsKey('d') && ret['d'] is List && !ret.containsKey('0')) {
     var count = 0;
+    if (ret['d'].isEmpty) {
+      return ret;
+    }
     for (List<dynamic> forList in ret['d']) {
       var localVar = {
         for (var localVar in forList.indexed) '${localVar.$1}': localVar.$2
@@ -41,8 +44,31 @@ Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
 List<Widget> renderDynamicComponent(NodeState state) {
   List<Widget> comps = [];
 
+  if (state.variables.containsKey('d')) {
+    if (state.variables['d'].isEmpty) {
+      return [];
+    }
+
+    for (var i = 0; i < state.variables['d'].length; i++) {
+      var newState = List<String>.from(state.nestedState);
+      newState.add(i.toString());
+
+      comps.addAll(
+        state.parser
+            .parseHtml(
+              List<String>.from(state.variables['s']),
+              state.variables[i.toString()],
+              newState,
+            )
+            .$1,
+      );
+    }
+    return comps;
+  }
+
   for (var elementKey in extractDynamicKeys(state.node.toString())) {
     var currentVariables = state.variables[elementKey.key];
+
     if (currentVariables is! Map || !currentVariables.containsKey('d')) {
       continue;
     }
