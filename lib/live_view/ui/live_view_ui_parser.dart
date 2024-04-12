@@ -89,12 +89,12 @@ class LiveViewUiParser {
     String? componentId,
     List<String> nestedState,
   ) {
-    return html.joinWith((i) {
+    var res = html.joinWith((i) {
       if (variables.containsKey(i.toString())) {
-        var injectedValue = variables[i.toString()].toString().trim();
+        var currentVariable = variables[i.toString()];
+        var injectedValue = currentVariable.toString().trim();
 
-        if (variables[i.toString()] is num &&
-            components.containsKey(injectedValue)) {
+        if (currentVariable is num && components.containsKey(injectedValue)) {
           return recursiveRender(
             List<String>.from(components[injectedValue]?["s"] ?? []),
             Map<String, dynamic>.from(components[injectedValue]),
@@ -102,6 +102,11 @@ class LiveViewUiParser {
             injectedValue,
             nestedState,
           );
+        }
+
+        while (currentVariable is Map) {
+          currentVariable = currentVariable[i.toString()];
+          injectedValue = currentVariable.toString().trim();
         }
 
         if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
@@ -116,6 +121,8 @@ class LiveViewUiParser {
 
       return '[[flutterState key=$i]]';
     }).trim();
+
+    return res;
   }
 
   (List<Widget>, NodeState?) parseHtml(
@@ -169,7 +176,10 @@ class LiveViewUiParser {
   }
 
   static List<Widget> buildWidget(NodeState state) {
-    if (state.node.nodeType == XmlNodeType.DOCUMENT) {
+    if (state.node.nodeType == XmlNodeType.TEXT ||
+        state.variables.containsKey('d')) {
+      return renderDynamicComponent(state);
+    } else if (state.node.nodeType == XmlNodeType.DOCUMENT) {
       List<Widget> ret = [];
       for (var node in state.node.nonEmptyChildren) {
         ret.addAll(traverse(state.copyWith(node: node)));
@@ -180,8 +190,6 @@ class LiveViewUiParser {
     } else if (state.node.nodeType == XmlNodeType.ELEMENT) {
       var componentName = (state.node as XmlElement).name.qualified;
       return LiveViewUiRegistry.instance.buildWidget(componentName, state);
-    } else if (state.node.nodeType == XmlNodeType.TEXT) {
-      return renderDynamicComponent(state);
     } else {
       reportError('unknown node type ${state.node.nodeType}');
       return [const SizedBox.shrink()];

@@ -24,12 +24,11 @@ class _LiveViewTextState extends StateWidget<LiveText> {
 
   @override
   Widget render(BuildContext context) {
+    var text = widget.state.node.innerText == ''
+        ? widget.state.node.value ?? ''
+        : widget.state.node.innerText;
     return Text(
-      replaceVariables(
-          widget.state.node.innerText == ''
-              ? widget.state.node.value ?? ''
-              : widget.state.node.innerText,
-          lastLiveDiff),
+      replaceVariables(text, lastLiveDiff),
       style: getTextStyle(getAttribute('style'), context),
       textAlign: getTextAlign(getAttribute('textAlign')),
     );

@@ -66,7 +66,7 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
   }
 
   Widget? _handleMapDiffEntry(Map diffEntry, ElementKey elementKey) {
-    if (!diffEntry.containsKey('s')) {
+    if (!diffEntry.containsKey('s') && !diffEntry.containsKey('d')) {
       // only updating child props
       return null;
     }
@@ -82,7 +82,7 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
 
     return body(widget.state.parser
         .parseHtml(
-          List<String>.from(diffEntry['s']),
+          List<String>.from(diffEntry['s'] ?? []),
           Map<String, dynamic>.from(diffEntry),
           newState,
         )
