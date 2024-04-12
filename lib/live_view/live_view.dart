@@ -419,7 +419,7 @@ class LiveView {
     if (nextUrl == null) return;
 
     log("redirecting to $nextUrl");
-    await _channel?.leave().future;
+    _channel?.leave();
     _channel?.close();
     _socket?.removeChannel(_channel!);
     _channel = null;
