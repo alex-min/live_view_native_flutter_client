@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/text_align.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/mapping/text_style_map.dart';
+import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:xml/xml.dart';
 
@@ -20,6 +21,12 @@ class _LiveViewTextState extends StateWidget<LiveText> {
     reloadAttributes(node, ['style', 'textAlign']);
     listenInnerTextKeys();
     lastLiveDiff = diff;
+  }
+
+  @override
+  bool isKeyListened(ElementKey elementKey) {
+    // TODO add the keys from the dynamic content
+    return true;
   }
 
   @override

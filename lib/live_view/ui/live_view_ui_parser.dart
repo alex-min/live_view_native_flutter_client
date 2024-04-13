@@ -89,7 +89,10 @@ class LiveViewUiParser {
     String? componentId,
     List<String> nestedState,
   ) {
-    var res = html.joinWith((i) {
+    var res = html
+        .map((part) => part == '' ? '<div></div>' : part)
+        .toList()
+        .joinWith((i) {
       if (variables.containsKey(i.toString())) {
         var currentVariable = variables[i.toString()];
         var injectedValue = currentVariable.toString().trim();
@@ -148,6 +151,8 @@ class LiveViewUiParser {
     // this is always injected in the xml and breaks the xml parser
     // the xml parser doesn't support html-like attributes without a property
     fullHtml = fullHtml.replaceFirst(RegExp('<div.*data-phx-main '), '<div ');
+
+    print(fullHtml);
 
     try {
       xml = XmlDocument.parse(fullHtml);

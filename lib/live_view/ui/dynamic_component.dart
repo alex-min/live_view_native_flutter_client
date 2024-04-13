@@ -53,6 +53,10 @@ List<Widget> renderDynamicComponent(NodeState state) {
       var newState = List<String>.from(state.nestedState);
       newState.add(i.toString());
 
+      print(newState);
+      print(
+          'here ${state.variables[i.toString()]} with ${state.variables['s']}');
+
       comps.addAll(
         state.parser
             .parseHtml(
