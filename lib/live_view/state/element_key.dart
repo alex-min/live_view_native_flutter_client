@@ -1,4 +1,3 @@
-import 'package:quiver/core.dart';
 
 class ElementKey {
   ElementKey(this.key);
