@@ -1,4 +1,3 @@
-
 class ElementKey {
   ElementKey(this.key);
 
