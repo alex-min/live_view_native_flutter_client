@@ -24,12 +24,6 @@ class _LiveViewTextState extends StateWidget<LiveText> {
   }
 
   @override
-  bool isKeyListened(ElementKey elementKey) {
-    // TODO add the keys from the dynamic content
-    return true;
-  }
-
-  @override
   Widget render(BuildContext context) {
     var text = widget.state.node.innerText == ''
         ? widget.state.node.value ?? ''

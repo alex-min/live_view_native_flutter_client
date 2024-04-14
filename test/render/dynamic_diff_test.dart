@@ -42,28 +42,26 @@ main() async {
   testWidgets('dynamic diffs with empty spots are working', (tester) async {
     var view = LiveView()
       ..handleRenderedMessage({
-        's': ['<viewBody>', '<Text>a</Text>', '</viewBody>'],
+        's': ['<viewBody>', '', '</viewBody>'],
         '1': {
-          's': ['<Text>world</Text>'],
+          's': ['<Text>hello</Text>'],
         }
       });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
-//    expect(find.allTexts(), ['world']);
-
     view.handleDiffMessage({
       '0': {
-        's': ['<Text', 'my-property="1">', '</Text>'],
+        's': ['<Text>', '</Text>'],
         'd': [
-          ['kind="info"', "other text"],
+          ["other text"],
         ]
       },
     });
 
     await tester.pumpAndSettle();
 
-    print(find.allTexts());
+    expect(find.allTexts(), ['other text', 'hello']);
   });
 }
