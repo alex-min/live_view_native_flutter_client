@@ -91,7 +91,7 @@ class LiveViewUiParser {
     String? componentId,
     List<String> nestedState,
   ) {
-    var res = html.toList().joinWith((i) {
+    var res = html.joinWith((i) {
       if (variables.containsKey(i.toString())) {
         var currentVariable = variables[i.toString()];
         var injectedValue = currentVariable.toString().trim();
