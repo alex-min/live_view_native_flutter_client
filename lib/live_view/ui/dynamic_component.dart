@@ -103,5 +103,20 @@ List<Widget> renderDynamicComponent(NodeState state) {
     }
   }
 
+  // this happens if we have two components being rendered in the same piece of text
+  // something like [[flutterState key="0"]][[flutterState key="1"]]
+  // we need to divide this in two components
+  if (dynamicKeys.length > 1 && comps.isEmpty) {
+    for (var elementKey in dynamicKeys) {
+      comps.addAll(
+        state.parser.parseHtml(
+          ["[[flutterState key=${elementKey.key}]]"],
+          state.variables,
+          state.nestedState,
+        ).$1,
+      );
+    }
+  }
+
   return (comps.isNotEmpty) ? comps : [LiveDynamicComponent(state: state)];
 }
