@@ -23,8 +23,7 @@ mixin ComputedAttributes {
 
   bool isKeyListened(ElementKey key) =>
       computedAttributes.listenedKeys.contains(key) ||
-      extraKeysListened.contains(key) ||
-      key.key == 'c';
+      extraKeysListened.contains(key);
 
   void addListenedKey(ElementKey key) {
     if (!extraKeysListened.contains(key)) {

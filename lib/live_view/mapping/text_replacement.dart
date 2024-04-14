@@ -3,30 +3,18 @@ import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:xml/xml.dart';
 
-const elementBracketsPattern =
-    r'\[\[flutterState\s*key=(\d+)(?:\s*component=(\d+))?\]\]';
-
-const elementXmlPattern =
-    r'<flutterState\s*key="(\d+)"(?:\s*component="(\d+)")?\s*(?:><\/flutterState|\/>)';
-
-const elementPattern = '$elementBracketsPattern|$elementXmlPattern';
+const elementPattern = r'\[\[flutterState\s*key=(\d+)?\]\]';
 
 String replaceVariables(String content, Map<String, dynamic> variables) {
-  final components = Map<String, dynamic>.from(variables['c'] ?? {});
-
   return content.replaceAllMapped(RegExp(elementPattern), (match) {
-    if (match.group(2) == null) {
-      var value = variables[match.group(1)];
+    var value = variables[match.group(1)];
 
-      if (value is Map && value.containsKey('s')) {
-        return List<String>.from(value['s'])
-            .joinWith((i) => value[i.toString()].toString());
-      }
-
-      return value?.toString() ?? '';
+    if (value is Map && value.containsKey('s')) {
+      return List<String>.from(value['s'])
+          .joinWith((i) => value[i.toString()].toString());
     }
 
-    return components[match.group(2)][match.group(1)].toString();
+    return value?.toString() ?? '';
   });
 }
 
@@ -37,7 +25,7 @@ List<ElementKey> extractDynamicKeys(String input) {
     if (match.group(1) == null) {
       continue;
     }
-    final elementKey = ElementKey(match.group(1)!, match.group(2));
+    final elementKey = ElementKey(match.group(1)!);
     if (!ret.contains(elementKey)) {
       ret.add(elementKey);
     }
@@ -61,8 +49,8 @@ List<ElementKey> extractDynamicKeys(String input) {
     return (attr, null);
   }
 
-  var elementKey = ElementKey(matches.group(1)!, matches.group(2));
-  if (elementKey.isComponent || variables[elementKey.key] == null) {
+  var elementKey = ElementKey(matches.group(1)!);
+  if (variables[elementKey.key] == null) {
     return (attr, null);
   }
 

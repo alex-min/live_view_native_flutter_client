@@ -5,6 +5,50 @@ import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import '../test_helpers.dart';
 
 main() async {
+  test('works with components', () {
+    expect(
+        expandVariables({
+          '0': 1,
+          'c': {
+            '1': {
+              "0": "world",
+              "1": {
+                "s": ["<Text>", "</Text>"]
+              },
+            }
+          }
+        }),
+        {
+          '0': {
+            "0": "world",
+            "1": {
+              "s": ["<Text>", "</Text>"]
+            },
+          }
+        });
+  });
+
+  test('works with nested components', () {
+    expect(
+        expandVariables({
+          '0': 1,
+          'c': {
+            '1': {"0": "world", "2": 2},
+            '2': {
+              "s": ["<Text>hello</Text>"]
+            },
+          }
+        }),
+        {
+          '0': {
+            "0": "world",
+            "2": {
+              "s": ["<Text>hello</Text>"]
+            }
+          }
+        });
+  });
+
   test('works when empty', () {
     expect(
         expandVariables({

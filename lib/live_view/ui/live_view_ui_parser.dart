@@ -88,27 +88,13 @@ class LiveViewUiParser {
   String recursiveRender(
     List<String> html,
     Map<String, dynamic> variables,
-    Map<String, dynamic> components,
     String? componentId,
     List<String> nestedState,
   ) {
-    var res = html
-        .map((part) => part == '' ? '<div></div>' : part)
-        .toList()
-        .joinWith((i) {
+    var res = html.toList().joinWith((i) {
       if (variables.containsKey(i.toString())) {
         var currentVariable = variables[i.toString()];
         var injectedValue = currentVariable.toString().trim();
-
-        if (currentVariable is num && components.containsKey(injectedValue)) {
-          return recursiveRender(
-            List<String>.from(components[injectedValue]?["s"] ?? []),
-            Map<String, dynamic>.from(components[injectedValue]),
-            components,
-            injectedValue,
-            nestedState,
-          );
-        }
 
         while (currentVariable is Map) {
           currentVariable = currentVariable[i.toString()];
@@ -144,7 +130,6 @@ class LiveViewUiParser {
     var fullHtml = recursiveRender(
       html,
       variables,
-      variables['c'] ?? {},
       null,
       nestedState,
     );

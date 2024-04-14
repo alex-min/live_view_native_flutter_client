@@ -1,12 +1,26 @@
 import 'package:flutter/widgets.dart';
+import 'package:liveview_flutter/live_view/mapping/css.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 
 Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
-    {Map<String, dynamic> templates = const {}}) {
+    {Map<String, dynamic> templates = const {},
+    Map<String, dynamic>? component}) {
   var ret = Map<String, dynamic>.from(diff);
   var nextTemplate = Map<String, dynamic>.from(templates);
+
+  if (ret.containsKey('c')) {
+    component = ret.remove('c');
+  }
+
+  if (component != null) {
+    for (var key in ret.keys) {
+      if (key.isNumber() && ret[key] is num) {
+        ret[key] = component[ret[key].toString()];
+      }
+    }
+  }
 
   if (ret.containsKey('p') && ret['p'] is Map) {
     nextTemplate.addAll(ret['p']);
@@ -23,7 +37,7 @@ Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
       ret[count.toString()] = localVar;
       count++;
     }
-    return expandVariables(ret, templates: nextTemplate);
+    return expandVariables(ret, templates: nextTemplate, component: component);
   }
   if (ret.containsKey('s') && ret['s'] is int) {
     ret['s'] = nextTemplate[ret['s'].toString()];
@@ -32,10 +46,8 @@ Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
     if (v is Map) {
       return MapEntry(
           k,
-          expandVariables(
-            Map<String, dynamic>.from(v),
-            templates: nextTemplate,
-          ));
+          expandVariables(Map<String, dynamic>.from(v),
+              templates: nextTemplate, component: component));
     }
     return MapEntry(k, v);
   });
@@ -66,7 +78,8 @@ List<Widget> renderDynamicComponent(NodeState state) {
     return comps;
   }
 
-  for (var elementKey in extractDynamicKeys(state.node.toString())) {
+  var dynamicKeys = extractDynamicKeys(state.node.toString());
+  for (var elementKey in dynamicKeys) {
     var currentVariables = state.variables[elementKey.key];
 
     if (currentVariables is! Map || !currentVariables.containsKey('d')) {
@@ -75,10 +88,6 @@ List<Widget> renderDynamicComponent(NodeState state) {
 
     for (var i = 0; i < currentVariables['d'].length; i++) {
       var newState = List<String>.from(state.nestedState);
-      if (!newState.contains('c') && elementKey.isComponent) {
-        newState.remove('c');
-        newState.add(elementKey.component!);
-      }
       newState.add(elementKey.key);
       newState.add(i.toString());
 
