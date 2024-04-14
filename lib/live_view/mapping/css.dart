@@ -1,4 +1,9 @@
 extension StringX on String {
+  isNumber() {
+    var val = codeUnitAt(0);
+    return val >= 48 && val <= 57;
+  }
+
   isLetterOrNumber() {
     var val = codeUnitAt(0);
     return (val >= 97 && val <= 122) ||

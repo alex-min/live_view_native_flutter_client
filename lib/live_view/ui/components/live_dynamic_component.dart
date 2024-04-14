@@ -51,9 +51,7 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
   }
 
   Widget? _handleElementKey(ElementKey elementKey) {
-    var diffEntry = elementKey.isComponent
-        ? lastLiveDiff['c'][elementKey.component][elementKey.key]
-        : lastLiveDiff[elementKey.key];
+    var diffEntry = lastLiveDiff[elementKey.key];
 
     if (diffEntry is String && diffEntry.trim() == '') {
       return const SizedBox.shrink();
@@ -72,11 +70,6 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
     }
 
     var newState = List<String>.from(widget.state.nestedState);
-
-    if (!newState.contains('c') && elementKey.isComponent) {
-      newState.add('c');
-      newState.add(elementKey.component!);
-    }
 
     newState.add(elementKey.key);
 

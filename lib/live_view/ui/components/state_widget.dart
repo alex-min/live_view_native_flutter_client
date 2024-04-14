@@ -128,6 +128,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       return;
     }
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
+
     if (lastLiveDiff.keys.any((key) => isKeyListened(ElementKey(key)))) {
       currentVariables.addAll(lastLiveDiff);
       onStateChange(lastLiveDiff);
