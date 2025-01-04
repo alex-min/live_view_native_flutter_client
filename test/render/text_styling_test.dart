@@ -36,6 +36,7 @@ main() async {
     await tester.runLiveView(view);
 
     var text = find.firstOf<Text>();
-    expect(text.style!.toString(), 'TextStyle(inherit: true, weight: 700)');
+    expect(text.style!.toString(),
+        'TextStyle(debugLabel: (unknown).merge(fontWeight FontWeight.w700), inherit: true, weight: 700)');
   });
 }
