@@ -561,7 +561,10 @@ class LiveView {
   Uri shortUrlToUri(String url) {
     var uri = Uri.parse("$endpointScheme://$host$url");
     var queryParams = Map<String, dynamic>.from(uri.queryParametersAll);
+    // legacy format (live view native <1.0)
     queryParams['_lvn[format]'] = 'flutter';
+    // modern format (live view native >1.0)
+    queryParams['_format'] = 'flutter';
 
     return uri.replace(queryParameters: queryParams);
   }
