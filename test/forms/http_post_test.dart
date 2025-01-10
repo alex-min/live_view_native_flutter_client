@@ -48,8 +48,7 @@ main() async {
     expect(formPost.method, 'POST');
     expect(formPost.body,
         'user%5Bemail%5D=contact%40example.org&_csrf_token=csrf');
-    expect(formPost.url.toString(),
-        'http://localhost:9999/?_lvn%5Bformat%5D=flutter');
+    expect(formPost.url.toString(), 'http://localhost:9999/?_format=flutter');
     expect(view.cookie, 'live_view=session2');
   });
 
