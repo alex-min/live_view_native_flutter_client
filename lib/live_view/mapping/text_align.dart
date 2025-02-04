@@ -13,6 +13,9 @@ TextAlign? getTextAlign(String? prop) {
     case 'justify':
       return TextAlign.justify;
     default:
+      if (prop != null) {
+        debugPrint("Unknown text align property $prop");
+      }
       return null;
   }
 }

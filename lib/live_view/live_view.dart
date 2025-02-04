@@ -223,10 +223,15 @@ class LiveView {
     };
 
     if (cookie != null) {
-      headers['Cookie'] = cookie!;
+      headers['Cookie'] = cookie!.split(';')[0];
     }
 
     return headers;
+  }
+
+  Future<void> disconnect() async {
+    _channel?.close();
+    _socket?.dispose();
   }
 
   Future<void> reconnect() async {
@@ -299,6 +304,7 @@ class LiveView {
         ..._requiredSocketParams(),
         '_csrf_token': _csrf,
         '_mounts': mount.toString(),
+        '_mount_attempts': '0',
         'client_id': _clientId,
       };
 
@@ -495,18 +501,20 @@ class LiveView {
     redirectTo(url);
   }
 
-  Future<void> postForm(Map<String, dynamic> formValues) async {
-    deadViewPostQuery(currentUrl, formValues);
+  Future<void> postForm(Map<String, dynamic> formValues) {
+    return deadViewPostQuery(currentUrl, formValues);
   }
 
   Future<http.Response> deadViewPostQuery(
       String url, Map<String, dynamic> formValues) async {
     formValues['_csrf_token'] = _csrf;
+
     var r = await httpClient.post(shortUrlToUri(currentUrl),
         headers: httpHeaders(), body: formValues);
+    await disconnect();
 
     if (r.headers['set-cookie'] != null) {
-      _parseAndSaveCookie(r.headers['set-cookie']!);
+      await _parseAndSaveCookie(r.headers['set-cookie']!);
     }
 
     if (r.statusCode >= 200 && r.statusCode < 300) {
@@ -555,7 +563,11 @@ class LiveView {
       's': [response.body]
     }, viewType: ViewType.deadView);
 
-    await _channel?.push('phx_leave', {}).future;
+    if (_socket?.isConnected == true) {
+      await _channel?.leave().future;
+    } else {
+      await reconnect();
+    }
   }
 
   Uri shortUrlToUri(String url) {

@@ -56,9 +56,7 @@ class ThemeSettings extends ChangeNotifier {
     // material 3 is the future of material in flutter
     // we set it as true to not break the theme in future updates
     // because this will be set as true by default later in a future update
-    if (content['useMaterial3'] == null) {
-      content['useMaterial3'] = true;
-    }
+    content['useMaterial3'] ??= true;
     try {
       switch (getDisplayedThemeMode()) {
         case ThemeMode.light:

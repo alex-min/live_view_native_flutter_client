@@ -262,15 +262,15 @@ Color? _parseVarColor(BuildContext context, String? color) {
     case '@theme.colorScheme.onErrorContainer':
       return Theme.of(context).colorScheme.onErrorContainer;
     case '@theme.colorScheme.background':
-      return Theme.of(context).colorScheme.background;
+      return Theme.of(context).colorScheme.surface;
     case '@theme.colorScheme.onBackground':
-      return Theme.of(context).colorScheme.onBackground;
+      return Theme.of(context).colorScheme.onSurface;
     case '@theme.colorScheme.surface':
       return Theme.of(context).colorScheme.surface;
     case '@theme.colorScheme.onSurface':
       return Theme.of(context).colorScheme.onSurface;
     case '@theme.colorScheme.surfaceVariant':
-      return Theme.of(context).colorScheme.surfaceVariant;
+      return Theme.of(context).colorScheme.surfaceContainerHighest;
     case '@theme.colorScheme.onSurfaceVariant':
       return Theme.of(context).colorScheme.onSurfaceVariant;
     case '@theme.colorScheme.outline':

@@ -28,7 +28,7 @@ class _LiveViewTextState extends StateWidget<LiveText> {
         ? widget.state.node.value ?? ''
         : widget.state.node.innerText;
     return Text(
-      replaceVariables(text, lastLiveDiff),
+      replaceVariables(text, lastLiveDiff).trim(),
       style: getTextStyle(getAttribute('style'), context),
       textAlign: getTextAlign(getAttribute('textAlign')),
     );
