@@ -47,14 +47,20 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   @override
   void initState() {
+    stateNotifier = Provider.of<StateNotifier>(context, listen: false);
+
     status = Status.visible;
     currentVariables = Map<String, dynamic>.from(widget.state.variables);
+    if (stateNotifier.getDiff().isNotEmpty) {
+      var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
+      currentVariables.addAll(lastLiveDiff);
+      reloadPredefinedAttributes(node);
+    }
     computedAttributes = VariableAttributes({}, []);
     extraKeysListened = [];
     onStateChange(currentVariables);
     onFormInitialize();
     reloadPredefinedAttributes(node);
-    stateNotifier = Provider.of<StateNotifier>(context, listen: false);
     stateNotifier.addListener(onDiffUpdateEvent);
     widget.state.liveView.connectionNotifier.addListener(onWipeState);
     widget.state.liveView.goBackNotifier.addListener(onGoBack);
@@ -127,14 +133,21 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     if (!mounted) {
       return;
     }
+    if (_handleDiff()) {
+      setState(() {});
+    }
+  }
+
+  bool _handleDiff() {
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
 
     if (lastLiveDiff.keys.any((key) => isKeyListened(ElementKey(key)))) {
       currentVariables.addAll(lastLiveDiff);
       onStateChange(lastLiveDiff);
       reloadPredefinedAttributes(node);
-      setState(() {});
+      return true;
     }
+    return false;
   }
 
   // a shorthand to get the current xml node & state associated

@@ -489,6 +489,7 @@ class LiveView {
   Future<void> saveCurrentTheme() => themeSettings.save();
 
   Future<void> livePatch(String url) async {
+    changeNotifier.emptyData();
     if (clientType == ClientType.webDocs) {
       web_html.window.parent
           ?.postMessage({'type': 'live-patch', 'url': url}, "*");
