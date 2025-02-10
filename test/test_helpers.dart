@@ -135,6 +135,13 @@ class FakePhoenixChannel extends PhoenixChannel {
   }
 
   @override
+  Push leave({Duration? timeout}) {
+    actions.add(const EventSent('phx_leave', {}));
+    currentState = PhoenixChannelState.leaving;
+    return FakePushMessage(this);
+  }
+
+  @override
   Push push(String eventName, Map<String, dynamic> payload,
       [Duration? newTimeout]) {
     if (eventName == 'phx_leave') {
@@ -150,14 +157,24 @@ class FakePhoenixSocket extends PhoenixSocket {
   PhoenixSocketOptions? socketOptions;
   List<EventSent> actions = [];
   List<FakePhoenixChannel> channelsAdded = [];
+  bool _isConnected = false;
 
   FakePhoenixSocket(this.url, this.socketOptions) : super(url);
 
   @override
   Future<PhoenixSocket?> connect() async {
     actions.add(const EventSent('connect', null));
+    _isConnected = true;
     return null;
   }
+
+  @override
+  void dispose() {
+    _isConnected = false;
+  }
+
+  @override
+  bool get isConnected => _isConnected;
 
   @override
   PhoenixChannel addChannel(
