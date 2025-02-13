@@ -82,7 +82,11 @@ List<Widget> renderDynamicComponent(NodeState state) {
   for (var elementKey in dynamicKeys) {
     var currentVariables = state.variables[elementKey.key];
 
-    if (currentVariables is! Map || !currentVariables.containsKey('d')) {
+    if (currentVariables is! Map) {
+      continue;
+    }
+
+    if (!currentVariables.containsKey('d')) {
       continue;
     }
 

@@ -14,13 +14,18 @@ class LiveText extends LiveStateWidget<LiveText> {
 
 class _LiveViewTextState extends StateWidget<LiveText> {
   @override
-  void onStateChange(Map<String, dynamic> diff) =>
-      reloadAttributes(node, ['style', 'textAlign', 'innerText']);
+  void onStateChange(Map<String, dynamic> diff) {
+    reloadAttributes(node, ['style', 'textAlign']);
+    listenInnerTextKeys();
+  }
 
   @override
   Widget render(BuildContext context) {
+    var text = widget.state.node.innerText == ''
+        ? widget.state.node.value ?? ''
+        : widget.state.node.innerText;
     return Text(
-      (getAttribute('innerText') ?? '').trim(),
+      replaceVariables(text, currentVariables).trim(),
       style: getTextStyle(getAttribute('style'), context),
       textAlign: getTextAlign(getAttribute('textAlign')),
     );

@@ -33,7 +33,7 @@ mixin ComputedAttributes {
 
   String? getAttribute(String name) {
     if (computedAttributes.attributes.containsKey(name)) {
-      var attribute = computedAttributes.attributes[name];
+      String? attribute = computedAttributes.attributes[name];
       if (attribute == null) {
         return null;
       }
