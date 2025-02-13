@@ -39,7 +39,13 @@ List<ElementKey> extractDynamicKeys(String input) {
   String attribute,
   Map<String, dynamic> variables,
 ) {
-  var attr = node.getAttribute(attribute);
+  String? attr;
+
+  if (attribute == 'innerText') {
+    attr = node.innerText == '' ? node.value ?? '' : node.innerText;
+  } else {
+    attr = node.getAttribute(attribute);
+  }
   if (attr == null) {
     return (null, null);
   }

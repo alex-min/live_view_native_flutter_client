@@ -33,11 +33,11 @@ mixin ComputedAttributes {
 
   String? getAttribute(String name) {
     if (computedAttributes.attributes.containsKey(name)) {
-      var attribute = computedAttributes.attributes[name];
+      String? attribute = computedAttributes.attributes[name];
       if (attribute == null) {
         return null;
       }
-      return attribute;
+      return replaceVariables(attribute, currentVariables);
     }
     return null;
   }
@@ -86,7 +86,8 @@ mixin ComputedAttributes {
 
     for (var child in node.nonEmptyChildren) {
       if (child.nodeType == XmlNodeType.ELEMENT) {
-        if ((child as XmlElement).name.qualified == 'flutter') {
+        if ((child as XmlElement).name.qualified == 'flutter' ||
+            (child.name.qualified == 'div')) {
           ret.addAll(childrenNodesOf(child, componentName));
         } else if (child.name.qualified == componentName) {
           ret.add(child);

@@ -39,4 +39,24 @@ main() async {
     expect(text.style!.toString(),
         'TextStyle(debugLabel: (unknown).merge(fontWeight FontWeight.w700), inherit: true, weight: 700)');
   });
+
+  testWidgets('text rendering remove extra spaces, similar as html',
+      (tester) async {
+    var view = LiveView()
+      ..handleRenderedMessage({
+        's': [
+          """<Text>
+        
+            my test
+          </Text>
+        """
+        ]
+      });
+
+    await tester.runLiveView(view);
+
+    var text = find.firstOf<Text>();
+
+    expect(text.data, 'my test');
+  });
 }

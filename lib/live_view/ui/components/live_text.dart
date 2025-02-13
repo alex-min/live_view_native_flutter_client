@@ -13,13 +13,10 @@ class LiveText extends LiveStateWidget<LiveText> {
 }
 
 class _LiveViewTextState extends StateWidget<LiveText> {
-  Map<String, dynamic> lastLiveDiff = {};
-
   @override
   void onStateChange(Map<String, dynamic> diff) {
     reloadAttributes(node, ['style', 'textAlign']);
     listenInnerTextKeys();
-    lastLiveDiff = diff;
   }
 
   @override
@@ -28,7 +25,7 @@ class _LiveViewTextState extends StateWidget<LiveText> {
         ? widget.state.node.value ?? ''
         : widget.state.node.innerText;
     return Text(
-      replaceVariables(text, lastLiveDiff),
+      replaceVariables(text, currentVariables).trim(),
       style: getTextStyle(getAttribute('style'), context),
       textAlign: getTextAlign(getAttribute('textAlign')),
     );
