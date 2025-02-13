@@ -17,7 +17,6 @@ import 'package:liveview_flutter/live_view/ui/loading/reload_widget.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_bottom_navigation_bar.dart';
-import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:throttled/throttled.dart';
 
 class ShowBottomSheetNotification extends Notification {}

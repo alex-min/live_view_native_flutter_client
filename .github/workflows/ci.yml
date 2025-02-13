@@ -43,7 +43,7 @@ jobs:
           channel: 'stable'
       - name: Install dependencies
         run: flutter pub get
-      - run: dart format --fix --set-exit-if-changed .
+      - run: dart format --set-exit-if-changed .
   analyzer:
     name: Run analyzer
     runs-on: ubuntu-latest
