@@ -29,6 +29,25 @@ main() async {
     expect(server.lastChannelActions?.last, liveEvents.event('backend_event'));
   });
 
+  testWidgets('hides on startup when the condition is met', (tester) async {
+    var (view, server) = await connect(LiveView());
+
+    await tester.runLiveView(view);
+
+    view.handleRenderedMessage({
+      's': [
+        """
+        <ElevatedButton 
+          phx-responsive="${baseActions.hide}"
+          phx-responsive-when="window_width > 1">hello</ElevatedButton>
+      """
+      ]
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.allTexts(), []);
+  });
+
   testWidgets('when condition', (tester) async {
     var (view, server) = await connect(LiveView());
 
