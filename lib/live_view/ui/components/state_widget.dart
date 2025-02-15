@@ -264,6 +264,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
     status = Status.hidden;
     animationDuration = action.timeInMilliseconds ?? 0;
+    setState(() {});
   }
 
   /// shows back the current widget with an animation
@@ -276,6 +277,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
     status = Status.visible;
     animationDuration = action.timeInMilliseconds ?? 0;
+    setState(() {});
   }
 
   /// You can call hide or show events on a id which is anywhere in the page
