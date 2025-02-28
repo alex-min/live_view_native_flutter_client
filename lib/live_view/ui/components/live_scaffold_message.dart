@@ -14,6 +14,7 @@ class LiveScaffoldMessage extends LiveStateWidget<LiveScaffoldMessage> {
 
 class _LiveScaffoldMessageState extends StateWidget<LiveScaffoldMessage> {
   Timer? timer;
+  bool rendered = false;
 
   @override
   void onFormInitialize() {
@@ -30,21 +31,25 @@ class _LiveScaffoldMessageState extends StateWidget<LiveScaffoldMessage> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, [
-      'kind',
-      'showCloseIcon',
-      'backgroundColor',
-      'duration',
-    ]);
+    reloadAttributes(node,
+        ['kind', 'showCloseIcon', 'backgroundColor', 'duration', 'http-clear']);
   }
 
   @override
-  Widget render(BuildContext context) => const SizedBox.shrink();
+  Widget render(BuildContext context) {
+    Future.microtask(() => showScaffold());
+    return const SizedBox.shrink();
+  }
 
   void showScaffold() {
+    if (rendered) {
+      return;
+    }
+    rendered = true;
     String? kind = getAttribute('kind');
     bool showCloseIcon = booleanAttribute('showCloseIcon') ?? true;
-    Color? backgroundColor = colorAttribute(context, 'backgroundColor');
+    Color? backgroundColor = colorAttribute(context, 'backgroundColor') ??
+        Theme.of(context).snackBarTheme.backgroundColor;
     Duration duration =
         durationAttribute('duration') ?? const Duration(milliseconds: 4000);
 
@@ -74,5 +79,10 @@ class _LiveScaffoldMessageState extends StateWidget<LiveScaffoldMessage> {
       name: "lv:clear-flash",
       value: {"key": kind},
     ));
+
+    var clear = getAttribute('http-clear');
+    if (clear != null) {
+      liveView.httpPost(clear, {'kind': kind});
+    }
   }
 }

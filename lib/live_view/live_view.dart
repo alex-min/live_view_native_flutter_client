@@ -506,6 +506,17 @@ class LiveView {
     return deadViewPostQuery(currentUrl, formValues);
   }
 
+  Future<http.Response> httpPost(
+      String url, Map<String, dynamic> formValues) async {
+    formValues['_csrf_token'] = _csrf;
+    var r = await httpClient.post(shortUrlToUri(url),
+        headers: httpHeaders(), body: formValues);
+    if (r.headers['set-cookie'] != null) {
+      await _parseAndSaveCookie(r.headers['set-cookie']!);
+    }
+    return r;
+  }
+
   Future<http.Response> deadViewPostQuery(
       String url, Map<String, dynamic> formValues) async {
     formValues['_csrf_token'] = _csrf;
