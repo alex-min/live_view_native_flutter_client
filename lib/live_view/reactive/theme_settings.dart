@@ -60,9 +60,9 @@ class ThemeSettings extends ChangeNotifier {
     try {
       switch (getDisplayedThemeMode()) {
         case ThemeMode.light:
-          _lightTheme = ThemeDecoder.decodeThemeData(content);
+          _lightTheme = ThemeDecoder.instance.decodeThemeData(content);
         case ThemeMode.dark:
-          _darkTheme = ThemeDecoder.decodeThemeData(content);
+          _darkTheme = ThemeDecoder.instance.decodeThemeData(content);
         case ThemeMode.system:
           throw Exception('unreachable');
       }
