@@ -511,7 +511,11 @@ class LiveView {
     formValues['_csrf_token'] = _csrf;
 
     var r = await httpClient.post(shortUrlToUri(currentUrl),
-        headers: httpHeaders(), body: formValues);
+        headers: {
+          ...httpHeaders(),
+          'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
+        },
+        body: formValues);
     await disconnect();
 
     if (r.headers['set-cookie'] != null) {
