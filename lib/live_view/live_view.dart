@@ -103,6 +103,7 @@ class LiveView {
   late PhoenixSocket _liveReloadSocket;
 
   PhoenixChannel? _channel;
+  Push? _pendingLeavePush;
 
   List<Widget>? lastRender;
 
@@ -230,6 +231,8 @@ class LiveView {
   }
 
   Future<void> disconnect() async {
+    _pendingLeavePush?.cancelTimeout();
+    _pendingLeavePush = null;
     _channel?.close();
     _socket?.dispose();
   }
@@ -342,13 +345,23 @@ class LiveView {
     _channel?.messages.listen(handleMessage);
 
     if (_channel?.state != PhoenixChannelState.joined) {
-      await _channel?.join().future;
+      var response = await _channel?.join().future;
+      if (response?.isError == true && redirectToUrl != null) {
+        // Cross-live_session redirect rejected by the server. Fall back to a
+        // full dead-view reconnect so the new session can be established.
+        var target = redirectToUrl!;
+        redirectToUrl = null;
+        await disconnect();
+        await connect("$endpointScheme://$host$target");
+      }
     }
   }
 
   Future<void> redirectTo(String path) async {
     redirectToUrl = path;
-    await _channel?.push('phx_leave', {}).future;
+    _pendingLeavePush = _channel?.push('phx_leave', {});
+    await _pendingLeavePush?.future;
+    _pendingLeavePush = null;
   }
 
   Future<void> _setupLiveReload() async {
