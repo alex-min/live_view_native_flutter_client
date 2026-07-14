@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/routes/live_custom_page.dart';
 import 'package:liveview_flutter/live_view/routes/no_transition_page.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/errors/missing_page_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
@@ -178,12 +180,77 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
                 child: content,
                 name: routeSettings.name,
                 arguments: routeSettings.arguments),
-        widgets: widgets,
+        widgets: _expandDynamicComponents(widgets),
         rootState: rootState);
   }
 
   bool _containsViewBody(NodeState? rootState) {
     if (rootState == null) return false;
     return rootState.node.findAllElements('viewBody').isNotEmpty;
+  }
+
+  /// Expands [LiveDynamicComponent] widgets so root-level global navigation
+  /// widgets (AppBar, Drawer, etc.) rendered inside dynamic components can be
+  /// discovered by [RootScaffold]. The expanded widgets are only used for
+  /// extraction; the actual page content is built separately.
+  List<Widget> _expandDynamicComponents(List<Widget> widgets) {
+    List<Widget> expanded = [];
+    for (var widget in widgets) {
+      expanded.add(widget);
+      if (widget is LiveDynamicComponent) {
+        expanded.addAll(_extractDynamicComponentChildren(widget));
+      }
+    }
+    return expanded;
+  }
+
+  List<Widget> _extractDynamicComponentChildren(LiveDynamicComponent component) {
+    var state = component.state;
+    List<Widget> result = [];
+
+    // Direct loop variable (e.g. <For> components)
+    if (state.variables.containsKey('d')) {
+      for (var i = 0; i < state.variables['d'].length; i++) {
+        var newState = List<String>.from(state.nestedState);
+        newState.add(i.toString());
+        result.addAll(state.parser.parseHtml(
+          List<String>.from(state.variables['s']),
+          state.variables[i.toString()],
+          newState,
+        ).$1);
+      }
+      return result;
+    }
+
+    // Nested rendered structures (e.g. conditional AppBar)
+    var dynamicKeys = extractDynamicKeys(state.node.toString());
+    for (var elementKey in dynamicKeys) {
+      var currentVariables = state.variables[elementKey.key];
+      if (currentVariables is! Map) continue;
+
+      if (currentVariables.containsKey('d')) {
+        for (var i = 0; i < currentVariables['d'].length; i++) {
+          var newState = List<String>.from(state.nestedState);
+          newState.add(elementKey.key);
+          newState.add(i.toString());
+          result.addAll(state.parser.parseHtml(
+            List<String>.from(currentVariables['s']),
+            currentVariables[i.toString()],
+            newState,
+          ).$1);
+        }
+      } else {
+        var newState = List<String>.from(state.nestedState);
+        newState.add(elementKey.key);
+        var parsed = state.parser.parseHtml(
+          List<String>.from(currentVariables['s'] ?? []),
+          Map<String, dynamic>.from(currentVariables),
+          newState,
+        );
+        result.addAll(parsed.$1);
+      }
+    }
+
+    return result;
   }
 }

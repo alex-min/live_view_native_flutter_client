@@ -6,6 +6,7 @@ import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/state/computed_attributes.dart';
 import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_end_drawer.dart';
@@ -133,7 +134,6 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
   Widget build(BuildContext context) {
     bindFloatingActionButtonLocation();
 
-    debugPrint('ROOTSCAFFOLD: pages=${widget.view.router.pages.length} last=${widget.view.router.pages.lastOrNull?.page.name} containsGlobal=${widget.view.router.pages.last.containsGlobalNavigationWidgets} widgets=${widget.view.router.pages.last.widgets.map((w) => w.runtimeType.toString()).toList()}');
     if (widget.view.router.pages.last.containsGlobalNavigationWidgets) {
       var widgets = List<Widget>.from(widget.view.router.pages.last.widgets);
 
@@ -144,7 +144,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
           StateChild.extractWidgetChild<LiveFloatingActionButton>(widgets);
       persistentButtons =
           StateChild.extractChildren<LivePersistentFooterButton>(widgets);
-      hasAppBar = childrenNodesOf(rootNode!.node, 'AppBar').firstOrNull != null;
+      hasAppBar = widgets.any((widget) => widget is LiveAppBar);
       hasBottomNavigationBar =
           (childrenNodesOf(rootNode!.node, 'BottomAppBar').firstOrNull ??
                   childrenNodesOf(rootNode!.node, 'BottomNavigationBar')
