@@ -130,8 +130,18 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
         return widgets.first;
       }
 
+      // Root layout nodes (csrf-token, meta, iframe) are rendered as no-op
+      // SizedBoxes. Ignore them when looking for the page body so that a
+      // single root widget such as <Scaffold> can be used as the page.
+      var meaningfulWidgets = widgets.where((widget) {
+        if (widget is SizedBox) {
+          return widget.width != 0 || widget.height != 0 || widget.child != null;
+        }
+        return true;
+      }).toList();
+
       Widget? body;
-      for (var widget in widgets) {
+      for (var widget in meaningfulWidgets) {
         if (widget is LiveViewBody) {
           body = widget;
           break;
@@ -139,6 +149,15 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
           body = widget;
           break;
         }
+      }
+
+      // Allow a single meaningful widget that contains a <viewBody> somewhere
+      // in its subtree to be the page. This supports templates that wrap the
+      // whole view in a <Scaffold> instead of placing <viewBody> at the root.
+      if (body == null &&
+          meaningfulWidgets.length == 1 &&
+          _containsViewBody(rootState)) {
+        return meaningfulWidgets.first;
       }
 
       // TODO: not found page + body error page
@@ -161,5 +180,10 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
                 arguments: routeSettings.arguments),
         widgets: widgets,
         rootState: rootState);
+  }
+
+  bool _containsViewBody(NodeState? rootState) {
+    if (rootState == null) return false;
+    return rootState.node.findAllElements('viewBody').isNotEmpty;
   }
 }
