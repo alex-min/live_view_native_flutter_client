@@ -447,9 +447,11 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     return switch (children.length) {
       0 => const SizedBox.shrink(),
       1 => children[0],
-      _ => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
+      _ => SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          ),
         )
     };
   }
