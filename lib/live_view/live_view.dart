@@ -515,15 +515,15 @@ class LiveView {
     redirectTo(url);
   }
 
-  Future<void> postForm(Map<String, dynamic> formValues) {
-    return deadViewPostQuery(currentUrl, formValues);
+  Future<void> postForm(Map<String, dynamic> formValues, {String? url}) {
+    return deadViewPostQuery(url ?? currentUrl, formValues);
   }
 
   Future<http.Response> deadViewPostQuery(
       String url, Map<String, dynamic> formValues) async {
     formValues['_csrf_token'] = _csrf;
 
-    var r = await httpClient.post(shortUrlToUri(currentUrl),
+    var r = await httpClient.post(shortUrlToUri(url),
         headers: {
           ...httpHeaders(),
           'content-type': 'application/x-www-form-urlencoded; charset=utf-8',

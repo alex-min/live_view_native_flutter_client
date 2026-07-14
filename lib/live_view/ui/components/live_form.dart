@@ -39,16 +39,37 @@ class LiveForm extends LiveStateWidget<LiveForm> {
 class _LiveFormState extends StateWidget<LiveForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> formValues = {};
+  bool _triggerActionHandled = false;
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['phx-change', 'phx-submit', 'method']);
+    reloadAttributes(node, [
+      'phx-change',
+      'phx-submit',
+      'method',
+      'action',
+      'phx-trigger-action'
+    ]);
+    _maybeTriggerAction();
   }
 
   @override
   void onWipeState() {
     formValues = {};
+    _triggerActionHandled = false;
     super.onWipeState();
+  }
+
+  void _maybeTriggerAction() {
+    var triggerAction = getAttribute('phx-trigger-action');
+    if (triggerAction == null || triggerAction == 'false') {
+      return;
+    }
+    if (_triggerActionHandled) {
+      return;
+    }
+    _triggerActionHandled = true;
+    widget.state.liveView.postForm(formValues, url: getAttribute('action'));
   }
 
   void sendFormEvent(String eventKind, {String? target}) {
@@ -83,8 +104,9 @@ class _LiveFormState extends StateWidget<LiveForm> {
               sendFormEvent('phx-change', target: event.name);
             } else if (event.type == FormFieldEventType.submit) {
               var method = getAttribute('method');
-              if (method == 'POST') {
-                widget.state.liveView.postForm(formValues);
+              if (method?.toUpperCase() == 'POST') {
+                widget.state.liveView.postForm(formValues,
+                    url: getAttribute('action'));
               }
               sendFormEvent('phx-submit', target: event.name);
             }
