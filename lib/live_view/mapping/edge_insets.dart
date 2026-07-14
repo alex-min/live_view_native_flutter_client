@@ -6,7 +6,7 @@ EdgeInsets? getEdgeInsets(String? edges) {
     return null;
   }
   edges = edges.trim();
-  if (!edges.matches(r'^[\d\s]+$')) {
+  if (!edges.matches(r'^[\d\s.]+$')) {
     return null;
   }
   if (edges == '0') {
@@ -15,7 +15,7 @@ EdgeInsets? getEdgeInsets(String? edges) {
 
   var values = edges
       .replaceAll(RegExp(r'\s+'), ' ')
-      .replaceAll(RegExp(r'[^\d\s]'), '')
+      .replaceAll(RegExp(r'[^\d\s.]'), '')
       .split(' ')
       .map((e) => double.tryParse(e))
       .toList();

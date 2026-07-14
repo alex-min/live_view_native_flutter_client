@@ -40,5 +40,14 @@ void main() {
         left: 8,
       ),
     );
+    expect(getEdgeInsets("24.0"), const EdgeInsets.all(24));
+    expect(
+      getEdgeInsets("24.0 16.0"),
+      const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+    );
+    expect(
+      getEdgeInsets("24.0 16.0 12.0 8.0"),
+      const EdgeInsets.only(top: 24, right: 16, bottom: 12, left: 8),
+    );
   });
 }
