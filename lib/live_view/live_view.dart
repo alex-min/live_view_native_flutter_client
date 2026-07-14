@@ -391,6 +391,7 @@ class LiveView {
   }
 
   handleMessage(Message event) {
+    debugPrint('LV MSG: ${event.event.value} payload=${event.payload}');
     if (event.event.value == 'phx_close') {
       if (redirectToUrl != null) {
         currentUrl = redirectToUrl!;
@@ -414,6 +415,7 @@ class LiveView {
 
   handleRenderedMessage(Map<String, dynamic> rendered,
       {ViewType viewType = ViewType.liveView}) {
+    debugPrint('LV RENDERED: ${rendered.keys} s.length=${(rendered['s'] as List?)?.length}');
     var elements = List<String>.from(rendered['s']);
 
     var render = LiveViewUiParser(
@@ -424,6 +426,7 @@ class LiveView {
       viewType: viewType,
     ).parse();
     lastRender = render.$1;
+    debugPrint('LV PARSED: widgets=${render.$1.map((w) => w.runtimeType.toString()).toList()}');
     connectionNotifier.wipeState();
     router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);
   }

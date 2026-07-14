@@ -133,6 +133,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
   Widget build(BuildContext context) {
     bindFloatingActionButtonLocation();
 
+    debugPrint('ROOTSCAFFOLD: pages=${widget.view.router.pages.length} last=${widget.view.router.pages.lastOrNull?.page.name} containsGlobal=${widget.view.router.pages.last.containsGlobalNavigationWidgets} widgets=${widget.view.router.pages.last.widgets.map((w) => w.runtimeType.toString()).toList()}');
     if (widget.view.router.pages.last.containsGlobalNavigationWidgets) {
       var widgets = List<Widget>.from(widget.view.router.pages.last.widgets);
 
