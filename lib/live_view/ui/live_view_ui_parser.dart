@@ -26,6 +26,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_filled_button.dart
 import 'package:liveview_flutter/live_view/ui/components/live_flex.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_hidden_input.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hint_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
@@ -205,6 +206,8 @@ class LiveViewUiParser {
       ..add(['Form'], (state) => [LiveForm(state: state, key: Key(uuid.v4()))])
       ..add(['TextField'],
           (state) => [LiveTextField(state: state, key: Key(uuid.v4()))])
+      ..add(['hidden'],
+          (state) => [LiveHiddenInput(state: state, key: Key(uuid.v4()))])
       ..add(['AppBar'],
           (state) => [LiveAppBar(state: state, key: Key(uuid.v4()))])
       ..add(['title'],
