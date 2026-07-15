@@ -63,11 +63,11 @@ class _CosmicBlobsPainter extends CustomPainter {
       case _BlobAnimation.circle:
         rotation = blob.reverse ? -value * 2 * pi : value * 2 * pi;
       case _BlobAnimation.vertical:
-        translation = Offset(0, blobSize * 0.50 * sin(value * 2 * pi));
+        translation = Offset(0, blobSize * 0.60 * sin(value * 2 * pi));
       case _BlobAnimation.horizontal:
         translation = Offset(
-          blobSize * 0.60 * sin(value * 2 * pi),
-          blobSize * 0.20 * sin(value * 2 * pi),
+          blobSize * 0.75 * sin(value * 2 * pi),
+          blobSize * 0.25 * sin(value * 2 * pi),
         );
     }
 
@@ -107,58 +107,60 @@ class LiveCosmicBackground extends LiveStateWidget<LiveCosmicBackground> {
 }
 
 class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
-  // Dark mode blob positions / colours from startup_kit/assets/css/cosmic.css.
-  // Durations and amplitudes are increased over the web originals so the
-  // motion remains visible through the heavy blur on Flutter screens.
+  // Blob layout mirroring the web auth background. The positions follow the
+  // light-mode CSS spread (the reference screenshot shows blobs scattered
+  // across the screen) while the colours and blend mode use the dark-mode
+  // palette. Durations and amplitudes are tuned so the motion is clearly
+  // visible even through the heavy blur.
   static const List<_BlobConfig> _darkBlobs = [
     _BlobConfig(
       color: Color(0xB35353E5),
       sizeVh: 62,
-      left: 0.50,
-      top: 0.70,
+      left: 0.78,
+      top: 0.24,
       animation: _BlobAnimation.vertical,
-      durationSeconds: 6,
+      durationSeconds: 10,
       curve: Curves.easeInOut,
     ),
     _BlobConfig(
       color: Color(0x996E63EE),
       sizeVh: 62,
-      left: 0.50,
-      top: 0.70,
-      originOffsetFraction: Offset(-0.45, 0),
+      left: 0.13,
+      top: 0.36,
+      originOffsetFraction: Offset(-0.65, 0),
       animation: _BlobAnimation.circle,
-      durationSeconds: 5,
+      durationSeconds: 8,
       reverse: true,
       curve: Curves.easeInOut,
     ),
     _BlobConfig(
       color: Color(0x8C5353E5),
       sizeVh: 62,
-      left: 0.38,
-      top: 0.76,
-      originOffsetFraction: Offset(0.45, 0),
+      left: 0.27,
+      top: 0.78,
+      originOffsetFraction: Offset(0.65, 0),
       animation: _BlobAnimation.circle,
-      durationSeconds: 8,
+      durationSeconds: 13,
       curve: Curves.linear,
     ),
     _BlobConfig(
       color: Color(0x61ED7EDC),
       sizeVh: 62,
-      left: 0.50,
-      top: 0.70,
-      originOffsetFraction: Offset(-0.25, 0),
+      left: 0.73,
+      top: 0.82,
+      originOffsetFraction: Offset(-0.37, 0),
       animation: _BlobAnimation.horizontal,
-      durationSeconds: 7,
+      durationSeconds: 11,
       curve: Curves.easeInOut,
     ),
     _BlobConfig(
       color: Color(0x8C5A5AEB),
       sizeVh: 92,
-      left: 0.62,
-      top: 0.80,
-      originOffsetFraction: Offset(-0.55, 0.20),
+      left: 0.18,
+      top: 0.18,
+      originOffsetFraction: Offset(-1.20, 0.37),
       animation: _BlobAnimation.circle,
-      durationSeconds: 4,
+      durationSeconds: 7,
       curve: Curves.easeInOut,
     ),
   ];

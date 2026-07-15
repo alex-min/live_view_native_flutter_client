@@ -19,6 +19,7 @@ import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_bottom_navigation_bar.dart';
 import 'package:throttled/throttled.dart';
+import 'package:xml/xml.dart';
 
 class ShowBottomSheetNotification extends Notification {}
 
@@ -121,8 +122,12 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
   String? getRootAttribute(String name) {
     if (widget.view.router.pages.last.rootState == null) return null;
 
+    var rootNode = widget.view.router.pages.last.rootState!.node;
+    var rootElement =
+        rootNode is XmlDocument ? rootNode.rootElement : rootNode;
+
     var attributes = bindChildVariableAttributes(
-      widget.view.router.pages.last.rootState!.node,
+      rootElement,
       [name],
       widget.view.router.pages.last.rootState!.variables,
     );
@@ -159,12 +164,13 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       persistentButtons = [];
     }
 
-    var child = SafeArea(
-      child: Router(
-        routerDelegate: widget.view.router,
-        backButtonDispatcher: RootBackButtonDispatcher(),
-      ),
+    var extendBodyBehindAppBar =
+        getBoolean(getRootAttribute('extendBodyBehindAppBar')) ?? false;
+    var router = Router(
+      routerDelegate: widget.view.router,
+      backButtonDispatcher: RootBackButtonDispatcher(),
     );
+    var child = extendBodyBehindAppBar ? router : SafeArea(child: router);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -172,6 +178,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       drawer: drawer,
       endDrawer: endDrawer,
       primary: getBoolean(getRootAttribute('primary')) ?? true,
+      extendBodyBehindAppBar: extendBodyBehindAppBar,
       appBar: hasAppBar ? RootAppBar(view: widget.view) : null,
       body: NotificationListener<SizeChangedLayoutNotification>(
         onNotification: (_) {
