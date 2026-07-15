@@ -83,4 +83,28 @@ main() async {
 
     expect(find.allTexts(), ['thanks for sign-in in']);
   });
+
+  testWidgets('does not dead-post when phx-submit is present', (tester) async {
+    var (view, server) = await connect(LiveView(), rendered: {
+      's': [
+        """
+          <Form phx-submit="save" method="POST" action="/users/log_in?_action=registered">
+            <TextField name="user[email]" initialValue="contact@example.org" />
+            <ElevatedButton type="submit" name="submit_button">Create an account</ElevatedButton>
+          </Form>
+        """
+      ],
+    });
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(LiveElevatedButton));
+    await tester.pumpAndSettle();
+
+    expect(server.httpRequestsMade.where((r) => r.method == 'POST'), isEmpty);
+    expect(
+        server.lastChannelAction,
+        liveEvents.phxFormValidate(
+            'save', 'user%5Bemail%5D=contact%40example.org&_target=submit_button'));
+  });
 }

@@ -103,12 +103,12 @@ class _LiveFormState extends StateWidget<LiveForm> {
             if (event.type == FormFieldEventType.change) {
               sendFormEvent('phx-change', target: event.name);
             } else if (event.type == FormFieldEventType.submit) {
-              var method = getAttribute('method');
-              if (method?.toUpperCase() == 'POST') {
+              if (getAttribute('phx-submit') != null) {
+                sendFormEvent('phx-submit', target: event.name);
+              } else if (getAttribute('method')?.toUpperCase() == 'POST') {
                 widget.state.liveView.postForm(formValues,
                     url: getAttribute('action'));
               }
-              sendFormEvent('phx-submit', target: event.name);
             }
             return true;
           },
