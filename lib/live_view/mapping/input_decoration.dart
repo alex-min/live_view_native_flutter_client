@@ -10,7 +10,7 @@ InputDecoration getInputDecoration(BuildContext context, String? css,
   Color? fillColor;
   bool? filled;
   bool? isDense;
-  InputBorder? border;
+  ({InputBorder enabled, InputBorder focused})? borders;
   BorderRadius? borderRadius;
   EdgeInsets? contentPadding;
 
@@ -23,7 +23,7 @@ InputDecoration getInputDecoration(BuildContext context, String? css,
       case 'isDense':
         isDense = getBoolean(value);
       case 'border':
-        border = _parseInputBorder(context, value, borderRadius);
+        borders = _parseInputBorder(context, value, borderRadius);
       case 'borderRadius':
         borderRadius = getBorderRadius(value);
       case 'contentPadding':
@@ -33,8 +33,12 @@ InputDecoration getInputDecoration(BuildContext context, String? css,
 
   // If a border radius was supplied without an explicit border, build an
   // outline border that uses the radius.
-  if (border == null && borderRadius != null) {
-    border = OutlineInputBorder(borderRadius: borderRadius);
+  if (borders == null && borderRadius != null) {
+    var radius = borderRadius;
+    borders = (
+      enabled: OutlineInputBorder(borderRadius: radius),
+      focused: OutlineInputBorder(borderRadius: radius),
+    );
   }
 
   return InputDecoration(
@@ -44,28 +48,44 @@ InputDecoration getInputDecoration(BuildContext context, String? css,
     isDense: isDense,
     labelText: labelText,
     hintText: hintText,
-    border: border,
-    enabledBorder: border,
-    focusedBorder: border,
+    border: borders?.enabled,
+    enabledBorder: borders?.enabled,
+    focusedBorder: borders?.focused,
     contentPadding: contentPadding,
   );
 }
 
-InputBorder? _parseInputBorder(
+({InputBorder enabled, InputBorder focused})? _parseInputBorder(
     BuildContext context, String value, BorderRadius? borderRadius) {
   var outlineColor = Theme.of(context).colorScheme.outline;
+  var primaryColor = Theme.of(context).colorScheme.primary;
 
   switch (value.trim().toLowerCase()) {
     case 'none':
-      return InputBorder.none;
+      return (
+        enabled: InputBorder.none,
+        focused: InputBorder.none,
+      );
     case 'underline':
-      return UnderlineInputBorder(
-        borderSide: BorderSide(color: outlineColor),
+      return (
+        enabled: UnderlineInputBorder(
+          borderSide: BorderSide(color: outlineColor),
+        ),
+        focused: UnderlineInputBorder(
+          borderSide: BorderSide(color: primaryColor),
+        ),
       );
     case 'outline':
-      return OutlineInputBorder(
-        borderRadius: borderRadius ?? BorderRadius.circular(12),
-        borderSide: BorderSide(color: outlineColor),
+      var radius = borderRadius ?? BorderRadius.circular(12);
+      return (
+        enabled: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: outlineColor),
+        ),
+        focused: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: primaryColor),
+        ),
       );
     default:
       return null;

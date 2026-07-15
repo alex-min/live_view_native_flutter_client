@@ -26,8 +26,11 @@ void main() async {
     var expectedColor = Theme.of(context).colorScheme.outline;
 
     var decorator = tester.widget<InputDecorator>(find.byType(InputDecorator));
-    var border = decorator.decoration.enabledBorder as OutlineInputBorder;
+    var enabledBorder = decorator.decoration.enabledBorder as OutlineInputBorder;
+    var focusedBorder = decorator.decoration.focusedBorder as OutlineInputBorder;
+    var primaryColor = Theme.of(context).colorScheme.primary;
 
-    expect(border.borderSide.color, expectedColor);
+    expect(enabledBorder.borderSide.color, expectedColor);
+    expect(focusedBorder.borderSide.color, primaryColor);
   });
 }
