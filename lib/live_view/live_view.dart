@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:event_hub/event_hub.dart';
 import 'package:flutter/foundation.dart';
@@ -36,9 +35,17 @@ import 'package:phoenix_socket/phoenix_socket.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import "package:universal_html/html.dart" as web_html;
 import 'package:uuid/uuid.dart';
-import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import './ui/live_view_ui_parser.dart';
+import 'http_client_factory.dart'
+    if (dart.library.html) 'http_client_factory_html.dart'
+    if (dart.library.io) 'http_client_factory_io.dart'
+    as http_client_factory;
+import 'web_socket_channel_factory.dart'
+    if (dart.library.html) 'web_socket_channel_factory_html.dart'
+    if (dart.library.io) 'web_socket_channel_factory_io.dart'
+    as web_socket;
 
 enum ViewType { deadView, liveView }
 
@@ -56,7 +63,7 @@ class LiveSocket {
         final query = qs.Encoder().convert(Map.fromEntries(queryParams));
         final newUri = uri.replace(query: query).toString();
 
-        return IOWebSocketChannel.connect(newUri, headers: headers);
+        return web_socket.connect(newUri, headers: headers);
       },
       socketOptions: PhoenixSocketOptions(
         reconnectDelays: const [
@@ -79,7 +86,7 @@ class LiveView {
   bool disableAnimations = false;
   ClientType clientType = ClientType.liveView;
 
-  http.Client httpClient = http.Client();
+  http.Client httpClient = http_client_factory.createHttpClient();
   var liveSocket = LiveSocket();
 
   Widget? onErrorWidget;
@@ -177,28 +184,30 @@ class LiveView {
           );
         }
       }
-    } on SocketException catch (e, stack) {
-      router.pushPage(
-        url: 'error',
-        widget: [
-          fallbackPages.buildNoServerError(
-            this,
-            FlutterErrorDetails(exception: e, stack: stack),
-          )
-        ],
-        rootState: null,
-      );
     } catch (e, stack) {
-      router.pushPage(
-        url: 'error',
-        widget: [
-          fallbackPages.buildFlutterError(
-            this,
-            FlutterErrorDetails(exception: e, stack: stack),
-          )
-        ],
-        rootState: null,
-      );
+      if (_isConnectionException(e)) {
+        router.pushPage(
+          url: 'error',
+          widget: [
+            fallbackPages.buildNoServerError(
+              this,
+              FlutterErrorDetails(exception: e, stack: stack),
+            )
+          ],
+          rootState: null,
+        );
+      } else {
+        router.pushPage(
+          url: 'error',
+          widget: [
+            fallbackPages.buildFlutterError(
+              this,
+              FlutterErrorDetails(exception: e, stack: stack),
+            )
+          ],
+          rootState: null,
+        );
+      }
     }
 
     if (!initialized) {
@@ -257,15 +266,20 @@ class LiveView {
   }
 
   String _parseSetCookieValue(String cookieValue) {
-    try {
-      return Cookie.fromSetCookieValue(cookieValue).toString();
-    } catch (_) {
-      // Some servers send cookie attributes that Dart's Cookie parser rejects
-      // (e.g. an empty or unknown SameSite value). Extract the first
-      // name/value pair so the session cookie can still be sent back.
-      var pair = cookieValue.split(';').first.trim();
-      return pair.contains('=') ? pair : cookieValue;
-    }
+    // Some servers send cookie attributes that Dart's Cookie parser rejects
+    // (e.g. an empty or unknown SameSite value). Extract the first
+    // name/value pair so the session cookie can still be sent back.
+    var pair = cookieValue.split(';').first.trim();
+    return pair.contains('=') ? pair : cookieValue;
+  }
+
+  bool _isConnectionException(Object e) {
+    var message = e.toString().toLowerCase();
+    return message.contains('socketexception') ||
+        message.contains('failed host lookup') ||
+        message.contains('connection refused') ||
+        message.contains('connection reset') ||
+        message.contains('connection timed out');
   }
 
   void _readInitialSession(Document content) {

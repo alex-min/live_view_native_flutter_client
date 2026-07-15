@@ -32,25 +32,39 @@
   <title>liveview_flutter</title>
   <link rel="manifest" href="manifest.json">
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = null;
-  </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
 </head>
 <body>
   <script>
+    // Tell the Flutter loader which build to use and where to find CanvasKit
+    // locally so demos work without relying on the gstatic CDN.
+    window._flutter = window._flutter || {};
+    window._flutter.buildConfig = {
+      builds: [
+        {
+          compileTarget: "dart2js",
+          renderer: "canvaskit",
+          mainJsPath: "main.dart.js"
+        }
+      ]
+    };
+
+    // Unregister any stale service worker left over from the old loader.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        registrations.forEach(function(registration) { registration.unregister(); });
+      });
+    }
+
     window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
+      _flutter.loader.load({
+        config: {
+          canvasKitBaseUrl: "canvaskit/"
         },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
+        onEntrypointLoaded: async function(engineInitializer) {
+          const appRunner = await engineInitializer.initializeEngine();
+          await appRunner.runApp();
         }
       });
     });

@@ -27,7 +27,7 @@ class _MyAppState extends State<MyApp> {
 
   void boot() async {
     if (kIsWeb) {
-      view.connectToDocs();
+      await view.connect('http://localhost:4000/');
       return;
     }
 
