@@ -16,6 +16,7 @@ class _BlobConfig {
   final _BlobAnimation animation;
   final int durationSeconds;
   final bool reverse;
+  final Curve curve;
 
   const _BlobConfig({
     required this.color,
@@ -26,6 +27,7 @@ class _BlobConfig {
     required this.animation,
     required this.durationSeconds,
     this.reverse = false,
+    this.curve = Curves.linear,
   });
 }
 
@@ -63,9 +65,10 @@ class LiveCosmicBackground extends LiveStateWidget<LiveCosmicBackground> {
   State<LiveCosmicBackground> createState() => LiveCosmicBackgroundState();
 }
 
-class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
-    with TickerProviderStateMixin {
-  // Dark mode blob positions / colours from startup_kit/assets/css/cosmic.css
+class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
+  // Dark mode blob positions / colours from startup_kit/assets/css/cosmic.css.
+  // Durations are shorter than the web originals so the motion is perceptible
+  // on a mobile screen while still feeling slow and ambient.
   static const List<_BlobConfig> _darkBlobs = [
     _BlobConfig(
       color: Color(0xB35353E5),
@@ -73,7 +76,8 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
       left: 0.50,
       top: 0.70,
       animation: _BlobAnimation.vertical,
-      durationSeconds: 26,
+      durationSeconds: 16,
+      curve: Curves.easeInOut,
     ),
     _BlobConfig(
       color: Color(0x996E63EE),
@@ -82,8 +86,9 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
       top: 0.70,
       originOffsetFraction: Offset(-0.45, 0),
       animation: _BlobAnimation.circle,
-      durationSeconds: 20,
+      durationSeconds: 12,
       reverse: true,
+      curve: Curves.easeInOut,
     ),
     _BlobConfig(
       color: Color(0x8C5353E5),
@@ -92,7 +97,8 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
       top: 0.76,
       originOffsetFraction: Offset(0.45, 0),
       animation: _BlobAnimation.circle,
-      durationSeconds: 34,
+      durationSeconds: 20,
+      curve: Curves.linear,
     ),
     _BlobConfig(
       color: Color(0x61ED7EDC),
@@ -101,7 +107,8 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
       top: 0.70,
       originOffsetFraction: Offset(-0.25, 0),
       animation: _BlobAnimation.horizontal,
-      durationSeconds: 30,
+      durationSeconds: 18,
+      curve: Curves.easeInOut,
     ),
     _BlobConfig(
       color: Color(0x8C5A5AEB),
@@ -110,7 +117,8 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
       top: 0.80,
       originOffsetFraction: Offset(-0.55, 0.20),
       animation: _BlobAnimation.circle,
-      durationSeconds: 18,
+      durationSeconds: 11,
+      curve: Curves.easeInOut,
     ),
   ];
 
@@ -202,9 +210,10 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
         child = AnimatedBuilder(
           animation: controller,
           builder: (context, child) {
+            var value = blob.curve.transform(controller.value);
             var angle = blob.reverse
-                ? -controller.value * 2 * pi
-                : controller.value * 2 * pi;
+                ? -value * 2 * pi
+                : value * 2 * pi;
             var originX = size / 2 + size * blob.originOffsetFraction.dx;
             var originY = size / 2 + size * blob.originOffsetFraction.dy;
             return Transform(
@@ -221,9 +230,10 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
         child = AnimatedBuilder(
           animation: controller,
           builder: (context, child) {
-            var t = sin(controller.value * 2 * pi);
+            var value = blob.curve.transform(controller.value);
+            var t = sin(value * 2 * pi);
             return Transform.translate(
-              offset: Offset(0, size * 0.26 * t),
+              offset: Offset(0, size * 0.30 * t),
               child: child,
             );
           },
@@ -233,9 +243,10 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground>
         child = AnimatedBuilder(
           animation: controller,
           builder: (context, child) {
-            var t = sin(controller.value * 2 * pi);
+            var value = blob.curve.transform(controller.value);
+            var t = sin(value * 2 * pi);
             return Transform.translate(
-              offset: Offset(size * 0.38 * t, size * 0.08 * t),
+              offset: Offset(size * 0.42 * t, size * 0.10 * t),
               child: child,
             );
           },
