@@ -137,7 +137,10 @@ class FlutterExec {
     List<Exec> ret = [];
 
     for (var action in actionList) {
-      ret.add(FlutterExecAction(name: action[0], value: action[1]).parse(
+      ret.add(FlutterExecAction(
+        name: action[0],
+        value: action.length > 1 ? action[1] : null,
+      ).parse(
         attributeName,
         attributes,
       ));
