@@ -4,7 +4,7 @@ import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
 
 InputDecoration getInputDecoration(BuildContext context, String? css,
-    {Widget? icon}) {
+    {Widget? icon, String? labelText, String? hintText}) {
   Color? fillColor;
   bool? filled;
   bool? isDense;
@@ -19,5 +19,11 @@ InputDecoration getInputDecoration(BuildContext context, String? css,
     }
   }
   return InputDecoration(
-      fillColor: fillColor, icon: icon, filled: filled, isDense: isDense);
+    fillColor: fillColor,
+    icon: icon,
+    filled: filled,
+    isDense: isDense,
+    labelText: labelText,
+    hintText: hintText,
+  );
 }

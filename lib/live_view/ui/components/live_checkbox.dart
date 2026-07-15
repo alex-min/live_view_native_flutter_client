@@ -26,7 +26,7 @@ class _LiveCheckboxState extends StateWidget<LiveCheckbox> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['checked', 'name']);
+    reloadAttributes(node, ['checked', 'name', 'value']);
     if (_initialBoot) {
       _isChecked = booleanAttribute('checked') ?? false;
       _initialBoot = false;
@@ -41,9 +41,10 @@ class _LiveCheckboxState extends StateWidget<LiveCheckbox> {
         setState(() {
           _isChecked = val ?? false;
         });
+        var checkedValue = getAttribute('value') ?? 'on';
         FormFieldEvent(
           name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
-          data: _isChecked ? 'on' : null,
+          data: _isChecked ? checkedValue : null,
           type: FormFieldEventType.change,
         ).dispatch(context);
         executeTapEventsManually();
