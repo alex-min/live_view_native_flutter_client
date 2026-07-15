@@ -251,9 +251,21 @@ class LiveView {
   }
 
   Future<void> _parseAndSaveCookie(String cookieValue) async {
-    cookie = Cookie.fromSetCookieValue(cookieValue).toString();
+    cookie = _parseSetCookieValue(cookieValue);
     var prefs = await SharedPreferences.getInstance();
     await prefs.setString('cookie', cookie.toString());
+  }
+
+  String _parseSetCookieValue(String cookieValue) {
+    try {
+      return Cookie.fromSetCookieValue(cookieValue).toString();
+    } catch (_) {
+      // Some servers send cookie attributes that Dart's Cookie parser rejects
+      // (e.g. an empty or unknown SameSite value). Extract the first
+      // name/value pair so the session cookie can still be sent back.
+      var pair = cookieValue.split(';').first.trim();
+      return pair.contains('=') ? pair : cookieValue;
+    }
   }
 
   void _readInitialSession(Document content) {
