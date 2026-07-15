@@ -219,15 +219,20 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
         const Color(0xFF2B314C);
     var blur = double.tryParse(getAttribute('blur') ?? '') ?? 26;
 
-    return Container(
-      width: size.width,
-      height: size.height,
-      color: baseColor,
-      child: ImageFiltered(
-        imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: CustomPaint(
-          size: size,
-          painter: _CosmicBlobsPainter(_darkBlobs, size, _controllers),
+    // Ensure tickers run even if an ancestor disabled them; reduced-motion
+    // checks are still handled by _updateAnimationState.
+    return TickerMode(
+      enabled: true,
+      child: Container(
+        width: size.width,
+        height: size.height,
+        color: baseColor,
+        child: ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: CustomPaint(
+            size: size,
+            painter: _CosmicBlobsPainter(_darkBlobs, size, _controllers),
+          ),
         ),
       ),
     );
