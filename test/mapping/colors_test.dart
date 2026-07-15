@@ -23,6 +23,10 @@ void main() {
             getColor(context, "@theme.colorScheme.primary"),
             Theme.of(context).colorScheme.primary,
           );
+          expect(
+            getColor(context, "#80FF0000"),
+            const Color(0x80FF0000),
+          );
 
           return const SizedBox.shrink();
         },

@@ -6,6 +6,7 @@ import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_icon_button.dart';
 
 import '../test_helpers.dart';
 
@@ -117,5 +118,29 @@ main() async {
 
     expect(
         view.themeSettings.lightTheme?.elevatedButtonBgColor, BasicColors.blue);
+  });
+
+  testWidgets('toggleTheme switches between light and dark', (tester) async {
+    var toggleAction =
+        FlutterExec.encode([FlutterExecAction(name: 'toggleTheme')]);
+
+    var (view, _) = await connect(LiveView(), rendered: {
+      's': ['<IconButton phx-click="$toggleAction" icon="dark_mode" />'],
+    });
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(view.themeSettings.themeMode, ThemeMode.system);
+
+    await tester.tap(find.byType(LiveIconButton));
+    await tester.pumpAndSettle();
+
+    expect(view.themeSettings.themeMode, ThemeMode.dark);
+
+    await tester.tap(find.byType(LiveIconButton));
+    await tester.pumpAndSettle();
+
+    expect(view.themeSettings.themeMode, ThemeMode.light);
   });
 }

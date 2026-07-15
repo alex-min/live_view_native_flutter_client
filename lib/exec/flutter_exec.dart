@@ -9,6 +9,7 @@ import 'package:liveview_flutter/exec/exec_phx_href.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
 import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
+import 'package:liveview_flutter/exec/exec_toggle_theme.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
 import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -89,6 +90,8 @@ class FlutterExecAction {
         );
       }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['goBack'], (_, __) => ExecGoBack(),
+          triggers: [LiveViewExecTrigger.onTap])
+      ..add(['toggleTheme'], (_, __) => ExecToggleTheme(),
           triggers: [LiveViewExecTrigger.onTap])
       ..add(['switchTheme'], (value, attributes) {
         return ExecSwitchTheme(

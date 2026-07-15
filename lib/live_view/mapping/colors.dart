@@ -356,7 +356,11 @@ Color? getColor(BuildContext context, String? color) {
       color = color.split('').map((e) => '$e$e').join().toUpperCase();
     }
 
-    return Color(int.parse(color, radix: 16) + 0xFF000000);
+    var value = int.parse(color, radix: 16);
+    if (color.length == 8) {
+      return Color(value);
+    }
+    return Color(value + 0xFF000000);
   }
 
   var colors = color.split('-');
