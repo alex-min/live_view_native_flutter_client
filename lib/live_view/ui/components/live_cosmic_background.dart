@@ -31,33 +31,74 @@ class _BlobConfig {
   });
 }
 
-/// Paints a single blurred radial-gradient blob using [BlendMode.screen]
-/// so overlapping blobs glow rather than darken, matching the web auth pages.
-class _BlobPainter extends CustomPainter {
-  final Color color;
+/// Paints the cosmic blob layer. The blobs are drawn with [BlendMode.screen]
+/// so overlapping gradients glow rather than darken, matching the web auth pages.
+class _CosmicBlobsPainter extends CustomPainter {
+  final List<_BlobConfig> blobs;
+  final Size screen;
+  final List<AnimationController> controllers;
 
-  const _BlobPainter(this.color);
+  _CosmicBlobsPainter(this.blobs, this.screen, this.controllers)
+      : super(repaint: Listenable.merge(controllers));
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    for (var i = 0; i < blobs.length; i++) {
+      _paintBlob(canvas, blobs[i], controllers[i]);
+    }
+  }
+
+  void _paintBlob(Canvas canvas, _BlobConfig blob, AnimationController controller) {
+    var value = blob.curve.transform(controller.value);
+    var blobSize = screen.height * (blob.sizeVh / 100);
+    var left = screen.width * blob.left - blobSize / 2;
+    var top = screen.height * blob.top - blobSize / 2;
+
+    Offset translation = Offset.zero;
+    double rotation = 0;
+    var originX = blobSize / 2 + blobSize * blob.originOffsetFraction.dx;
+    var originY = blobSize / 2 + blobSize * blob.originOffsetFraction.dy;
+
+    switch (blob.animation) {
+      case _BlobAnimation.circle:
+        rotation = blob.reverse ? -value * 2 * pi : value * 2 * pi;
+      case _BlobAnimation.vertical:
+        translation = Offset(0, blobSize * 0.30 * sin(value * 2 * pi));
+      case _BlobAnimation.horizontal:
+        translation = Offset(
+          blobSize * 0.42 * sin(value * 2 * pi),
+          blobSize * 0.10 * sin(value * 2 * pi),
+        );
+    }
+
+    canvas.save();
+    canvas.translate(left + translation.dx, top + translation.dy);
+    if (rotation != 0) {
+      canvas.translate(originX, originY);
+      canvas.rotate(rotation);
+      canvas.translate(-originX, -originY);
+    }
+
+    var paint = Paint()
       ..shader = RadialGradient(
-        colors: [color, color.withAlpha(0)],
+        colors: [blob.color, blob.color.withAlpha(0)],
         stops: const [0.0, 0.6],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ).createShader(Rect.fromLTWH(0, 0, blobSize, blobSize))
       ..blendMode = BlendMode.screen;
-    canvas.drawRect(Offset.zero & size, paint);
+    canvas.drawRect(Rect.fromLTWH(0, 0, blobSize, blobSize), paint);
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _BlobPainter old) => old.color != color;
+  bool shouldRepaint(covariant _CosmicBlobsPainter old) => true;
 }
 
 /// Replicates the animated cosmic background from the web auth pages.
 ///
 /// The web version layers several large, semi-transparent radial gradients,
 /// applies a screen blend mode in dark mode, blurs them, and animates them
-/// slowly. This widget mirrors that effect using Flutter primitives.
+/// slowly. This widget mirrors that effect using a single painter that
+/// repaints every frame so the blur layer updates correctly.
 class LiveCosmicBackground extends LiveStateWidget<LiveCosmicBackground> {
   const LiveCosmicBackground({super.key, required super.state});
 
@@ -184,76 +225,11 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
       color: baseColor,
       child: ImageFiltered(
         imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Stack(
-          children: [
-            for (var i = 0; i < _darkBlobs.length; i++)
-              _buildBlob(context, _darkBlobs[i], size, _controllers[i]),
-          ],
+        child: CustomPaint(
+          size: size,
+          painter: _CosmicBlobsPainter(_darkBlobs, size, _controllers),
         ),
       ),
     );
-  }
-
-  Widget _buildBlob(
-      BuildContext context, _BlobConfig blob, Size screen, AnimationController controller) {
-    var size = screen.height * (blob.sizeVh / 100);
-    var left = screen.width * blob.left - size / 2;
-    var top = screen.height * blob.top - size / 2;
-
-    Widget child = CustomPaint(
-      size: Size(size, size),
-      painter: _BlobPainter(blob.color),
-    );
-
-    switch (blob.animation) {
-      case _BlobAnimation.circle:
-        child = AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            var value = blob.curve.transform(controller.value);
-            var angle = blob.reverse
-                ? -value * 2 * pi
-                : value * 2 * pi;
-            var originX = size / 2 + size * blob.originOffsetFraction.dx;
-            var originY = size / 2 + size * blob.originOffsetFraction.dy;
-            return Transform(
-              transform: Matrix4.identity()
-                ..translate(originX, originY)
-                ..rotateZ(angle)
-                ..translate(-originX, -originY),
-              child: child,
-            );
-          },
-          child: child,
-        );
-      case _BlobAnimation.vertical:
-        child = AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            var value = blob.curve.transform(controller.value);
-            var t = sin(value * 2 * pi);
-            return Transform.translate(
-              offset: Offset(0, size * 0.30 * t),
-              child: child,
-            );
-          },
-          child: child,
-        );
-      case _BlobAnimation.horizontal:
-        child = AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            var value = blob.curve.transform(controller.value);
-            var t = sin(value * 2 * pi);
-            return Transform.translate(
-              offset: Offset(size * 0.42 * t, size * 0.10 * t),
-              child: child,
-            );
-          },
-          child: child,
-        );
-    }
-
-    return Positioned(left: left, top: top, child: child);
   }
 }
