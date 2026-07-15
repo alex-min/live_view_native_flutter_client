@@ -26,15 +26,18 @@ void main() {
       ..handleRenderedMessage({
         's': ['<CosmicBackground />'],
       });
+    view.disableAnimations = true;
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
     var state = tester.state(find.byType(LiveCosmicBackground))
         as LiveCosmicBackgroundState;
-    for (var controller in state.controllers) {
-      expect(controller.isAnimating, isFalse);
-    }
+    var initialTime = state.time.value;
+
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(state.time.value, equals(initialTime));
   });
 
   testWidgets('animates blobs when animations are enabled', (tester) async {
@@ -50,13 +53,10 @@ void main() {
 
     var state = tester.state(find.byType(LiveCosmicBackground))
         as LiveCosmicBackgroundState;
-    var initialValues = state.controllers.map((c) => c.value).toList();
+    var initialTime = state.time.value;
 
     await tester.pump(const Duration(seconds: 1));
 
-    for (var i = 0; i < state.controllers.length; i++) {
-      expect(state.controllers[i].isAnimating, isTrue);
-      expect(state.controllers[i].value, isNot(equals(initialValues[i])));
-    }
+    expect(state.time.value, greaterThan(initialTime));
   });
 }

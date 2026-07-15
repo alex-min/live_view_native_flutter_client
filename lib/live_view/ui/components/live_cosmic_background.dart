@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
@@ -36,20 +37,22 @@ class _BlobConfig {
 class _CosmicBlobsPainter extends CustomPainter {
   final List<_BlobConfig> blobs;
   final Size screen;
-  final List<AnimationController> controllers;
+  final ValueNotifier<double> time;
 
-  _CosmicBlobsPainter(this.blobs, this.screen, this.controllers)
-      : super(repaint: Listenable.merge(controllers));
+  _CosmicBlobsPainter(this.blobs, this.screen, this.time)
+    : super(repaint: time);
 
   @override
   void paint(Canvas canvas, Size size) {
+    var elapsed = time.value;
     for (var i = 0; i < blobs.length; i++) {
-      _paintBlob(canvas, blobs[i], controllers[i]);
+      _paintBlob(canvas, blobs[i], elapsed);
     }
   }
 
-  void _paintBlob(Canvas canvas, _BlobConfig blob, AnimationController controller) {
-    var value = blob.curve.transform(controller.value);
+  void _paintBlob(Canvas canvas, _BlobConfig blob, double elapsed) {
+    var progress = (elapsed / blob.durationSeconds) % 1.0;
+    var value = blob.curve.transform(progress);
     var blobSize = screen.height * (blob.sizeVh / 100);
     var left = screen.width * blob.left - blobSize / 2;
     var top = screen.height * blob.top - blobSize / 2;
@@ -79,12 +82,13 @@ class _CosmicBlobsPainter extends CustomPainter {
       canvas.translate(-originX, -originY);
     }
 
-    var paint = Paint()
-      ..shader = RadialGradient(
-        colors: [blob.color, blob.color.withAlpha(0)],
-        stops: const [0.0, 0.6],
-      ).createShader(Rect.fromLTWH(0, 0, blobSize, blobSize))
-      ..blendMode = BlendMode.screen;
+    var paint =
+        Paint()
+          ..shader = RadialGradient(
+            colors: [blob.color, blob.color.withAlpha(0)],
+            stops: const [0.0, 0.6],
+          ).createShader(Rect.fromLTWH(0, 0, blobSize, blobSize))
+          ..blendMode = BlendMode.screen;
     canvas.drawRect(Rect.fromLTWH(0, 0, blobSize, blobSize), paint);
     canvas.restore();
   }
@@ -165,19 +169,15 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
     ),
   ];
 
-  late final List<AnimationController> _controllers;
+  late final ValueNotifier<double> _time;
+  Timer? _timer;
 
-  List<AnimationController> get controllers => _controllers;
+  ValueNotifier<double> get time => _time;
 
   @override
   void initState() {
     super.initState();
-    _controllers = _darkBlobs.map((blob) {
-      return AnimationController(
-        vsync: this,
-        duration: Duration(seconds: blob.durationSeconds),
-      );
-    }).toList();
+    _time = ValueNotifier(0);
   }
 
   @override
@@ -187,25 +187,36 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
   }
 
   void _updateAnimationState() {
-    var reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations == true ||
-        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
+    var reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations == true ||
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .accessibilityFeatures
             .disableAnimations ||
         widget.state.liveView.disableAnimations;
 
-    for (var controller in _controllers) {
-      if (reduceMotion) {
-        controller.stop();
-      } else if (!controller.isAnimating) {
-        controller.repeat();
-      }
+    if (reduceMotion) {
+      _stopAnimation();
+      return;
     }
+
+    if (_timer == null) {
+      _timer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+        _time.value += 0.016;
+      });
+    }
+  }
+
+  void _stopAnimation() {
+    _timer?.cancel();
+    _timer = null;
   }
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
-      controller.dispose();
-    }
+    _stopAnimation();
+    _time.dispose();
     super.dispose();
   }
 
@@ -217,24 +228,19 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
   @override
   Widget render(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    var baseColor = getColor(context, getAttribute('baseColor')) ??
-        const Color(0xFF2B314C);
+    var baseColor =
+        getColor(context, getAttribute('baseColor')) ?? const Color(0xFF2B314C);
     var blur = double.tryParse(getAttribute('blur') ?? '') ?? 26;
 
-    // Ensure tickers run even if an ancestor disabled them; reduced-motion
-    // checks are still handled by _updateAnimationState.
-    return TickerMode(
-      enabled: true,
-      child: Container(
-        width: size.width,
-        height: size.height,
-        color: baseColor,
-        child: ImageFiltered(
-          imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: CustomPaint(
-            size: size,
-            painter: _CosmicBlobsPainter(_darkBlobs, size, _controllers),
-          ),
+    return Container(
+      width: size.width,
+      height: size.height,
+      color: baseColor,
+      child: ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: CustomPaint(
+          size: size,
+          painter: _CosmicBlobsPainter(_darkBlobs, size, _time),
         ),
       ),
     );
