@@ -11,6 +11,7 @@ mixin ComputedAttributes {
     'id',
     'live-patch',
     'phx-href',
+    'method',
     'phx-before-each-render',
     'data-confirm',
     'data-confirm-title',

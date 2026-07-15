@@ -553,6 +553,23 @@ class LiveView {
     return r;
   }
 
+  Future<http.Response> deadViewDeleteQuery(String url) async {
+    var r = await httpClient.delete(shortUrlToUri(url), headers: {
+      ...httpHeaders(),
+      'x-csrf-token': _csrf ?? '',
+    });
+
+    if (r.headers['set-cookie'] != null) {
+      await _parseAndSaveCookie(r.headers['set-cookie']!);
+    }
+
+    if (r.statusCode == 200) {
+      var content = html.parse(r.body);
+      _readInitialSession(content);
+    }
+    return r;
+  }
+
   Future<http.Response> deadViewGetQuery(String url) async {
     var r = await httpClient.get(shortUrlToUri(url), headers: httpHeaders());
     if (r.headers['set-cookie'] != null) {
@@ -566,13 +583,25 @@ class LiveView {
     return r;
   }
 
-  Future<void> execHrefClick(String url) async {
+  Future<void> execHrefClick(String url, {String method = 'GET'}) async {
     router.pushPage(
       url: 'loading;$url',
       widget: loadingWidget(url),
       rootState: router.pages.lastOrNull?.rootState,
     );
-    var response = await deadViewGetQuery(url);
+
+    http.Response response;
+    if (method.toUpperCase() == 'DELETE') {
+      response = await deadViewDeleteQuery(url);
+    } else {
+      response = await deadViewGetQuery(url);
+    }
+
+    if ((response.statusCode == 302 || response.statusCode == 301) &&
+        response.headers['location'] != null) {
+      await execHrefClick(response.headers['location']!);
+      return;
+    }
 
     currentUrl = url;
     redirectToUrl = url;

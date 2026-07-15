@@ -77,10 +77,16 @@ class FlutterExecAction {
         return ExecLivePatch(url: value!['name']);
       }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['phx-href'], (value, attributes) {
-        return ExecPhxHref(url: value!['name']);
+        return ExecPhxHref(
+          url: value!['name'],
+          method: attributes?['method'] ?? 'GET',
+        );
       }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['phx-href-modal'], (value, attributes) {
-        return ExecPhxHrefModal(url: value!['name']);
+        return ExecPhxHrefModal(
+          url: value!['name'],
+          method: attributes?['method'] ?? 'GET',
+        );
       }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['goBack'], (_, __) => ExecGoBack(),
           triggers: [LiveViewExecTrigger.onTap])
