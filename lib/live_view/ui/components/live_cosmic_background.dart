@@ -32,14 +32,16 @@ class _BlobConfig {
   });
 }
 
-/// Paints the cosmic blob layer. The blobs are drawn with [BlendMode.screen]
-/// so overlapping gradients glow rather than darken, matching the web auth pages.
+/// Paints the cosmic blob layer. In dark mode the blobs use [BlendMode.screen]
+/// so overlapping gradients glow; in light mode they use [BlendMode.multiply]
+/// to darken the white background, matching the web auth pages.
 class _CosmicBlobsPainter extends CustomPainter {
   final List<_BlobConfig> blobs;
   final Size screen;
   final ValueNotifier<double> time;
+  final BlendMode blendMode;
 
-  _CosmicBlobsPainter(this.blobs, this.screen, this.time)
+  _CosmicBlobsPainter(this.blobs, this.screen, this.time, this.blendMode)
     : super(repaint: time);
 
   @override
@@ -88,7 +90,7 @@ class _CosmicBlobsPainter extends CustomPainter {
             colors: [blob.color, blob.color.withAlpha(0)],
             stops: const [0.0, 0.6],
           ).createShader(Rect.fromLTWH(0, 0, blobSize, blobSize))
-          ..blendMode = BlendMode.screen;
+          ..blendMode = blendMode;
     canvas.drawRect(Rect.fromLTWH(0, 0, blobSize, blobSize), paint);
     canvas.restore();
   }
@@ -111,11 +113,64 @@ class LiveCosmicBackground extends LiveStateWidget<LiveCosmicBackground> {
 }
 
 class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
-  // Blob layout mirroring the web auth background. The positions follow the
-  // light-mode CSS spread (the reference screenshot shows blobs scattered
-  // across the screen) while the colours and blend mode use the dark-mode
-  // palette. Durations and amplitudes are tuned so the motion is clearly
-  // visible even through the heavy blur.
+  // Blob layout mirroring the web auth background. Positions follow the
+  // light-mode CSS spread (blobs scattered across the screen). Colours and
+  // blend mode switch between light and dark palettes. Durations and
+  // amplitudes are tuned so the motion is clearly visible even through the
+  // heavy blur.
+  static const List<_BlobConfig> _lightBlobs = [
+    _BlobConfig(
+      color: Color(0x8C5353E5),
+      sizeVh: 62,
+      left: 0.78,
+      top: 0.24,
+      animation: _BlobAnimation.vertical,
+      durationSeconds: 10,
+      curve: Curves.easeInOut,
+    ),
+    _BlobConfig(
+      color: Color(0x75D94FC3),
+      sizeVh: 62,
+      left: 0.13,
+      top: 0.36,
+      originOffsetFraction: Offset(-0.65, 0),
+      animation: _BlobAnimation.circle,
+      durationSeconds: 8,
+      reverse: true,
+      curve: Curves.easeInOut,
+    ),
+    _BlobConfig(
+      color: Color(0x6BEC6FD0),
+      sizeVh: 62,
+      left: 0.27,
+      top: 0.78,
+      originOffsetFraction: Offset(0.65, 0),
+      animation: _BlobAnimation.circle,
+      durationSeconds: 13,
+      curve: Curves.linear,
+    ),
+    _BlobConfig(
+      color: Color(0x66D94FC3),
+      sizeVh: 62,
+      left: 0.73,
+      top: 0.82,
+      originOffsetFraction: Offset(-0.37, 0),
+      animation: _BlobAnimation.horizontal,
+      durationSeconds: 11,
+      curve: Curves.easeInOut,
+    ),
+    _BlobConfig(
+      color: Color(0x6B635AEB),
+      sizeVh: 92,
+      left: 0.18,
+      top: 0.18,
+      originOffsetFraction: Offset(-1.20, 0.37),
+      animation: _BlobAnimation.circle,
+      durationSeconds: 7,
+      curve: Curves.easeInOut,
+    ),
+  ];
+
   static const List<_BlobConfig> _darkBlobs = [
     _BlobConfig(
       color: Color(0xB35353E5),
@@ -228,9 +283,10 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
   @override
   Widget render(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    var baseColor =
-        getColor(context, getAttribute('baseColor')) ?? const Color(0xFF2B314C);
+    var baseColor = getColor(context, getAttribute('baseColor')) ??
+        Theme.of(context).scaffoldBackgroundColor;
     var blur = double.tryParse(getAttribute('blur') ?? '') ?? 26;
+    var isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: size.width,
@@ -240,7 +296,12 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
         imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: CustomPaint(
           size: size,
-          painter: _CosmicBlobsPainter(_darkBlobs, size, _time),
+          painter: _CosmicBlobsPainter(
+            isDark ? _darkBlobs : _lightBlobs,
+            size,
+            _time,
+            isDark ? BlendMode.screen : BlendMode.multiply,
+          ),
         ),
       ),
     );
