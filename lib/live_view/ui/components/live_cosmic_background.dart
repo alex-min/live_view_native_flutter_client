@@ -63,11 +63,11 @@ class _CosmicBlobsPainter extends CustomPainter {
       case _BlobAnimation.circle:
         rotation = blob.reverse ? -value * 2 * pi : value * 2 * pi;
       case _BlobAnimation.vertical:
-        translation = Offset(0, blobSize * 0.30 * sin(value * 2 * pi));
+        translation = Offset(0, blobSize * 0.50 * sin(value * 2 * pi));
       case _BlobAnimation.horizontal:
         translation = Offset(
-          blobSize * 0.42 * sin(value * 2 * pi),
-          blobSize * 0.10 * sin(value * 2 * pi),
+          blobSize * 0.60 * sin(value * 2 * pi),
+          blobSize * 0.20 * sin(value * 2 * pi),
         );
     }
 
@@ -108,8 +108,8 @@ class LiveCosmicBackground extends LiveStateWidget<LiveCosmicBackground> {
 
 class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
   // Dark mode blob positions / colours from startup_kit/assets/css/cosmic.css.
-  // Durations are shorter than the web originals so the motion is perceptible
-  // on a mobile screen while still feeling slow and ambient.
+  // Durations and amplitudes are increased over the web originals so the
+  // motion remains visible through the heavy blur on Flutter screens.
   static const List<_BlobConfig> _darkBlobs = [
     _BlobConfig(
       color: Color(0xB35353E5),
@@ -117,7 +117,7 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
       left: 0.50,
       top: 0.70,
       animation: _BlobAnimation.vertical,
-      durationSeconds: 16,
+      durationSeconds: 6,
       curve: Curves.easeInOut,
     ),
     _BlobConfig(
@@ -127,7 +127,7 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
       top: 0.70,
       originOffsetFraction: Offset(-0.45, 0),
       animation: _BlobAnimation.circle,
-      durationSeconds: 12,
+      durationSeconds: 5,
       reverse: true,
       curve: Curves.easeInOut,
     ),
@@ -138,7 +138,7 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
       top: 0.76,
       originOffsetFraction: Offset(0.45, 0),
       animation: _BlobAnimation.circle,
-      durationSeconds: 20,
+      durationSeconds: 8,
       curve: Curves.linear,
     ),
     _BlobConfig(
@@ -148,7 +148,7 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
       top: 0.70,
       originOffsetFraction: Offset(-0.25, 0),
       animation: _BlobAnimation.horizontal,
-      durationSeconds: 18,
+      durationSeconds: 7,
       curve: Curves.easeInOut,
     ),
     _BlobConfig(
@@ -158,7 +158,7 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
       top: 0.80,
       originOffsetFraction: Offset(-0.55, 0.20),
       animation: _BlobAnimation.circle,
-      durationSeconds: 11,
+      durationSeconds: 4,
       curve: Curves.easeInOut,
     ),
   ];
