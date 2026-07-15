@@ -71,4 +71,42 @@ void main() {
       ),
     );
   });
+
+  testWidgets('parse box shadow declaration', (tester) async {
+    await tester.pumpWidget(
+      Builder(
+        builder: (BuildContext context) {
+          var decoration =
+              getDecoration(context, 'boxShadow: { 0 24 60 -24 #8C000000 }');
+          expect(decoration, isA<BoxDecoration>());
+          var shadows = (decoration as BoxDecoration).boxShadow;
+          expect(shadows, isNotNull);
+          expect(shadows!.length, 1);
+          expect(shadows.first.offset, const Offset(0, 24));
+          expect(shadows.first.blurRadius, 60);
+          expect(shadows.first.spreadRadius, -24);
+          expect(shadows.first.color, const Color(0x8C000000));
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  });
+
+  testWidgets('parse border declaration', (tester) async {
+    await tester.pumpWidget(
+      Builder(
+        builder: (BuildContext context) {
+          var decoration =
+              getDecoration(context, 'border: { 1 #404868 }; borderRadius: 12');
+          expect(decoration, isA<BoxDecoration>());
+          var boxDecoration = decoration as BoxDecoration;
+          expect(boxDecoration.border, isA<Border>());
+          expect((boxDecoration.border as Border).bottom.color, const Color(0xFF404868));
+          expect((boxDecoration.border as Border).bottom.width, 1);
+          expect(boxDecoration.borderRadius, BorderRadius.circular(12));
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  });
 }

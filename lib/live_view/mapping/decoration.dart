@@ -13,6 +13,7 @@ Decoration? getDecoration(BuildContext context, String? css) {
   BorderRadius? borderRadius;
   Border? border;
   Gradient? gradient;
+  List<BoxShadow>? boxShadow;
 
   for (var (prop, value) in parseCss(css)) {
     switch (prop) {
@@ -24,6 +25,11 @@ Decoration? getDecoration(BuildContext context, String? css) {
         border = getBorder(context, value);
       case 'gradient':
         gradient = _parseGradient(context, value);
+      case 'boxShadow':
+        var shadow = _parseBoxShadow(context, value);
+        if (shadow != null) {
+          boxShadow = [shadow];
+        }
     }
   }
 
@@ -32,6 +38,7 @@ Decoration? getDecoration(BuildContext context, String? css) {
     borderRadius: borderRadius,
     border: border,
     gradient: gradient,
+    boxShadow: boxShadow,
   );
 }
 
@@ -79,4 +86,51 @@ Gradient? _parseGradient(BuildContext context, String value) {
     default:
       return null;
   }
+}
+
+/// Parses a simplified box-shadow declaration.
+///
+/// Syntax: `<offsetX> <offsetY> <blurRadius> <spreadRadius> <color>`
+/// All values except color are numbers (logical pixels). Colors can be hex,
+/// named, or theme variables. Spread radius is optional.
+///
+/// Examples:
+///   boxShadow: { 0 24 60 -24 #8C000000 }
+///   boxShadow: { 0 4 12 0 #805353E5 }
+BoxShadow? _parseBoxShadow(BuildContext context, String value) {
+  var parts = value.trim().split(RegExp(r'\s+'));
+  if (parts.length < 4) return null;
+
+  var offsetX = double.tryParse(parts[0]);
+  var offsetY = double.tryParse(parts[1]);
+  var blurRadius = double.tryParse(parts[2]);
+
+  if (offsetX == null || offsetY == null || blurRadius == null) {
+    return null;
+  }
+
+  // The 4th token is either the spread radius or the color.
+  double spreadRadius = 0;
+  String? colorToken;
+  if (parts.length == 4) {
+    colorToken = parts[3];
+  } else {
+    var maybeSpread = double.tryParse(parts[3]);
+    if (maybeSpread != null) {
+      spreadRadius = maybeSpread;
+      colorToken = parts.sublist(4).join(' ');
+    } else {
+      colorToken = parts.sublist(3).join(' ');
+    }
+  }
+
+  var color = getColor(context, colorToken);
+  if (color == null) return null;
+
+  return BoxShadow(
+    offset: Offset(offsetX, offsetY),
+    blurRadius: blurRadius,
+    spreadRadius: spreadRadius,
+    color: color,
+  );
 }

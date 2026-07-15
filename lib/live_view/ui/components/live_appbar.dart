@@ -31,7 +31,8 @@ class _LiveAppBarState extends StateWidget<LiveAppBar> {
       'titleSpacing',
       'toolbarOpacity',
       'toolbarHeight',
-      'leadingWidth'
+      'leadingWidth',
+      'shape'
     ]);
   }
 
@@ -57,6 +58,7 @@ class _LiveAppBarState extends StateWidget<LiveAppBar> {
       toolbarOpacity: doubleAttribute('toolbarOpacity') ?? 1,
       toolbarHeight: doubleAttribute('toolbarHeight'),
       leadingWidth: doubleAttribute('leadingWidth'),
+      shape: shapeBorderAttribute('shape'),
     );
   }
 }

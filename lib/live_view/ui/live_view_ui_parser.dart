@@ -9,6 +9,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dar
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_cached_networked_image.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_card.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_center.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_checkbox.dart';
@@ -259,6 +260,8 @@ class LiveViewUiParser {
       ..add([
         'CachedNetworkImage'
       ], (state) => [LiveCachedNetworkImage(state: state, key: Key(uuid.v4()))])
+      ..add(['CosmicBackground'],
+          (state) => [LiveCosmicBackground(state: state, key: Key(uuid.v4()))])
       ..add(['Expanded'],
           (state) => [LiveExpanded(state: state, key: Key(uuid.v4()))])
       ..add(['FilledButton'],

@@ -12,8 +12,8 @@ Border? getBorder(BuildContext context, String? border) {
   }
 
   var match = exp.firstMatch(border)!;
-  var widths = match[0];
-  var colors = match[1];
+  var widths = match.group(1);
+  var colors = match.group(2);
 
   var edgesWidths = getEdgeInsets(widths);
 
