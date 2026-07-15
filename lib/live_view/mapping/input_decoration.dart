@@ -53,14 +53,19 @@ InputDecoration getInputDecoration(BuildContext context, String? css,
 
 InputBorder? _parseInputBorder(
     BuildContext context, String value, BorderRadius? borderRadius) {
+  var outlineColor = Theme.of(context).colorScheme.outline;
+
   switch (value.trim().toLowerCase()) {
     case 'none':
       return InputBorder.none;
     case 'underline':
-      return const UnderlineInputBorder();
+      return UnderlineInputBorder(
+        borderSide: BorderSide(color: outlineColor),
+      );
     case 'outline':
       return OutlineInputBorder(
         borderRadius: borderRadius ?? BorderRadius.circular(12),
+        borderSide: BorderSide(color: outlineColor),
       );
     default:
       return null;
