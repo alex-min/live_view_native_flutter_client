@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:html_unescape/html_unescape.dart';
 import 'package:liveview_flutter/live_view/mapping/text_align.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/mapping/text_style_map.dart';
@@ -25,7 +26,7 @@ class _LiveViewTextState extends StateWidget<LiveText> {
         ? widget.state.node.value ?? ''
         : widget.state.node.innerText;
     return Text(
-      replaceVariables(text, currentVariables).trim(),
+      HtmlUnescape().convert(replaceVariables(text, currentVariables)).trim(),
       style: getTextStyle(getAttribute('style'), context),
       textAlign: getTextAlign(getAttribute('textAlign')),
     );
