@@ -12,14 +12,16 @@ class LiveCachedNetworkImage extends LiveStateWidget<LiveCachedNetworkImage> {
 class _LiveCachedNetworkImageState extends StateWidget<LiveCachedNetworkImage> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['imageUrl', 'width', 'height']);
+    reloadAttributes(node, ['imageUrl', 'src', 'width', 'height']);
   }
 
   @override
   Widget render(BuildContext context) {
-    var url = getAttribute('imageUrl')!;
+    var url = getAttribute('imageUrl') ?? getAttribute('src');
+    if (url == null) return const SizedBox.shrink();
     if (!url.startsWith('http')) {
-      url = '${liveView.endpointScheme}://${liveView.host}/$url';
+      var base = Uri.parse('${liveView.endpointScheme}://${liveView.host}');
+      url = base.resolve(url).toString();
     }
 
     return CachedNetworkImage(

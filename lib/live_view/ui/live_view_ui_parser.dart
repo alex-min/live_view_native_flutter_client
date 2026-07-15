@@ -258,7 +258,8 @@ class LiveViewUiParser {
           (state) => [LiveNavigationRail(state: state, key: Key(uuid.v4()))])
       ..add(['NavigationRailDestination'], (state) => [const SizedBox.shrink()])
       ..add([
-        'CachedNetworkImage'
+        'CachedNetworkImage',
+        'Image'
       ], (state) => [LiveCachedNetworkImage(state: state, key: Key(uuid.v4()))])
       ..add(['CosmicBackground'],
           (state) => [LiveCosmicBackground(state: state, key: Key(uuid.v4()))])
