@@ -39,7 +39,6 @@ class LiveForm extends LiveStateWidget<LiveForm> {
 class _LiveFormState extends StateWidget<LiveForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> formValues = {};
-  bool _triggerActionHandled = false;
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
@@ -56,20 +55,23 @@ class _LiveFormState extends StateWidget<LiveForm> {
   @override
   void onWipeState() {
     formValues = {};
-    _triggerActionHandled = false;
     super.onWipeState();
   }
 
   void _maybeTriggerAction() {
-    var triggerAction = getAttribute('phx-trigger-action');
-    if (triggerAction == null || triggerAction == 'false') {
+    var triggerAction = getAttribute('phx-trigger-action') ?? 'false';
+    var action = getAttribute('action') ?? '';
+    var last = widget.state.liveView.getFormTriggerAction(
+        widget.state.urlPath, action);
+    if (triggerAction == last) {
       return;
     }
-    if (_triggerActionHandled) {
+    widget.state.liveView.setFormTriggerAction(
+        widget.state.urlPath, action, triggerAction);
+    if (triggerAction == 'false') {
       return;
     }
-    _triggerActionHandled = true;
-    widget.state.liveView.postForm(formValues, url: getAttribute('action'));
+    widget.state.liveView.postForm(formValues, url: action);
   }
 
   void sendFormEvent(String eventKind, {String? target}) {

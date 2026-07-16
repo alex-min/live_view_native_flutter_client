@@ -123,6 +123,11 @@ class LiveView {
   late LiveRouterDelegate router;
   bool throttleSpammyCalls = true;
 
+  // Tracks the last phx-trigger-action value per form so that offstage forms
+  // (which are rebuilt and lose their local state) don't re-submit when the
+  // action attribute is still "true" on a previous route.
+  final Map<String, String> _lastFormTriggerActions = {};
+
   /// Holds all fallback widgets that will be used in the live view lifecycle
   LiveViewFallbackPages fallbackPages;
 
@@ -477,6 +482,15 @@ class LiveView {
           viewType: ViewType.liveView);
     } else if (event.payload!['response']?.containsKey('diff') ?? false) {
       handleDiffMessage(event.payload!['response']!['diff']);
+    } else if (event.payload!['response']?['redirect'] is Map) {
+      // Some redirects (e.g. after a phx-click event) come back as a channel
+      // reply with the redirect embedded in the response.
+      var redirect = event.payload!['response']!['redirect'] as Map;
+      var to = redirect['to'];
+      if (to is String) {
+        redirectToUrl = null;
+        unawaited(disconnect().then((_) => execHrefClick(to)));
+      }
     }
   }
 
@@ -492,6 +506,7 @@ class LiveView {
       viewType: viewType,
     ).parse();
     lastRender = render.$1;
+    clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
     router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);
   }
@@ -585,6 +600,20 @@ class LiveView {
 
   Future<void> postForm(Map<String, dynamic> formValues, {String? url}) {
     return deadViewPostQuery(url ?? currentUrl, formValues);
+  }
+
+  String _formTriggerKey(String urlPath, String action) => '$urlPath|$action';
+
+  String? getFormTriggerAction(String urlPath, String action) =>
+      _lastFormTriggerActions[_formTriggerKey(urlPath, action)];
+
+  void setFormTriggerAction(String urlPath, String action, String value) {
+    _lastFormTriggerActions[_formTriggerKey(urlPath, action)] = value;
+  }
+
+  void clearFormTriggerActions(String urlPath) {
+    _lastFormTriggerActions.removeWhere(
+        (key, _) => key.startsWith('$_formTriggerKey(urlPath, '')'));
   }
 
   Future<http.Response> deadViewPostQuery(
