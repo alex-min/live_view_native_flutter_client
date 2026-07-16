@@ -111,6 +111,7 @@ class LiveView {
 
   PhoenixChannel? _channel;
   Push? _pendingLeavePush;
+  bool _isJoiningChannel = false;
 
   List<Widget>? lastRender;
 
@@ -167,6 +168,20 @@ class LiveView {
     endpointScheme = endpoint.scheme;
     try {
       var response = await deadViewGetQuery(currentUrl);
+
+      // The HTTP client no longer follows redirects automatically, so follow
+      // dead-view redirects until we land on the real initial page.
+      while ((response.statusCode == 302 || response.statusCode == 301) &&
+          response.headers['location'] != null) {
+        var location = response.headers['location']!;
+        var uri = Uri.parse(location);
+        currentUrl = uri.path.isEmpty ? '/' : uri.path;
+        if (uri.query.isNotEmpty) {
+          currentUrl = '$currentUrl?${uri.query}';
+        }
+        response = await deadViewGetQuery(currentUrl);
+      }
+
       initialized = true;
 
       if (response.statusCode > 300) {
@@ -363,23 +378,33 @@ class LiveView {
   }
 
   _setupPhoenixChannel({bool redirect = false}) async {
-    _channel = _socket!.addChannel(
-      topic: "lv:$_liveViewId",
-      parameters: _fullsocketParams(redirect: redirect),
-    );
+    if (_isJoiningChannel) return;
+    _isJoiningChannel = true;
 
-    _channel?.messages.listen(handleMessage);
+    try {
+      _channel = _socket!.addChannel(
+        topic: "lv:$_liveViewId",
+        parameters: _fullsocketParams(redirect: redirect),
+      );
 
-    if (_channel?.state != PhoenixChannelState.joined) {
-      var response = await _channel?.join().future;
-      if (response?.isError == true && redirectToUrl != null) {
-        // Cross-live_session redirect rejected by the server. Fall back to a
-        // full dead-view reconnect so the new session can be established.
-        var target = redirectToUrl!;
-        redirectToUrl = null;
-        await disconnect();
-        await connect("$endpointScheme://$host$target");
+      _channel?.messages.listen(handleMessage);
+
+      if (_channel?.state != PhoenixChannelState.joined &&
+          _channel?.state != PhoenixChannelState.joining) {
+        var response = await _channel?.join().future;
+        if (response?.isError == true && redirectToUrl != null) {
+          // Cross-live_session redirect rejected by the server. Fall back to a
+          // full dead-view reconnect so the new session can be established.
+          var target = redirectToUrl!;
+          redirectToUrl = null;
+          await disconnect();
+          await connect("$endpointScheme://$host$target");
+        } else {
+          redirectToUrl = null;
+        }
       }
+    } finally {
+      _isJoiningChannel = false;
     }
   }
 
@@ -597,7 +622,12 @@ class LiveView {
   }
 
   Future<http.Response> deadViewGetQuery(String url) async {
-    var r = await httpClient.get(shortUrlToUri(url), headers: httpHeaders());
+    var request = http.Request('GET', shortUrlToUri(url));
+    request.followRedirects = false;
+    request.headers.addAll(httpHeaders());
+    var streamedResponse = await httpClient.send(request);
+    var r = await http.Response.fromStream(streamedResponse);
+
     if (r.headers['set-cookie'] != null) {
       await _parseAndSaveCookie(r.headers['set-cookie']!);
     }
