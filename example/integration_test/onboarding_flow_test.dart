@@ -37,7 +37,21 @@ void main() {
         view.throttleSpammyCalls = false;
 
         await tester.pumpWidget(_TestApp(view: view));
-        await view.connect('http://$_serverHost:$_serverPort/users/register');
+        await view.connect('http://$_serverHost:$_serverPort/');
+
+        // Tap the sign-up button on the home page to navigate to the
+        // registration form via a real live-patch navigation.
+        final signUpButton = find.byType(ElevatedButton).last;
+        await _waitFor(tester, signUpButton, seconds: 30);
+        await tester.tap(signUpButton);
+        await _waitForUrl(tester, view, '/users/register', seconds: 30);
+
+        // Wait for the cross-live_session fallback and the websocket join to
+        // settle before interacting with the form.
+        await tester.pumpAndSettle();
+        await Future.delayed(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+
         await _waitFor(tester, find.byType(TextField));
 
         final email =

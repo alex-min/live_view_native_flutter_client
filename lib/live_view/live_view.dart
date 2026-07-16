@@ -404,6 +404,7 @@ class LiveView {
           // loader while waiting for the websocket.
           var target = redirectToUrl!;
           redirectToUrl = null;
+          _isJoiningChannel = false;
           await disconnect();
           await execHrefClick(target);
         } else {
