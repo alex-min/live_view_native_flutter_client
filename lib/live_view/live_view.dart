@@ -410,6 +410,13 @@ class LiveView {
 
   Future<void> redirectTo(String path) async {
     redirectToUrl = path;
+
+    if (_channel == null || _channel?.state == PhoenixChannelState.closed) {
+      await disconnect();
+      await connect("$endpointScheme://$host$path");
+      return;
+    }
+
     _pendingLeavePush = _channel?.push('phx_leave', {});
     await _pendingLeavePush?.future;
     _pendingLeavePush = null;
@@ -446,6 +453,14 @@ class LiveView {
       if (redirectToUrl != null) {
         currentUrl = redirectToUrl!;
         _setupPhoenixChannel(redirect: true);
+      }
+      return;
+    }
+    if (event.event.value == 'redirect') {
+      var to = event.payload?['to'];
+      if (to is String) {
+        redirectToUrl = null;
+        unawaited(disconnect().then((_) => connect("$endpointScheme://$host$to")));
       }
       return;
     }
