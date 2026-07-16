@@ -623,8 +623,8 @@ class LiveView {
   }
 
   void clearFormTriggerActions(String urlPath) {
-    _lastFormTriggerActions.removeWhere(
-        (key, _) => key.startsWith('$_formTriggerKey(urlPath, '')'));
+    var prefix = _formTriggerKey(urlPath, '');
+    _lastFormTriggerActions.removeWhere((key, _) => key.startsWith(prefix));
   }
 
   Future<http.Response> deadViewPostQuery(

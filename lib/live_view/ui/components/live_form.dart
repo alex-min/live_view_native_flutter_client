@@ -59,6 +59,11 @@ class _LiveFormState extends StateWidget<LiveForm> {
   }
 
   void _maybeTriggerAction() {
+    // Offstage forms from previous routes share the same StateNotifier and can
+    // receive diffs that target the current page. They must never auto-submit.
+    if (!widget.state.isOnTheCurrentPage) {
+      return;
+    }
     var triggerAction = getAttribute('phx-trigger-action') ?? 'false';
     var action = getAttribute('action') ?? '';
     var last = widget.state.liveView.getFormTriggerAction(
