@@ -394,11 +394,13 @@ class LiveView {
         var response = await _channel?.join().future;
         if (response?.isError == true && redirectToUrl != null) {
           // Cross-live_session redirect rejected by the server. Fall back to a
-          // full dead-view reconnect so the new session can be established.
+          // full dead-view navigation so the new session can be established and
+          // the target page is rendered immediately instead of staying on a
+          // loader while waiting for the websocket.
           var target = redirectToUrl!;
           redirectToUrl = null;
           await disconnect();
-          await connect("$endpointScheme://$host$target");
+          await execHrefClick(target);
         } else {
           redirectToUrl = null;
         }
@@ -413,7 +415,7 @@ class LiveView {
 
     if (_channel == null || _channel?.state == PhoenixChannelState.closed) {
       await disconnect();
-      await connect("$endpointScheme://$host$path");
+      await execHrefClick(path);
       return;
     }
 
@@ -460,7 +462,7 @@ class LiveView {
       var to = event.payload?['to'];
       if (to is String) {
         redirectToUrl = null;
-        unawaited(disconnect().then((_) => connect("$endpointScheme://$host$to")));
+        unawaited(disconnect().then((_) => execHrefClick(to)));
       }
       return;
     }
