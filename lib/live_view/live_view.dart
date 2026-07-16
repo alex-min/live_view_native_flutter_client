@@ -504,6 +504,9 @@ class LiveView {
 
   handleRenderedMessage(Map<String, dynamic> rendered,
       {ViewType viewType = ViewType.liveView}) {
+    // A full render replaces whatever diffs were targeting the previous page,
+    // so drop stale diff state before the new widgets read it.
+    changeNotifier.emptyData();
     var elements = List<String>.from(rendered['s']);
 
     var render = LiveViewUiParser(
