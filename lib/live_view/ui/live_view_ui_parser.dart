@@ -29,6 +29,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_floating_action_bu
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hidden_input.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hint_attribute.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_html_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_button.dart';
@@ -198,6 +199,8 @@ class LiveViewUiParser {
       ..add(['Tooltip'],
           (state) => [LiveTooltip(state: state, key: Key(uuid.v4()))])
       ..add(['Text'], (state) => [LiveText(state: state, key: Key(uuid.v4()))])
+      ..add(['HtmlView'],
+          (state) => [LiveHtmlView(state: state, key: Key(uuid.v4()))])
       ..add(['ElevatedButton'],
           (state) => [LiveElevatedButton(state: state, key: Key(uuid.v4()))])
       ..add(['Center'],
