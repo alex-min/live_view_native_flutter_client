@@ -398,15 +398,22 @@ class LiveView {
           _channel?.state != PhoenixChannelState.joining) {
         var response = await _channel?.join().future;
         if (response?.isError == true && redirectToUrl != null) {
-          // Cross-live_session redirect rejected by the server. Fall back to a
-          // full dead-view navigation so the new session can be established and
-          // the target page is rendered immediately instead of staying on a
-          // loader while waiting for the websocket.
-          var target = redirectToUrl!;
-          redirectToUrl = null;
-          _isJoiningChannel = false;
-          await disconnect();
-          await execHrefClick(target);
+          var reason = response?.response?['reason'];
+          if (reason == 'unauthorized') {
+            // Cross-live_session redirect rejected by the server. Fall back to a
+            // full dead-view navigation so the new session can be established
+            // and the target page is rendered immediately instead of staying on
+            // a loader while waiting for the websocket.
+            var target = redirectToUrl!;
+            redirectToUrl = null;
+            _isJoiningChannel = false;
+            await disconnect();
+            await execHrefClick(target);
+          } else {
+            // Other join failures (e.g. stale session) cannot be recovered by
+            // reloading the same dead view; doing so would loop forever.
+            redirectToUrl = null;
+          }
         } else {
           redirectToUrl = null;
         }
