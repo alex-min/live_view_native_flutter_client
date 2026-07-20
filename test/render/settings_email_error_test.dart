@@ -5,11 +5,14 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('settings email form shows current_password error',
-      (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+  testWidgets('settings email form shows current_password error', (
+    tester,
+  ) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <AppBar>
               <title><Text>Settings</Text></title>
@@ -44,9 +47,10 @@ main() async {
               </SingleChildScrollView>
             </viewBody>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

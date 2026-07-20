@@ -7,15 +7,19 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('hides and shows back an id', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        '<ListView><Text id="hello">hello</Text><ElevatedButton ',
-        '></ElevatedButton></ListView>',
-      ],
-      '0': 'phx-click="${FlutterExec.encode([
-            FlutterExecAction(name: 'hide', value: {'to': '#hello'})
-          ])}"',
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '<ListView><Text id="hello">hello</Text><ElevatedButton ',
+          '></ElevatedButton></ListView>',
+        ],
+        '0':
+            'phx-click="${FlutterExec.encode([
+              FlutterExecAction(name: 'hide', value: {'to': '#hello'}),
+            ])}"',
+      },
+    );
     await tester.runLiveView(view);
 
     await tester.pumpAndSettle();
@@ -27,9 +31,10 @@ main() async {
 
     await tester.tap(find.byType(LiveElevatedButton));
     view.handleDiffMessage({
-      '0': 'phx-click="${FlutterExec.encode([
-            FlutterExecAction(name: 'show', value: {'to': '#hello'})
-          ])}"'
+      '0':
+          'phx-click="${FlutterExec.encode([
+            FlutterExecAction(name: 'show', value: {'to': '#hello'}),
+          ])}"',
     });
 
     await tester.pumpAndSettle();
@@ -41,15 +46,14 @@ main() async {
   });
 
   testWidgets('hides itself', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        '<ElevatedButton ',
-        '>click me</ElevatedButton>',
-      ],
-      '0': 'phx-click="${FlutterExec.encode([
-            FlutterExecAction(name: 'hide')
-          ])}"',
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<ElevatedButton ', '>click me</ElevatedButton>'],
+        '0':
+            'phx-click="${FlutterExec.encode([FlutterExecAction(name: 'hide')])}"',
+      },
+    );
 
     await tester.runLiveView(view);
 

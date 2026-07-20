@@ -7,26 +7,14 @@ void main() {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
-          expect(
-            getColor(context, "#FAD"),
-            const Color(0xFFFFAADD),
-          );
-          expect(
-            getColor(context, "#000000"),
-            Colors.black,
-          );
-          expect(
-            getColor(context, "red"),
-            Colors.red,
-          );
+          expect(getColor(context, "#FAD"), const Color(0xFFFFAADD));
+          expect(getColor(context, "#000000"), Colors.black);
+          expect(getColor(context, "red"), Colors.red);
           expect(
             getColor(context, "@theme.colorScheme.primary"),
             Theme.of(context).colorScheme.primary,
           );
-          expect(
-            getColor(context, "#80FF0000"),
-            const Color(0x80FF0000),
-          );
+          expect(getColor(context, "#80FF0000"), const Color(0x80FF0000));
 
           return const SizedBox.shrink();
         },

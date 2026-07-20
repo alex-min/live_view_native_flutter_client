@@ -37,7 +37,7 @@ class _LiveIconButtonState extends StateWidget<LiveIconButton> {
       'enableFeedback',
       'isSelected',
       'filled',
-      'filledTonal'
+      'filledTonal',
     ]);
   }
 
@@ -46,74 +46,12 @@ class _LiveIconButtonState extends StateWidget<LiveIconButton> {
 
   @override
   Widget render(BuildContext context) {
-    var child =
-        StateChild.extractChild<LiveIconSelectedAttribute>(multipleChildren());
+    var child = StateChild.extractChild<LiveIconSelectedAttribute>(
+      multipleChildren(),
+    );
 
     if (booleanAttribute('filledTonal') == true) {
       return IconButton.filledTonal(
-          padding: marginOrPaddingAttribute('padding'),
-          alignment: alignmentDirectionalAttribute('alignment'),
-          splashRadius: doubleAttribute('splashRadius'),
-          color: colorAttribute(context, 'color'),
-          focusColor: colorAttribute(context, 'focusColor'),
-          hoverColor: colorAttribute(context, 'hoverColor'),
-          highlightColor: colorAttribute(context, 'highlightColor'),
-          splashColor: colorAttribute(context, 'splashColor'),
-          disabledColor: colorAttribute(context, 'disabledColor'),
-          icon: iconWidgetFromAttribute('icon') ?? const Icon(defaultIconData),
-          style: buttonStyleAttribute(context, 'style'),
-          autofocus: booleanAttribute('autofocus') ?? false,
-          mouseCursor: mouseCursorAttribute('mouseCursor'),
-          tooltip: getAttribute('tooltip'),
-          enableFeedback: booleanAttribute('enableFeedback'),
-          isSelected: booleanAttribute('isSelected'),
-          selectedIcon: child,
-          onPressed: () {
-            if (getAttribute('type') == 'submit') {
-              FormFieldEvent(
-                      name: getAttribute('name') ??
-                          'unamed-elevated-button-$unamedInput',
-                      data: null,
-                      type: FormFieldEventType.submit)
-                  .dispatch(context);
-            }
-            executeTapEventsManually();
-          });
-    }
-
-    if (booleanAttribute('filled') == true) {
-      return IconButton.filled(
-          padding: marginOrPaddingAttribute('padding'),
-          alignment: alignmentDirectionalAttribute('alignment'),
-          splashRadius: doubleAttribute('splashRadius'),
-          color: colorAttribute(context, 'color'),
-          focusColor: colorAttribute(context, 'focusColor'),
-          hoverColor: colorAttribute(context, 'hoverColor'),
-          highlightColor: colorAttribute(context, 'highlightColor'),
-          splashColor: colorAttribute(context, 'splashColor'),
-          disabledColor: colorAttribute(context, 'disabledColor'),
-          icon: iconWidgetFromAttribute('icon') ?? const Icon(defaultIconData),
-          style: buttonStyleAttribute(context, 'style'),
-          autofocus: booleanAttribute('autofocus') ?? false,
-          mouseCursor: mouseCursorAttribute('mouseCursor'),
-          tooltip: getAttribute('tooltip'),
-          enableFeedback: booleanAttribute('enableFeedback'),
-          isSelected: booleanAttribute('isSelected'),
-          selectedIcon: child,
-          onPressed: () {
-            if (getAttribute('type') == 'submit') {
-              FormFieldEvent(
-                      name: getAttribute('name') ??
-                          'unamed-elevated-button-$unamedInput',
-                      data: null,
-                      type: FormFieldEventType.submit)
-                  .dispatch(context);
-            }
-            executeTapEventsManually();
-          });
-    }
-
-    return IconButton(
         padding: marginOrPaddingAttribute('padding'),
         alignment: alignmentDirectionalAttribute('alignment'),
         splashRadius: doubleAttribute('splashRadius'),
@@ -134,13 +72,78 @@ class _LiveIconButtonState extends StateWidget<LiveIconButton> {
         onPressed: () {
           if (getAttribute('type') == 'submit') {
             FormFieldEvent(
-                    name: getAttribute('name') ??
-                        'unamed-elevated-button-$unamedInput',
-                    data: null,
-                    type: FormFieldEventType.submit)
-                .dispatch(context);
+              name:
+                  getAttribute('name') ?? 'unamed-elevated-button-$unamedInput',
+              data: null,
+              type: FormFieldEventType.submit,
+            ).dispatch(context);
           }
           executeTapEventsManually();
-        });
+        },
+      );
+    }
+
+    if (booleanAttribute('filled') == true) {
+      return IconButton.filled(
+        padding: marginOrPaddingAttribute('padding'),
+        alignment: alignmentDirectionalAttribute('alignment'),
+        splashRadius: doubleAttribute('splashRadius'),
+        color: colorAttribute(context, 'color'),
+        focusColor: colorAttribute(context, 'focusColor'),
+        hoverColor: colorAttribute(context, 'hoverColor'),
+        highlightColor: colorAttribute(context, 'highlightColor'),
+        splashColor: colorAttribute(context, 'splashColor'),
+        disabledColor: colorAttribute(context, 'disabledColor'),
+        icon: iconWidgetFromAttribute('icon') ?? const Icon(defaultIconData),
+        style: buttonStyleAttribute(context, 'style'),
+        autofocus: booleanAttribute('autofocus') ?? false,
+        mouseCursor: mouseCursorAttribute('mouseCursor'),
+        tooltip: getAttribute('tooltip'),
+        enableFeedback: booleanAttribute('enableFeedback'),
+        isSelected: booleanAttribute('isSelected'),
+        selectedIcon: child,
+        onPressed: () {
+          if (getAttribute('type') == 'submit') {
+            FormFieldEvent(
+              name:
+                  getAttribute('name') ?? 'unamed-elevated-button-$unamedInput',
+              data: null,
+              type: FormFieldEventType.submit,
+            ).dispatch(context);
+          }
+          executeTapEventsManually();
+        },
+      );
+    }
+
+    return IconButton(
+      padding: marginOrPaddingAttribute('padding'),
+      alignment: alignmentDirectionalAttribute('alignment'),
+      splashRadius: doubleAttribute('splashRadius'),
+      color: colorAttribute(context, 'color'),
+      focusColor: colorAttribute(context, 'focusColor'),
+      hoverColor: colorAttribute(context, 'hoverColor'),
+      highlightColor: colorAttribute(context, 'highlightColor'),
+      splashColor: colorAttribute(context, 'splashColor'),
+      disabledColor: colorAttribute(context, 'disabledColor'),
+      icon: iconWidgetFromAttribute('icon') ?? const Icon(defaultIconData),
+      style: buttonStyleAttribute(context, 'style'),
+      autofocus: booleanAttribute('autofocus') ?? false,
+      mouseCursor: mouseCursorAttribute('mouseCursor'),
+      tooltip: getAttribute('tooltip'),
+      enableFeedback: booleanAttribute('enableFeedback'),
+      isSelected: booleanAttribute('isSelected'),
+      selectedIcon: child,
+      onPressed: () {
+        if (getAttribute('type') == 'submit') {
+          FormFieldEvent(
+            name: getAttribute('name') ?? 'unamed-elevated-button-$unamedInput',
+            data: null,
+            type: FormFieldEventType.submit,
+          ).dispatch(context);
+        }
+        executeTapEventsManually();
+      },
+    );
   }
 }

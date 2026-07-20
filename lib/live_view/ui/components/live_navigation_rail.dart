@@ -28,7 +28,7 @@ class _LiveNavigationRailState extends StateWidget<LiveNavigationRail> {
     'useIndicator',
     'indicatorColor',
     'disabled',
-    'initialValue'
+    'initialValue',
   ];
 
   @override
@@ -41,14 +41,19 @@ class _LiveNavigationRailState extends StateWidget<LiveNavigationRail> {
   }
 
   List<(Map<String, String?>, NavigationRailDestination)> barItems() {
-    return childrenNodesOf(node, 'NavigationRailDestination')
-        .map((destination) {
-      var attributes = bindChildVariableAttributes(
-          destination,
-          ['icon', 'label', 'indicatorColor', 'disabled', 'padding'],
-          widget.state.variables);
-      var children =
-          StateChild.multipleChildren(widget.state.copyWith(node: destination));
+    return childrenNodesOf(node, 'NavigationRailDestination').map((
+      destination,
+    ) {
+      var attributes = bindChildVariableAttributes(destination, [
+        'icon',
+        'label',
+        'indicatorColor',
+        'disabled',
+        'padding',
+      ], widget.state.variables);
+      var children = StateChild.multipleChildren(
+        widget.state.copyWith(node: destination),
+      );
       Widget? icon;
       Widget? label;
       if (attributes['icon'] != null) {
@@ -65,14 +70,12 @@ class _LiveNavigationRailState extends StateWidget<LiveNavigationRail> {
       return (
         attributes,
         NavigationRailDestination(
-            padding: getEdgeInsets(attributes['padding']),
-            icon: icon ?? defaultIcon,
-            label: label ?? const Text(''),
-            indicatorColor: getColor(
-              context,
-              attributes['indicatorColor'],
-            ),
-            disabled: getBoolean(attributes['disabled']) ?? false)
+          padding: getEdgeInsets(attributes['padding']),
+          icon: icon ?? defaultIcon,
+          label: label ?? const Text(''),
+          indicatorColor: getColor(context, attributes['indicatorColor']),
+          disabled: getBoolean(attributes['disabled']) ?? false,
+        ),
       );
     }).toList();
   }
@@ -81,18 +84,19 @@ class _LiveNavigationRailState extends StateWidget<LiveNavigationRail> {
   Widget render(BuildContext context) {
     var items = barItems();
     return NavigationRail(
-        indicatorColor: colorAttribute(context, 'indicatorColor'),
-        onDestinationSelected: (newSelection) {
-          setState(() => selected = newSelection);
-          // tapping on the item
-          executeTapEventsManually(fromAttributes: items[selected].$1);
+      indicatorColor: colorAttribute(context, 'indicatorColor'),
+      onDestinationSelected: (newSelection) {
+        setState(() => selected = newSelection);
+        // tapping on the item
+        executeTapEventsManually(fromAttributes: items[selected].$1);
 
-          // tapping itself
-          executeTapEventsManually();
-        },
-        useIndicator: booleanAttribute('useIndicator'),
-        labelType: getNavigationRailLabelTypeAttribute('labelType'),
-        destinations: items.map((e) => e.$2).toList(),
-        selectedIndex: selected);
+        // tapping itself
+        executeTapEventsManually();
+      },
+      useIndicator: booleanAttribute('useIndicator'),
+      labelType: getNavigationRailLabelTypeAttribute('labelType'),
+      destinations: items.map((e) => e.$2).toList(),
+      selectedIndex: selected,
+    );
   }
 }

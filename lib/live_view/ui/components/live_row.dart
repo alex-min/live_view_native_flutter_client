@@ -14,30 +14,31 @@ class LiveRow extends LiveStateWidget<LiveRow> {
 class _LiveColState extends StateWidget<LiveRow> {
   @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
-        'mainAxisAlignment',
-        'crossAxisAlignment',
-        'textDirection',
-        'mainAxisSize',
-        'verticalDirection',
-        'textBaseline'
-      ]);
+    'mainAxisAlignment',
+    'crossAxisAlignment',
+    'textDirection',
+    'mainAxisSize',
+    'verticalDirection',
+    'textBaseline',
+  ]);
 
   @override
   Widget render(BuildContext context) {
     return Row(
-        mainAxisAlignment:
-            getMainAxisAlignment(getAttribute('mainAxisAlignment')) ??
-                MainAxisAlignment.start,
-        crossAxisAlignment:
-            getCrossAxisAlignment(getAttribute('crossAxisAlignment')) ??
-                CrossAxisAlignment.center,
-        mainAxisSize:
-            getMainAxisSize(getAttribute('mainAxisSize')) ?? MainAxisSize.max,
-        textDirection: getTextDirection(getAttribute('textDirection')),
-        verticalDirection:
-            getVerticalDirection(getAttribute('verticalDirection')) ??
-                VerticalDirection.down,
-        textBaseline: getTextBaseline(getAttribute('textBaseline')),
-        children: multipleChildren());
+      mainAxisAlignment:
+          getMainAxisAlignment(getAttribute('mainAxisAlignment')) ??
+          MainAxisAlignment.start,
+      crossAxisAlignment:
+          getCrossAxisAlignment(getAttribute('crossAxisAlignment')) ??
+          CrossAxisAlignment.center,
+      mainAxisSize:
+          getMainAxisSize(getAttribute('mainAxisSize')) ?? MainAxisSize.max,
+      textDirection: getTextDirection(getAttribute('textDirection')),
+      verticalDirection:
+          getVerticalDirection(getAttribute('verticalDirection')) ??
+          VerticalDirection.down,
+      textBaseline: getTextBaseline(getAttribute('textBaseline')),
+      children: multipleChildren(),
+    );
   }
 }

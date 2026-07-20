@@ -198,9 +198,10 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
     return AnimatedSwitcher(
       duration: Duration(milliseconds: animationDuration ?? 0),
-      child: status == Status.hidden
-          ? SizedBox.shrink(key: Key("${node.hashCode}-invisible"))
-          : child,
+      child:
+          status == Status.hidden
+              ? SizedBox.shrink(key: Key("${node.hashCode}-invisible"))
+              : child,
     );
   }
 
@@ -237,18 +238,22 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     for (var eventName in attributes) {
       if (fromAttributes != null) {
         if (fromAttributes[eventName] != null) {
-          actions.addAll(FlutterExec.parse(
-            fromAttributes[eventName],
-            eventName,
-            fromAttributes,
-          ));
+          actions.addAll(
+            FlutterExec.parse(
+              fromAttributes[eventName],
+              eventName,
+              fromAttributes,
+            ),
+          );
         }
       } else if (getAttribute(eventName) != null) {
-        actions.addAll(FlutterExec.parse(
-          getAttribute(eventName),
-          eventName,
-          computedAttributes.attributes,
-        ));
+        actions.addAll(
+          FlutterExec.parse(
+            getAttribute(eventName),
+            eventName,
+            computedAttributes.attributes,
+          ),
+        );
       }
     }
     return actions;
@@ -326,16 +331,13 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     List<EventHandler> events = [];
 
     reloadPredefinedAttributes(node);
-    gatherAllEvents(
-      ['phx-on-trigger'],
-      events,
-      fromAttributes: fromAttributes,
-    );
+    gatherAllEvents(['phx-on-trigger'], events, fromAttributes: fromAttributes);
     executeAllEvents(events);
   }
 
-  void executeOnTapOutsideEventsManually(
-      {Map<String, dynamic>? fromAttributes}) {
+  void executeOnTapOutsideEventsManually({
+    Map<String, dynamic>? fromAttributes,
+  }) {
     List<EventHandler> events = [];
 
     reloadPredefinedAttributes(node);
@@ -363,8 +365,10 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
     List<EventHandler> windowResizeEvents = [];
 
-    gatherAllEvents(
-        ['phx-window-resize', 'phx-responsive'], windowResizeEvents);
+    gatherAllEvents([
+      'phx-window-resize',
+      'phx-responsive',
+    ], windowResizeEvents);
     executeAllEvents(windowResizeEvents);
   }
 
@@ -448,11 +452,11 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       0 => const SizedBox.shrink(),
       1 => children[0],
       _ => SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: children,
-          ),
-        )
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      ),
     };
   }
 }

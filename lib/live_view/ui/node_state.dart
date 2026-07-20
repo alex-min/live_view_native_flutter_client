@@ -39,15 +39,14 @@ class NodeState {
     List<Widget>? dynamicWidget,
     String? componentId,
     ViewType? viewType,
-  }) =>
-      NodeState(
-        node: node ?? this.node,
-        variables: variables ?? this.variables,
-        parser: parser ?? this.parser,
-        nestedState: nestedState ?? this.nestedState,
-        liveView: liveView ?? this.liveView,
-        urlPath: urlPath ?? this.urlPath,
-        dynamicWidget: dynamicWidget ?? this.dynamicWidget,
-        viewType: viewType ?? this.viewType,
-      );
+  }) => NodeState(
+    node: node ?? this.node,
+    variables: variables ?? this.variables,
+    parser: parser ?? this.parser,
+    nestedState: nestedState ?? this.nestedState,
+    liveView: liveView ?? this.liveView,
+    urlPath: urlPath ?? this.urlPath,
+    dynamicWidget: dynamicWidget ?? this.dynamicWidget,
+    viewType: viewType ?? this.viewType,
+  );
 }

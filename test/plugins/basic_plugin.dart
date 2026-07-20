@@ -43,8 +43,10 @@ class BasicPlugin extends Plugin {
 
   @override
   registerExecs(LiveViewExecRegistry registry) {
-    registry.add(['phx-my-plugin'],
-        (value, attributes) => MyPluginExec(attributes: attributes),
-        triggers: [LiveViewExecTrigger.onTap]);
+    registry.add(
+      ['phx-my-plugin'],
+      (value, attributes) => MyPluginExec(attributes: attributes),
+      triggers: [LiveViewExecTrigger.onTap],
+    );
   }
 }

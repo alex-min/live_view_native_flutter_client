@@ -18,10 +18,11 @@ class _LiveViewRootMaterialAppState extends State<LiveViewRootMaterialApp> {
   Widget build(BuildContext context) {
     var theme = Provider.of<ThemeSettings>(context);
     return MaterialApp(
-        title: 'Flutter Demo',
-        themeMode: theme.themeMode,
-        theme: theme.lightTheme,
-        darkTheme: theme.darkTheme,
-        home: RootScaffold(view: widget.view));
+      title: 'Flutter Demo',
+      themeMode: theme.themeMode,
+      theme: theme.lightTheme,
+      darkTheme: theme.darkTheme,
+      home: RootScaffold(view: widget.view),
+    );
   }
 }

@@ -26,7 +26,7 @@ class _LiveMaterialBannerState extends StateWidget<LiveMaterialBanner> {
     'margin',
     'leadingPadding',
     'forceActionsBelow',
-    'overflowAlignment'
+    'overflowAlignment',
   ];
 
   @override
@@ -45,22 +45,23 @@ class _LiveMaterialBannerState extends StateWidget<LiveMaterialBanner> {
     leading ??= iconWidgetFromAttribute('leading');
 
     return MaterialBanner(
-        content: content,
-        actions: children,
-        leading: leading,
-        contentTextStyle: textStyleAttribute('contentTextStyle', context),
-        elevation: doubleAttribute('elevation'),
-        backgroundColor: colorAttribute(context, 'backgroundColor'),
-        surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
-        shadowColor: colorAttribute(context, 'shadowColor'),
-        dividerColor: colorAttribute(context, 'dividerColor'),
-        padding: marginOrPaddingAttribute('padding'),
-        margin: marginOrPaddingAttribute('margin'),
-        leadingPadding: marginOrPaddingAttribute('leadingPadding'),
-        forceActionsBelow: booleanAttribute('forceActionsBelow') ?? false,
-        overflowAlignment: overflowBarAlignmentAttribute('overflowAlignment') ??
-            OverflowBarAlignment.end,
-        onVisible: null // TODO: onVisible
-        );
+      content: content,
+      actions: children,
+      leading: leading,
+      contentTextStyle: textStyleAttribute('contentTextStyle', context),
+      elevation: doubleAttribute('elevation'),
+      backgroundColor: colorAttribute(context, 'backgroundColor'),
+      surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
+      shadowColor: colorAttribute(context, 'shadowColor'),
+      dividerColor: colorAttribute(context, 'dividerColor'),
+      padding: marginOrPaddingAttribute('padding'),
+      margin: marginOrPaddingAttribute('margin'),
+      leadingPadding: marginOrPaddingAttribute('leadingPadding'),
+      forceActionsBelow: booleanAttribute('forceActionsBelow') ?? false,
+      overflowAlignment:
+          overflowBarAlignmentAttribute('overflowAlignment') ??
+          OverflowBarAlignment.end,
+      onVisible: null, // TODO: onVisible
+    );
   }
 }

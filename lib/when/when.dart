@@ -37,12 +37,14 @@ class When {
       } else if (chunk is String) {
         switch (chunk) {
           case 'and':
-            var restOfCalculation =
-                _execute(conditions.getRange(1, conditions.length).toList());
+            var restOfCalculation = _execute(
+              conditions.getRange(1, conditions.length).toList(),
+            );
             return stack.first && restOfCalculation;
           case 'or':
-            var restOfCalculation =
-                _execute(conditions.getRange(1, conditions.length).toList());
+            var restOfCalculation = _execute(
+              conditions.getRange(1, conditions.length).toList(),
+            );
             return stack.first || restOfCalculation;
           default:
             return false;
@@ -72,10 +74,14 @@ class When {
         return MediaQuery.of(context).size.width >= 1400;
       default:
         var window = MediaQuery.of(context);
-        conditions =
-            conditions.replaceAll('window_width', window.size.width.toString());
         conditions = conditions.replaceAll(
-            'window_height', window.size.height.toString());
+          'window_width',
+          window.size.width.toString(),
+        );
+        conditions = conditions.replaceAll(
+          'window_height',
+          window.size.height.toString(),
+        );
 
         var c = conditions.split(' ');
 

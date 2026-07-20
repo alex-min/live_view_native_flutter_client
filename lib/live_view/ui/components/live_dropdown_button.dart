@@ -37,7 +37,7 @@ class _LiveDropdownButtonState extends StateWidget<LiveDropdownButton> {
     'dropdownColor',
     'menuMaxHeight',
     'enableFeedback',
-    'padding'
+    'padding',
   ];
   final childAttributes = ['label', 'value', 'enabled', 'alignment'];
   @override
@@ -64,79 +64,95 @@ class _LiveDropdownButtonState extends StateWidget<LiveDropdownButton> {
   Widget render(BuildContext context) {
     Map<String?, Map<String, String?>> attributesMapping = {};
     var countNoValue = 0;
-    var buttons = childrenNodesOf(node, 'DropdownMenuItem').map((button) {
-      var attributes = bindChildVariableAttributes(
-          button, childAttributes, widget.state.variables);
-      Widget? child =
-          attributes['label'] != null ? Text(attributes['label']!) : null;
+    var buttons =
+        childrenNodesOf(node, 'DropdownMenuItem').map((button) {
+          var attributes = bindChildVariableAttributes(
+            button,
+            childAttributes,
+            widget.state.variables,
+          );
+          Widget? child =
+              attributes['label'] != null ? Text(attributes['label']!) : null;
 
-      if (attributes['value'] == null) {
-        countNoValue++;
-      }
+          if (attributes['value'] == null) {
+            countNoValue++;
+          }
 
-      child ??= singleChild(state: widget.state.copyWith(node: button));
+          child ??= singleChild(state: widget.state.copyWith(node: button));
 
-      attributesMapping[attributes['value']] = attributes;
+          attributesMapping[attributes['value']] = attributes;
 
-      return DropdownMenuItem<String>(
-          value: attributes['value'],
-          enabled: getBoolean(attributes['enabled']) ?? true,
-          alignment: getAlignmentDirectional(attributes['alignment']) ??
-              AlignmentDirectional.centerStart,
-          child: child);
-    }).toList();
+          return DropdownMenuItem<String>(
+            value: attributes['value'],
+            enabled: getBoolean(attributes['enabled']) ?? true,
+            alignment:
+                getAlignmentDirectional(attributes['alignment']) ??
+                AlignmentDirectional.centerStart,
+            child: child,
+          );
+        }).toList();
 
     if (countNoValue > 1) {
       throw Exception(
-          "They are $countNoValue items in <DropdownButton> without any value, flutter only allows one since its picked up as a default");
+        "They are $countNoValue items in <DropdownButton> without any value, flutter only allows one since its picked up as a default",
+      );
     }
 
-    Widget? hint =
-        textWidgetFromAttributeOrChild<LiveHintAttribute>(widget.state, 'hint');
+    Widget? hint = textWidgetFromAttributeOrChild<LiveHintAttribute>(
+      widget.state,
+      'hint',
+    );
     Widget? disabledHint =
         textWidgetFromAttributeOrChild<LiveDisabledHintAttribute>(
-            widget.state, 'disabledHint');
+          widget.state,
+          'disabledHint',
+        );
     Widget? underline = textWidgetFromAttributeOrChild<LiveUnderlineAttribute>(
-        widget.state, 'underline');
-    Widget? icon =
-        textWidgetFromAttributeOrChild<LiveIconAttribute>(widget.state, 'icon');
+      widget.state,
+      'underline',
+    );
+    Widget? icon = textWidgetFromAttributeOrChild<LiveIconAttribute>(
+      widget.state,
+      'icon',
+    );
 
     return DropdownButton(
-        items: buttons,
-        value: initialValue,
-        hint: hint,
-        disabledHint: disabledHint,
-        icon: icon,
-        iconDisabledColor: colorAttribute(context, 'iconDisabledColor'),
-        iconEnabledColor: colorAttribute(context, 'iconEnabledColor'),
-        iconSize: doubleAttribute('iconSize') ?? 24.0,
-        isDense: booleanAttribute('isDense') ?? false,
-        isExpanded: booleanAttribute('isExpanded') ?? false,
-        onTap: () => executeTapEventsManually(),
-        elevation: intAttribute('elevation') ?? 8,
-        style: textStyleAttribute('style', context),
-        itemHeight: doubleAttribute('itemHeight') ?? kMinInteractiveDimension,
-        focusNode: null, // TODO: FocusNode
-        focusColor: colorAttribute(context, 'focusColor'),
-        autofocus: booleanAttribute('autofocus') ?? false,
-        dropdownColor: colorAttribute(context, 'dropdownColor'),
-        menuMaxHeight: doubleAttribute('menuMaxHeight'),
-        enableFeedback: booleanAttribute('enableFeedback'),
-        borderRadius: null, // TODO: BorderRadius
-        padding: marginOrPaddingAttribute('padding'),
-        underline: underline,
-        onChanged: (value) {
-          setState(() => initialValue = value);
-          FormFieldEvent(
-            name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
-            data: value,
-            type: FormFieldEventType.change,
-          ).dispatch(context);
+      items: buttons,
+      value: initialValue,
+      hint: hint,
+      disabledHint: disabledHint,
+      icon: icon,
+      iconDisabledColor: colorAttribute(context, 'iconDisabledColor'),
+      iconEnabledColor: colorAttribute(context, 'iconEnabledColor'),
+      iconSize: doubleAttribute('iconSize') ?? 24.0,
+      isDense: booleanAttribute('isDense') ?? false,
+      isExpanded: booleanAttribute('isExpanded') ?? false,
+      onTap: () => executeTapEventsManually(),
+      elevation: intAttribute('elevation') ?? 8,
+      style: textStyleAttribute('style', context),
+      itemHeight: doubleAttribute('itemHeight') ?? kMinInteractiveDimension,
+      focusNode: null, // TODO: FocusNode
+      focusColor: colorAttribute(context, 'focusColor'),
+      autofocus: booleanAttribute('autofocus') ?? false,
+      dropdownColor: colorAttribute(context, 'dropdownColor'),
+      menuMaxHeight: doubleAttribute('menuMaxHeight'),
+      enableFeedback: booleanAttribute('enableFeedback'),
+      borderRadius: null, // TODO: BorderRadius
+      padding: marginOrPaddingAttribute('padding'),
+      underline: underline,
+      onChanged: (value) {
+        setState(() => initialValue = value);
+        FormFieldEvent(
+          name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
+          data: value,
+          type: FormFieldEventType.change,
+        ).dispatch(context);
 
-          // children
-          if (attributesMapping[value] != null) {
-            executeTapEventsManually(fromAttributes: attributesMapping[value]);
-          }
-        });
+        // children
+        if (attributesMapping[value] != null) {
+          executeTapEventsManually(fromAttributes: attributesMapping[value]);
+        }
+      },
+    );
   }
 }

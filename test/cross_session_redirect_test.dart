@@ -35,16 +35,21 @@ class CrossSessionFakeChannel extends FakePhoenixChannel {
   }
 
   @override
-  Push push(String eventName, Map<String, dynamic> payload,
-      [Duration? newTimeout]) {
+  Push push(
+    String eventName,
+    Map<String, dynamic> payload, [
+    Duration? newTimeout,
+  ]) {
     var push = super.push(eventName, payload, newTimeout);
     if (eventName == 'phx_leave') {
       // Simulate the server closing the channel after phx_leave.
       Future.microtask(() {
-        trigger(Message(
-          event: PhoenixChannelEvent.close,
-          payload: const <String, String>{},
-        ));
+        trigger(
+          Message(
+            event: PhoenixChannelEvent.close,
+            payload: const <String, String>{},
+          ),
+        );
       });
     }
     return push;
@@ -83,8 +88,9 @@ class CrossSessionFakeLiveSocket extends FakeLiveSocket {
 }
 
 void main() {
-  testWidgets('live-patch across live_sessions reconnects to target url',
-      (tester) async {
+  testWidgets('live-patch across live_sessions reconnects to target url', (
+    tester,
+  ) async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
 
@@ -94,7 +100,11 @@ void main() {
     final socket = CrossSessionFakeLiveSocket();
     final client = MockClient((request) async {
       socket.httpRequestsMade.add(request);
-      return http.Response(xmlCsrf, 200, headers: {'set-cookie': 'live_view=session'});
+      return http.Response(
+        xmlCsrf,
+        200,
+        headers: {'set-cookie': 'live_view=session'},
+      );
     });
 
     view.liveSocket = socket;
@@ -108,8 +118,8 @@ void main() {
         '<AppBar><title><Text>StartupKit</Text></title>'
             '<TextButton live-patch="/users/log_in"><Text>Sign in</Text></TextButton>'
             '</AppBar>'
-            '<viewBody><Center><Column><Text>Welcome</Text></Column></Center></viewBody>'
-      ]
+            '<viewBody><Center><Column><Text>Welcome</Text></Column></Center></viewBody>',
+      ],
     });
     await tester.pumpAndSettle();
 
@@ -122,18 +132,22 @@ void main() {
     // reconnected to the target URL via a fresh HTTP GET.
     final navigationLogs = socket.liveSocket?.navigationLogs ?? [];
     expect(
-      navigationLogs.any((log) => log['redirect']?.endsWith('/users/log_in') ?? false),
+      navigationLogs.any(
+        (log) => log['redirect']?.endsWith('/users/log_in') ?? false,
+      ),
       isTrue,
       reason: 'Expected a redirect join attempt to /users/log_in',
     );
 
-    final httpGets = socket.httpRequestsMade
-        .where((r) => r.method == 'GET' && r.url.path == '/users/log_in')
-        .toList();
+    final httpGets =
+        socket.httpRequestsMade
+            .where((r) => r.method == 'GET' && r.url.path == '/users/log_in')
+            .toList();
     expect(
       httpGets,
       isNotEmpty,
-      reason: 'Expected a dead-view GET to /users/log_in after cross-session redirect failed',
+      reason:
+          'Expected a dead-view GET to /users/log_in after cross-session redirect failed',
     );
   });
 }

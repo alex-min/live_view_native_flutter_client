@@ -27,13 +27,13 @@ class LiveViewFallbackPages {
     Widget Function(LiveView, Response)? compilationErrorBuilder,
     Widget Function(LiveView, FlutterErrorDetails)? noServerErrorBuilder,
     Widget Function(LiveView, FlutterErrorDetails)? flutterErrorBuilder,
-  })  : _debugMode = debugMode,
-        _connectingBuilder = connectingBuilder,
-        _loadingBuilder = loadingBuilder,
-        _notFoundErrorBuilder = notFoundErrorBuilder,
-        _noServerErrorBuilder = noServerErrorBuilder,
-        _compilationErrorBuilder = compilationErrorBuilder,
-        _flutterErrorBuilder = flutterErrorBuilder;
+  }) : _debugMode = debugMode,
+       _connectingBuilder = connectingBuilder,
+       _loadingBuilder = loadingBuilder,
+       _notFoundErrorBuilder = notFoundErrorBuilder,
+       _noServerErrorBuilder = noServerErrorBuilder,
+       _compilationErrorBuilder = compilationErrorBuilder,
+       _flutterErrorBuilder = flutterErrorBuilder;
 
   /// Returns the widget to be displayed when the page is loading
   Widget buildLoading(LiveView liveView, String url) {
@@ -41,16 +41,18 @@ class LiveViewFallbackPages {
       liveView,
       customBuilder: _loadingBuilder,
       param: url,
-      defaultBuilder: () => Builder(
-        builder: (context) => Container(
-          color: Theme.of(context).colorScheme.background,
-          child: Center(
-            child: CircularProgressIndicator(
-              value: liveView.disableAnimations == false ? null : 1,
-            ),
+      defaultBuilder:
+          () => Builder(
+            builder:
+                (context) => Container(
+                  color: Theme.of(context).colorScheme.background,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: liveView.disableAnimations == false ? null : 1,
+                    ),
+                  ),
+                ),
           ),
-        ),
-      ),
     );
   }
 
@@ -60,25 +62,24 @@ class LiveViewFallbackPages {
       liveView,
       customBuilder: _connectingBuilder,
       param: url,
-      defaultBuilder: () => Builder(
-        builder: (context) => Container(
-          color: Theme.of(context).colorScheme.background,
-          child: Center(
-            child: CircularProgressIndicator(
-              value: liveView.disableAnimations == false ? null : 1,
-            ),
+      defaultBuilder:
+          () => Builder(
+            builder:
+                (context) => Container(
+                  color: Theme.of(context).colorScheme.background,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: liveView.disableAnimations == false ? null : 1,
+                    ),
+                  ),
+                ),
           ),
-        ),
-      ),
     );
   }
 
   /// Returns the widget to be displayed in case of a compilation error
   /// due to an error in the Dart code during the xml compilation
-  Widget buildCompilationError(
-    LiveView liveView,
-    Response response,
-  ) {
+  Widget buildCompilationError(LiveView liveView, Response response) {
     return _wrapper(
       liveView,
       customBuilder: _compilationErrorBuilder,

@@ -31,22 +31,22 @@ class _ReloadWidgetState extends State<ReloadWidget>
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-        animation: controller,
-        builder: (_, __) {
-          return FractionallySizedBox(
-              widthFactor: controller.value,
-              child: Container(
-                  height: 5,
-                  decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment(0.8, 1),
-                          colors: [
-                        Colors.green,
-                        Colors.red,
-                        Colors.blue,
-                        Colors.purple
-                      ]))));
-        });
+      animation: controller,
+      builder: (_, __) {
+        return FractionallySizedBox(
+          widthFactor: controller.value,
+          child: Container(
+            height: 5,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment(0.8, 1),
+                colors: [Colors.green, Colors.red, Colors.blue, Colors.purple],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }

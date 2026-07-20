@@ -7,7 +7,8 @@ import '../test_helpers.dart';
 
 main() async {
   testGoldens(
-      'navigation rail looks okay', (tester) => tester.checkScreenshot("""
+    'navigation rail looks okay',
+    (tester) => tester.checkScreenshot("""
         <flutter>
           <NavigationRail labelType="all" selectedIndex="1" indicatorColor="blue-500" useIndicator="true">
             <NavigationRailDestination icon="home" label="Home" />
@@ -17,20 +18,24 @@ main() async {
           </NavigationRail>
           <viewBody>my view</viewBody>
         </flutter>
-        """, "navigation_rail_test.png"));
+        """, "navigation_rail_test.png"),
+  );
 
   testWidgets('phx-click works', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
         <NavigationRail labelType="all" phx-click="parent_event">
           <NavigationRailDestination icon="home" label="Home" />
           <NavigationRailDestination phx-click="child_event" icon="wallet" label="Wallets" />
           <NavigationRailDestination icon="apps" label="Photos" />
           <NavigationRailDestination icon="window" label="Albums" />
-        </NavigationRail>"""
-      ]
-    });
+        </NavigationRail>""",
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -52,20 +57,23 @@ main() async {
   });
 
   testWidgets('initialValue cannot be changed', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
         <NavigationRail labelType="all" phx-click="parent_event"
         """,
-        """ >
+          """ >
           <NavigationRailDestination icon="home" label="Home" />
           <NavigationRailDestination phx-click="child_event" icon="wallet" label="Wallets" />
           <NavigationRailDestination icon="apps" label="Photos" />
           <NavigationRailDestination icon="window" label="Albums" />
         </NavigationRail>""",
-      ],
-      '0': 'initialValue="1"'
-    });
+        ],
+        '0': 'initialValue="1"',
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

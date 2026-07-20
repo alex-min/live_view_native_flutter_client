@@ -10,8 +10,11 @@ class FormFieldEvent extends Notification {
   final dynamic data;
   final FormFieldEventType type;
 
-  const FormFieldEvent(
-      {required this.name, required this.data, required this.type});
+  const FormFieldEvent({
+    required this.name,
+    required this.data,
+    required this.type,
+  });
 
   @override
   String toString() => "FormFieldEvent(type=$type,name=$name,data=$data)";
@@ -47,7 +50,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
       'phx-submit',
       'method',
       'action',
-      'phx-trigger-action'
+      'phx-trigger-action',
     ]);
     _maybeTriggerAction();
   }
@@ -67,12 +70,17 @@ class _LiveFormState extends StateWidget<LiveForm> {
     var triggerAction = getAttribute('phx-trigger-action') ?? 'false';
     var action = getAttribute('action') ?? '';
     var last = widget.state.liveView.getFormTriggerAction(
-        widget.state.urlPath, action);
+      widget.state.urlPath,
+      action,
+    );
     if (triggerAction == last) {
       return;
     }
     widget.state.liveView.setFormTriggerAction(
-        widget.state.urlPath, action, triggerAction);
+      widget.state.urlPath,
+      action,
+      triggerAction,
+    );
     if (triggerAction == 'false') {
       return;
     }
@@ -90,36 +98,42 @@ class _LiveFormState extends StateWidget<LiveForm> {
       nonNullValues['_target'] = target;
     }
 
-    liveView.sendEvent(ExecLiveEvent(
+    liveView.sendEvent(
+      ExecLiveEvent(
         type: 'form',
         name: getAttribute(eventKind)!,
-        value: qs.Encoder().convert(nonNullValues)));
+        value: qs.Encoder().convert(nonNullValues),
+      ),
+    );
   }
 
   @override
   Widget render(BuildContext context) {
     return Form(
-        key: _formKey,
-        child: NotificationListener<FormFieldEvent>(
-          onNotification: (event) {
-            if (event.type == FormFieldEventType.change ||
-                event.type == FormFieldEventType.initField) {
-              formValues[event.name] = event.data;
-            }
+      key: _formKey,
+      child: NotificationListener<FormFieldEvent>(
+        onNotification: (event) {
+          if (event.type == FormFieldEventType.change ||
+              event.type == FormFieldEventType.initField) {
+            formValues[event.name] = event.data;
+          }
 
-            if (event.type == FormFieldEventType.change) {
-              sendFormEvent('phx-change', target: event.name);
-            } else if (event.type == FormFieldEventType.submit) {
-              if (getAttribute('phx-submit') != null) {
-                sendFormEvent('phx-submit', target: event.name);
-              } else if (getAttribute('method')?.toUpperCase() == 'POST') {
-                widget.state.liveView.postForm(formValues,
-                    url: getAttribute('action'));
-              }
+          if (event.type == FormFieldEventType.change) {
+            sendFormEvent('phx-change', target: event.name);
+          } else if (event.type == FormFieldEventType.submit) {
+            if (getAttribute('phx-submit') != null) {
+              sendFormEvent('phx-submit', target: event.name);
+            } else if (getAttribute('method')?.toUpperCase() == 'POST') {
+              widget.state.liveView.postForm(
+                formValues,
+                url: getAttribute('action'),
+              );
             }
-            return true;
-          },
-          child: singleChild(),
-        ));
+          }
+          return true;
+        },
+        child: singleChild(),
+      ),
+    );
   }
 }

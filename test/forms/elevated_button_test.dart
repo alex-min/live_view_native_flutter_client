@@ -14,17 +14,20 @@ main() async {
   });
 
   testWidgets('phx click works', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <Row>
             <Container padding="20">
               <ElevatedButton phx-click="my_event" phx-value-count="50">hello</ElevatedButton>
             </Container>
           </Row>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -39,17 +42,20 @@ main() async {
 
   testWidgets('type=submit for forms', (tester) async {
     await loadAppFonts();
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
             <Form phx-submit="submit_event" phx-change="change_event">
               <TextField initialValue="hello" name="my_field" />
               <ElevatedButton>does nothing</ElevatedButton>
               <ElevatedButton type="submit" name="submit">submit</ElevatedButton>
             </Form>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -67,8 +73,8 @@ main() async {
       const EventSent('event', {
         'type': 'form',
         'event': 'submit_event',
-        'value': 'my_field=hello&_target=submit'
-      })
+        'value': 'my_field=hello&_target=submit',
+      }),
     ]);
   });
 }

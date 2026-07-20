@@ -10,8 +10,9 @@ String replaceVariables(String content, Map<String, dynamic> variables) {
     var value = variables[match.group(1)];
 
     if (value is Map && value.containsKey('s')) {
-      return List<String>.from(value['s'])
-          .joinWith((i) => value[i.toString()].toString());
+      return List<String>.from(
+        value['s'],
+      ).joinWith((i) => value[i.toString()].toString());
     }
 
     return value?.toString() ?? '';
@@ -67,7 +68,7 @@ List<ElementKey> extractDynamicKeys(String input) {
 
   return (
     attr.replaceAll("[[flutterState key=${elementKey.key}]]", content),
-    elementKey
+    elementKey,
   );
 }
 

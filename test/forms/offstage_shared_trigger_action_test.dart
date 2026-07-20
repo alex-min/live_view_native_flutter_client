@@ -13,12 +13,14 @@ var _redirectResponse = http.Response(
 );
 
 main() async {
-  testWidgets(
-      'offstage form does not post when a diff targets the current page',
-      (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        '''
+  testWidgets('offstage form does not post when a diff targets the current page', (
+    tester,
+  ) async {
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '''
           <flutter>
             <csrf-token value="csrf"></csrf-token>
             <viewBody>
@@ -27,15 +29,17 @@ main() async {
               </Form>
             </viewBody>
           </flutter>
-        '''
-      ],
-      '0': 'false'
-    }, onRequest: (request) {
-      if (request.method == 'POST') {
-        return _redirectResponse;
-      }
-      return null;
-    });
+        ''',
+        ],
+        '0': 'false',
+      },
+      onRequest: (request) {
+        if (request.method == 'POST') {
+          return _redirectResponse;
+        }
+        return null;
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -55,9 +59,9 @@ main() async {
               <Text>register form</Text>
             </Form>
           </viewBody>
-        </flutter></div>'''
+        </flutter></div>''',
       ],
-      '0': 'false'
+      '0': 'false',
     }, viewType: ViewType.deadView);
     await tester.pumpAndSettle();
 

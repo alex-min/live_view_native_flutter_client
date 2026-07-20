@@ -6,7 +6,7 @@ import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 class RootAppBar extends StatefulWidget implements PreferredSizeWidget {
   final LiveView view;
   const RootAppBar({super.key, required this.view})
-      : preferredSize = const Size.fromHeight(kToolbarHeight);
+    : preferredSize = const Size.fromHeight(kToolbarHeight);
 
   @override
   final Size preferredSize;

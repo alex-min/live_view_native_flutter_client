@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/mapping/input_decoration.dart';
 
 void main() {
-  testWidgets('parse filled input with border radius and content padding',
-      (tester) async {
+  testWidgets('parse filled input with border radius and content padding', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
@@ -19,12 +20,10 @@ void main() {
             (decoration.border as OutlineInputBorder).borderRadius,
             BorderRadius.circular(12),
           );
-          expect(decoration.contentPadding, const EdgeInsets.only(
-            top: 12,
-            bottom: 12,
-            left: 14,
-            right: 14,
-          ));
+          expect(
+            decoration.contentPadding,
+            const EdgeInsets.only(top: 12, bottom: 12, left: 14, right: 14),
+          );
           return const SizedBox.shrink();
         },
       ),
@@ -35,10 +34,7 @@ void main() {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
-          var decoration = getInputDecoration(
-            context,
-            'border: none',
-          );
+          var decoration = getInputDecoration(context, 'border: none');
           expect(decoration.border, InputBorder.none);
           return const SizedBox.shrink();
         },

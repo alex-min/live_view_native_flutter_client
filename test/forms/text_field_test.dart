@@ -11,10 +11,13 @@ String? fieldValue() =>
 
 main() async {
   testWidgets('initial value cannot change from the server', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': ['<TextField ', '/>'],
-      '0': 'initialValue="initialValue"'
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<TextField ', '/>'],
+        '0': 'initialValue="initialValue"',
+      },
+    );
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
@@ -36,7 +39,7 @@ main() async {
           <Form phx-change="my_validate_event">
             <TextField name="myfield" />
           </Form>
-        """
+        """,
       ],
     });
     await tester.pumpAndSettle();
@@ -44,8 +47,11 @@ main() async {
     await tester.enterText(find.byType(TextField), 'typing');
 
     expect(
-        server.lastChannelAction,
-        liveEvents.phxFormValidate(
-            'my_validate_event', 'myfield=typing&_target=myfield'));
+      server.lastChannelAction,
+      liveEvents.phxFormValidate(
+        'my_validate_event',
+        'myfield=typing&_target=myfield',
+      ),
+    );
   });
 }

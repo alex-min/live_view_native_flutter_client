@@ -14,8 +14,11 @@ import 'package:phoenix_socket/phoenix_socket.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 http.Response jsonHttpResponse(dynamic data) {
-  return http.Response(jsonEncode(data), 200,
-      headers: {'content-type': 'application/json'});
+  return http.Response(
+    jsonEncode(data),
+    200,
+    headers: {'content-type': 'application/json'},
+  );
 }
 
 http.Response textFlutterHttpResponse(String data) {
@@ -45,8 +48,9 @@ extension FindText on CommonFinders {
 
   T firstOf<T>() => byType(T).evaluate().first.widget as T;
   List<String> allTexts() =>
-      (byType(Text).evaluate().map((e) => (e.widget as Text).data ?? ''))
-          .toList();
+      (byType(
+        Text,
+      ).evaluate().map((e) => (e.widget as Text).data ?? '')).toList();
 }
 
 extension ValueText on FormBuilderTextField {
@@ -69,9 +73,12 @@ extension RunLiveView on WidgetTester {
 
   Future<void> checkScreenshot(String content, String filename) async {
     await loadAppFonts();
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [content],
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [content],
+      },
+    );
 
     await runLiveView(view);
     await pumpAndSettle();
@@ -121,7 +128,7 @@ class FakePhoenixChannel extends PhoenixChannel {
   PhoenixChannelState currentState = PhoenixChannelState.closed;
 
   FakePhoenixChannel(this.socket, this.topic, this.params)
-      : super.fromSocket(socket, topic: topic, parameters: params);
+    : super.fromSocket(socket, topic: topic, parameters: params);
 
   @override
   PhoenixChannelState get state => currentState;
@@ -142,8 +149,11 @@ class FakePhoenixChannel extends PhoenixChannel {
   }
 
   @override
-  Push push(String eventName, Map<String, dynamic> payload,
-      [Duration? newTimeout]) {
+  Push push(
+    String eventName,
+    Map<String, dynamic> payload, [
+    Duration? newTimeout,
+  ]) {
     if (eventName == 'phx_leave') {
       currentState = PhoenixChannelState.closed;
     }
@@ -177,10 +187,11 @@ class FakePhoenixSocket extends PhoenixSocket {
   bool get isConnected => _isConnected;
 
   @override
-  PhoenixChannel addChannel(
-      {required String topic,
-      Map<String, dynamic>? parameters,
-      Duration? timeout}) {
+  PhoenixChannel addChannel({
+    required String topic,
+    Map<String, dynamic>? parameters,
+    Duration? timeout,
+  }) {
     actions.add(EventSent('addChannel', parameters));
     var channel = FakePhoenixChannel(this, topic, parameters);
     channelsAdded.add(channel);
@@ -193,10 +204,14 @@ class FakePhoenixSocket extends PhoenixSocket {
   List<EventSent> get addChannelEvents =>
       actions.where((a) => a.eventName == 'addChannel').toList();
 
-  List<Map<String, String?>> get navigationLogs => addChannelEvents
-      .map((e) => Map<String, String?>.from(
-          e.payload?.takeKeys(['url', 'redirect']) ?? {}))
-      .toList();
+  List<Map<String, String?>> get navigationLogs =>
+      addChannelEvents
+          .map(
+            (e) => Map<String, String?>.from(
+              e.payload?.takeKeys(['url', 'redirect']) ?? {},
+            ),
+          )
+          .toList();
 }
 
 class FakeLiveSocket extends LiveSocket {
@@ -228,11 +243,13 @@ class FakeLiveSocket extends LiveSocket {
   EventSent? get lastChannelAction => lastChannelActions?.last;
 }
 
-Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
-    {Map<String, dynamic>? rendered,
-    http.Response? Function(http.Request)? onRequest,
-    ViewType viewType = ViewType.liveView,
-    Map<String, Object> sharedPreferences = const {}}) async {
+Future<(LiveView, FakeLiveSocket)> connect(
+  LiveView view, {
+  Map<String, dynamic>? rendered,
+  http.Response? Function(http.Request)? onRequest,
+  ViewType viewType = ViewType.liveView,
+  Map<String, Object> sharedPreferences = const {},
+}) async {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues(sharedPreferences);
 
@@ -245,8 +262,11 @@ Future<(LiveView, FakeLiveSocket)> connect(LiveView view,
         return response;
       }
     }
-    return http.Response(xmlCsrf, 200,
-        headers: {'set-cookie': 'live_view=session'});
+    return http.Response(
+      xmlCsrf,
+      200,
+      headers: {'set-cookie': 'live_view=session'},
+    );
   });
 
   view.liveSocket = socket;
@@ -262,8 +282,11 @@ class BaseEvents {
   final join = const EventSent('join', null);
   final phxLeave = const EventSent('phx_leave', {});
   EventSent phxClick(dynamic value, {String eventName = 'click_event'}) =>
-      EventSent(
-          'event', {'type': 'phx-click', 'event': eventName, 'value': value});
+      EventSent('event', {
+        'type': 'phx-click',
+        'event': eventName,
+        'value': value,
+      });
   EventSent phxFormValidate(String name, String value) =>
       EventSent('event', {'type': 'form', 'event': name, 'value': value});
   EventSent event(String event) =>
@@ -281,10 +304,13 @@ class BaseActions {
   String switchTheme(String mode, {String theme = 'default'}) =>
       FlutterExec.encode([
         FlutterExecAction(
-            name: 'switchTheme', value: {'mode': mode, 'theme': theme})
+          name: 'switchTheme',
+          value: {'mode': mode, 'theme': theme},
+        ),
       ]);
-  String showBottomSheet =
-      FlutterExec.encode([FlutterExecAction(name: 'showBottomSheet')]);
+  String showBottomSheet = FlutterExec.encode([
+    FlutterExecAction(name: 'showBottomSheet'),
+  ]);
 }
 
 var liveEvents = const BaseEvents();

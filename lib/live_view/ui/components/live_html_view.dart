@@ -30,13 +30,13 @@ class _LiveHtmlViewState extends StateWidget<LiveHtmlView> {
 
   @override
   Widget render(BuildContext context) {
-    var html = widget.state.node.innerText == ''
-        ? widget.state.node.value ?? ''
-        : widget.state.node.innerText;
+    var html =
+        widget.state.node.innerText == ''
+            ? widget.state.node.value ?? ''
+            : widget.state.node.innerText;
 
-    html = HtmlUnescape()
-        .convert(replaceVariables(html, currentVariables))
-        .trim();
+    html =
+        HtmlUnescape().convert(replaceVariables(html, currentVariables)).trim();
 
     if (html.isEmpty) {
       return const SizedBox.shrink();

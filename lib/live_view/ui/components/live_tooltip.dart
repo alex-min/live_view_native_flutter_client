@@ -23,7 +23,7 @@ class _LiveTooltipState extends StateWidget<LiveTooltip> {
     'waitDuration',
     'showDuration',
     'triggerMode',
-    'enableFeedback'
+    'enableFeedback',
   ];
 
   @override

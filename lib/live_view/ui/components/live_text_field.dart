@@ -48,7 +48,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
     'scribbleEnabled',
     'enableIMEPersonalizedLearning',
     'canRequestFocus',
-    'selectionHeightStyle'
+    'selectionHeightStyle',
   ];
   @override
   handleClickState() => HandleClickState.manual;
@@ -95,12 +95,10 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
     if (serverErrors == null) {
       return;
     }
-    errors = serverErrors
-        .map((e) => FormError(
-              message: e['message'],
-              options: e['options'],
-            ))
-        .toList();
+    errors =
+        serverErrors
+            .map((e) => FormError(message: e['message'], options: e['options']))
+            .toList();
   }
 
   @override
@@ -111,58 +109,63 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
     icon ??= iconWidgetFromAttribute('icon');
 
     return TextFormField(
-        selectionHeightStyle: boxHeightStyleAttribute('selectionHeightStyle') ??
-            BoxHeightStyle.tight,
-        obscuringCharacter: getAttribute('obscuringCharacter') ?? '•',
-        showCursor: booleanAttribute('showCursor'),
-        enableSuggestions: booleanAttribute('enableSuggestions') ?? true,
-        autocorrect: booleanAttribute('autocorrect') ?? false,
-        expands: booleanAttribute('expands') ?? false,
-        readOnly: booleanAttribute('readOnly') ?? false,
-        keyboardType: textInputTypeAttribute('keyboardType'),
-        maxLength: intAttribute('maxLength'),
-        minLines: intAttribute('minLines'),
-        maxLines: getAttribute('maxLines') == 'unlimited'
-            ? null
-            : intAttribute('maxLines') ?? 1,
-        autovalidateMode: AutovalidateMode.disabled,
-        validator: (_) {
-          var message = errors.map((e) => e.message).join('\n');
-          return message == '' ? null : message;
-        },
-        key: key,
-        obscureText: booleanAttribute('obscureText') ?? false,
-        decoration: getInputDecoration(
-          context,
-          getAttribute('decoration'),
-          icon: icon,
-          labelText: getAttribute('label'),
-          hintText: getAttribute('hintText'),
-        ),
-        onTapOutside: (_) => executeOnTapOutsideEventsManually(),
-        onTap: () => executeTapEventsManually(),
-        onChanged: (value) {
-          FormFieldEvent(
-            name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
-            data: value,
-            type: FormFieldEventType.change,
-          ).dispatch(context);
-        },
-        initialValue: getAttribute('initialValue'),
-        textAlign: textAlignAttribute('textAlign') ?? TextAlign.start,
-        enabled: booleanAttribute('enabled'),
-        cursorWidth: doubleAttribute('cursorWidth') ?? 2.0,
-        cursorHeight: doubleAttribute('cursorHeight'),
-        cursorRadius: null, // TODO: Radius
-        cursorColor: colorAttribute(context, 'cursorColor'),
-        cursorOpacityAnimates: booleanAttribute('cursorOpacityAnimates'),
-        scrollPadding: marginOrPaddingAttribute('scrollPadding') ??
-            const EdgeInsets.all(20.0),
-        enableInteractiveSelection:
-            booleanAttribute('enableInteractiveSelection'),
-        scribbleEnabled: booleanAttribute('scribbleEnabled') ?? true,
-        enableIMEPersonalizedLearning:
-            booleanAttribute('enableIMEPersonalizedLearning') ?? true,
-        canRequestFocus: booleanAttribute('canRequestFocus') ?? true);
+      selectionHeightStyle:
+          boxHeightStyleAttribute('selectionHeightStyle') ??
+          BoxHeightStyle.tight,
+      obscuringCharacter: getAttribute('obscuringCharacter') ?? '•',
+      showCursor: booleanAttribute('showCursor'),
+      enableSuggestions: booleanAttribute('enableSuggestions') ?? true,
+      autocorrect: booleanAttribute('autocorrect') ?? false,
+      expands: booleanAttribute('expands') ?? false,
+      readOnly: booleanAttribute('readOnly') ?? false,
+      keyboardType: textInputTypeAttribute('keyboardType'),
+      maxLength: intAttribute('maxLength'),
+      minLines: intAttribute('minLines'),
+      maxLines:
+          getAttribute('maxLines') == 'unlimited'
+              ? null
+              : intAttribute('maxLines') ?? 1,
+      autovalidateMode: AutovalidateMode.disabled,
+      validator: (_) {
+        var message = errors.map((e) => e.message).join('\n');
+        return message == '' ? null : message;
+      },
+      key: key,
+      obscureText: booleanAttribute('obscureText') ?? false,
+      decoration: getInputDecoration(
+        context,
+        getAttribute('decoration'),
+        icon: icon,
+        labelText: getAttribute('label'),
+        hintText: getAttribute('hintText'),
+      ),
+      onTapOutside: (_) => executeOnTapOutsideEventsManually(),
+      onTap: () => executeTapEventsManually(),
+      onChanged: (value) {
+        FormFieldEvent(
+          name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
+          data: value,
+          type: FormFieldEventType.change,
+        ).dispatch(context);
+      },
+      initialValue: getAttribute('initialValue'),
+      textAlign: textAlignAttribute('textAlign') ?? TextAlign.start,
+      enabled: booleanAttribute('enabled'),
+      cursorWidth: doubleAttribute('cursorWidth') ?? 2.0,
+      cursorHeight: doubleAttribute('cursorHeight'),
+      cursorRadius: null, // TODO: Radius
+      cursorColor: colorAttribute(context, 'cursorColor'),
+      cursorOpacityAnimates: booleanAttribute('cursorOpacityAnimates'),
+      scrollPadding:
+          marginOrPaddingAttribute('scrollPadding') ??
+          const EdgeInsets.all(20.0),
+      enableInteractiveSelection: booleanAttribute(
+        'enableInteractiveSelection',
+      ),
+      scribbleEnabled: booleanAttribute('scribbleEnabled') ?? true,
+      enableIMEPersonalizedLearning:
+          booleanAttribute('enableIMEPersonalizedLearning') ?? true,
+      canRequestFocus: booleanAttribute('canRequestFocus') ?? true,
+    );
   }
 }

@@ -12,9 +12,11 @@ import '../test_helpers.dart';
 
 void main() async {
   testWidgets('login form renders labels, padding and actions', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <viewBody>
               <Stack>
@@ -89,9 +91,10 @@ void main() async {
               </Center>
             </BottomAppBar>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

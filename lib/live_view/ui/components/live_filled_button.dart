@@ -18,9 +18,10 @@ class _LiveFilledButtonState extends StateWidget<LiveFilledButton> {
   @override
   Widget render(BuildContext context) {
     return FilledButton(
-        onPressed: () {
-          executeTapEventsManually();
-        },
-        child: singleChild());
+      onPressed: () {
+        executeTapEventsManually();
+      },
+      child: singleChild(),
+    );
   }
 }

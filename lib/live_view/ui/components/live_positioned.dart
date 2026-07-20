@@ -11,8 +11,14 @@ class LivePositioned extends LiveStateWidget<LivePositioned> {
 class _LivePositionedState extends StateWidget<LivePositioned> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(
-        node, ['left', 'top', 'right', 'bottom', 'width', 'height']);
+    reloadAttributes(node, [
+      'left',
+      'top',
+      'right',
+      'bottom',
+      'width',
+      'height',
+    ]);
   }
 
   @override

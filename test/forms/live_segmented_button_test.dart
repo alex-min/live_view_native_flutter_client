@@ -31,9 +31,11 @@ main() async {
   });
 
   testWidgets('inside a form', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <Form phx-change="changed">
             <SegmentedButton initialValue="1" name="button-group" emptySelectionAllowed="true">
               <ButtonSegment name="1" label="first option" icon="home" />
@@ -41,9 +43,10 @@ main() async {
               <ButtonSegment name="3" label="third option" icon="home" />
             </SegmentedButton>
           </Form>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -52,12 +55,13 @@ main() async {
     await tester.pumpAndSettle();
 
     expect(
-        server.lastChannelAction,
-        const EventSent('event', {
-          'type': 'form',
-          'event': 'changed',
-          'value': 'button-group=2&_target=button-group',
-        }));
+      server.lastChannelAction,
+      const EventSent('event', {
+        'type': 'form',
+        'event': 'changed',
+        'value': 'button-group=2&_target=button-group',
+      }),
+    );
 
     expect(find.firstOf<SegmentedButton<String>>().selected, {'2'});
 
@@ -65,30 +69,34 @@ main() async {
     await tester.pumpAndSettle();
 
     expect(
-        server.lastChannelAction,
-        const EventSent('event', {
-          'type': 'form',
-          'event': 'changed',
-          'value': '_target=button-group',
-        }));
+      server.lastChannelAction,
+      const EventSent('event', {
+        'type': 'form',
+        'event': 'changed',
+        'value': '_target=button-group',
+      }),
+    );
 
     expect(find.firstOf<SegmentedButton<String>>().selected, <String>{});
   });
 
   testWidgets('initial value cannot be reset', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <SegmentedButton """,
-        """ name="button-group">
+          """ name="button-group">
             <ButtonSegment name="1" label="first option" icon="home" />
             <ButtonSegment name="2" label="second option" icon="home" />
             <ButtonSegment name="3" label="third option" icon="home" />
           </SegmentedButton>
-        """
-      ],
-      '0': 'initialValue="1"'
-    });
+        """,
+        ],
+        '0': 'initialValue="1"',
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -101,9 +109,11 @@ main() async {
   });
 
   testWidgets('with multiple selection', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <Row>
             <Form phx-change="changed">
               <SegmentedButton initialValue="1" name="button-group" multiSelectionEnabled="true">
@@ -113,9 +123,10 @@ main() async {
               </SegmentedButton>
             </Form>
           </Row>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -130,19 +141,22 @@ main() async {
     expect(find.firstOf<SegmentedButton<String>>().selected, {'1', '2', '3'});
 
     expect(
-        server.lastChannelAction,
-        const EventSent('event', {
-          'type': 'form',
-          'event': 'changed',
-          'value':
-              'button-group%5B0%5D=1&button-group%5B1%5D=2&button-group%5B2%5D=3&_target=button-group',
-        }));
+      server.lastChannelAction,
+      const EventSent('event', {
+        'type': 'form',
+        'event': 'changed',
+        'value':
+            'button-group%5B0%5D=1&button-group%5B1%5D=2&button-group%5B2%5D=3&_target=button-group',
+      }),
+    );
   });
 
   testWidgets('phx click on the child and the parent', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <Row>
             <Form>
               <SegmentedButton phx-click="parent_event" name="button-group" emptySelectionAllowed="true">
@@ -152,9 +166,10 @@ main() async {
               </SegmentedButton>
             </Form>
           </Row>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

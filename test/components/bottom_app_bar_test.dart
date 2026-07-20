@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('looks okay', (tester) => tester.checkScreenshot("""
+  testWidgets(
+    'looks okay',
+    (tester) => tester.checkScreenshot("""
           <flutter>
             <viewBody floatingActionButtonLocation="centerDocked">
               <Container>hello</Container>
@@ -22,5 +24,6 @@ main() async {
               </BottomNavigationBar>
             </BottomAppBar>
           </flutter>
-        """, 'bottom_app_bar_test.png'));
+        """, 'bottom_app_bar_test.png'),
+  );
 }

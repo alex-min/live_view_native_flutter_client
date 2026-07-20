@@ -20,10 +20,17 @@ void main() {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
-          var decoration = getDecoration(context, 'gradient: { linear #5353E5 #D94FC3 }');
+          var decoration = getDecoration(
+            context,
+            'gradient: { linear #5353E5 #D94FC3 }',
+          );
           expect(decoration, isA<BoxDecoration>());
-          var gradient = (decoration as BoxDecoration).gradient as LinearGradient;
-          expect(gradient.colors, [const Color(0xFF5353E5), const Color(0xFFD94FC3)]);
+          var gradient =
+              (decoration as BoxDecoration).gradient as LinearGradient;
+          expect(gradient.colors, [
+            const Color(0xFF5353E5),
+            const Color(0xFFD94FC3),
+          ]);
           expect(gradient.stops, [0.0, 1.0]);
           return const SizedBox.shrink();
         },
@@ -35,10 +42,13 @@ void main() {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
-          var decoration =
-              getDecoration(context, 'gradient: { radial #5353E5 0.0 #D94FC3 0.75 #232840 1.0 }');
+          var decoration = getDecoration(
+            context,
+            'gradient: { radial #5353E5 0.0 #D94FC3 0.75 #232840 1.0 }',
+          );
           expect(decoration, isA<BoxDecoration>());
-          var gradient = (decoration as BoxDecoration).gradient as RadialGradient;
+          var gradient =
+              (decoration as BoxDecoration).gradient as RadialGradient;
           expect(gradient.colors, [
             const Color(0xFF5353E5),
             const Color(0xFFD94FC3),
@@ -55,17 +65,17 @@ void main() {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
-          var decoration =
-              getDecoration(context, 'gradient: { radial @theme.colorScheme.primary @theme.colorScheme.secondary }');
-          expect(decoration, isA<BoxDecoration>());
-          var gradient = (decoration as BoxDecoration).gradient as RadialGradient;
-          expect(
-            gradient.colors,
-            [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.secondary,
-            ],
+          var decoration = getDecoration(
+            context,
+            'gradient: { radial @theme.colorScheme.primary @theme.colorScheme.secondary }',
           );
+          expect(decoration, isA<BoxDecoration>());
+          var gradient =
+              (decoration as BoxDecoration).gradient as RadialGradient;
+          expect(gradient.colors, [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.secondary,
+          ]);
           return const SizedBox.shrink();
         },
       ),
@@ -76,8 +86,10 @@ void main() {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
-          var decoration =
-              getDecoration(context, 'boxShadow: { 0 24 60 -24 #8C000000 }');
+          var decoration = getDecoration(
+            context,
+            'boxShadow: { 0 24 60 -24 #8C000000 }',
+          );
           expect(decoration, isA<BoxDecoration>());
           var shadows = (decoration as BoxDecoration).boxShadow;
           expect(shadows, isNotNull);
@@ -96,12 +108,17 @@ void main() {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
-          var decoration =
-              getDecoration(context, 'border: { 1 #404868 }; borderRadius: 12');
+          var decoration = getDecoration(
+            context,
+            'border: { 1 #404868 }; borderRadius: 12',
+          );
           expect(decoration, isA<BoxDecoration>());
           var boxDecoration = decoration as BoxDecoration;
           expect(boxDecoration.border, isA<Border>());
-          expect((boxDecoration.border as Border).bottom.color, const Color(0xFF404868));
+          expect(
+            (boxDecoration.border as Border).bottom.color,
+            const Color(0xFF404868),
+          );
           expect((boxDecoration.border as Border).bottom.width, 1);
           expect(boxDecoration.borderRadius, BorderRadius.circular(12));
           return const SizedBox.shrink();

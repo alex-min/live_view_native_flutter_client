@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('icon button test', (tester) => tester.checkScreenshot("""
+  testWidgets(
+    'icon button test',
+    (tester) => tester.checkScreenshot("""
           <flutter>
             <viewBody>
               <Container>
@@ -14,5 +16,6 @@ main() async {
               </Container>
             </viewBody>
           </flutter>
-        """, 'icon_button_test.png'));
+        """, 'icon_button_test.png'),
+  );
 }

@@ -85,8 +85,8 @@ mixin AttributeHelpers {
       getDragStartBehavior(getAttribute(attribute));
 
   ScrollViewKeyboardDismissBehavior? scrollViewKeyboardDismissBehaviorAttribute(
-          String attribute) =>
-      getScrollViewKeyboardDismissBehavior(getAttribute(attribute));
+    String attribute,
+  ) => getScrollViewKeyboardDismissBehavior(getAttribute(attribute));
 
   Curve? curveAttribute(String attribute) => getCurve(getAttribute(attribute));
 
@@ -112,12 +112,12 @@ mixin AttributeHelpers {
       getOverflowBarAlignment(getAttribute(attribute));
 
   OptionsViewOpenDirection? optionsViewOpenDirectionAttribute(
-          String attribute) =>
-      getOptionsViewOpenDirection(getAttribute(attribute));
+    String attribute,
+  ) => getOptionsViewOpenDirection(getAttribute(attribute));
 
   FloatingActionButtonLocation? floatingActionButtonLocationAttributes(
-          String attribute) =>
-      getFloatingActionButtonLocation(getAttribute(attribute));
+    String attribute,
+  ) => getFloatingActionButtonLocation(getAttribute(attribute));
 
   NotchedShape? notchedShapeAttribute(String attribute) =>
       getNotchedShape(getAttribute(attribute));

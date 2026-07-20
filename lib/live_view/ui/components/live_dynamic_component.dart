@@ -73,12 +73,14 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
 
     newState.add(elementKey.key);
 
-    return body(widget.state.parser
-        .parseHtml(
-          List<String>.from(diffEntry['s'] ?? []),
-          Map<String, dynamic>.from(diffEntry),
-          newState,
-        )
-        .$1);
+    return body(
+      widget.state.parser
+          .parseHtml(
+            List<String>.from(diffEntry['s'] ?? []),
+            Map<String, dynamic>.from(diffEntry),
+            newState,
+          )
+          .$1,
+    );
   }
 }

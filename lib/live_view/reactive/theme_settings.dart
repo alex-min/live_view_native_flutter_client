@@ -38,8 +38,9 @@ class ThemeSettings extends ChangeNotifier {
   Future<void> loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _themeName = prefs.getString('themeName') ?? 'default';
-    _themeMode =
-        ThemeModeStringify.parse(prefs.getString('themeMode') ?? 'system');
+    _themeMode = ThemeModeStringify.parse(
+      prefs.getString('themeMode') ?? 'system',
+    );
     notifyListeners();
   }
 
@@ -100,14 +101,17 @@ class ThemeSettings extends ChangeNotifier {
     await loadCurrentTheme();
     try {
       await httpClient
-          .get(Uri.parse(
-              '$host/flutter/themes/$_themeName/${getDisplayedThemeMode().modeAsString()}.json'))
+          .get(
+            Uri.parse(
+              '$host/flutter/themes/$_themeName/${getDisplayedThemeMode().modeAsString()}.json',
+            ),
+          )
           .then((response) {
-        if (response.statusCode == 200) {
-          saveJsonCurrentTheme(response.body);
-          loadCurrentTheme();
-        }
-      });
+            if (response.statusCode == 200) {
+              saveJsonCurrentTheme(response.body);
+              loadCurrentTheme();
+            }
+          });
     } catch (e) {
       // We don't care if fetching the theme fails
     }

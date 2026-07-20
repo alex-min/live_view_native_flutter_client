@@ -21,7 +21,7 @@ class _LiveSingleChildScrollViewState
     'dragStartBehavior',
     'keyboardDismissBehavior',
     'restorationId',
-    'clipBehavior'
+    'clipBehavior',
   ];
 
   @override
@@ -35,10 +35,13 @@ class _LiveSingleChildScrollViewState
       reverse: booleanAttribute('reverse') ?? false,
       padding: marginOrPaddingAttribute('padding'),
       primary: booleanAttribute('primary'),
-      dragStartBehavior: dragStartBehaviorAttribute('dragStartBehavior') ??
+      dragStartBehavior:
+          dragStartBehaviorAttribute('dragStartBehavior') ??
           DragStartBehavior.start,
-      keyboardDismissBehavior: scrollViewKeyboardDismissBehaviorAttribute(
-              'keyboardDismissBehavior') ??
+      keyboardDismissBehavior:
+          scrollViewKeyboardDismissBehaviorAttribute(
+            'keyboardDismissBehavior',
+          ) ??
           ScrollViewKeyboardDismissBehavior.manual,
       restorationId: getAttribute('restorationId'),
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,

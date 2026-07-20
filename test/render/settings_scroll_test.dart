@@ -5,12 +5,15 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('scaffold body scrolls when implicit column overflows',
-      (tester) async {
+  testWidgets('scaffold body scrolls when implicit column overflows', (
+    tester,
+  ) async {
     tester.setScreenSize(const Size(1280, 720));
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <csrf-token value="token"></csrf-token>
             <div data-phx-session="session" data-phx-static="static">
@@ -25,9 +28,10 @@ main() async {
               </Scaffold>
             </div>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

@@ -6,14 +6,16 @@ import 'basic_plugin.dart';
 
 void main() {
   testWidgets('basic plugin', (tester) async {
-    var (view, _) =
-        await connect(LiveView()..installPlugins([BasicPlugin()]), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView()..installPlugins([BasicPlugin()]),
+      rendered: {
+        's': [
+          """
           <MyComponent phx-my-plugin="1"></MyComponent>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

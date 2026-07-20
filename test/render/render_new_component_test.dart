@@ -5,19 +5,19 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('handles a new component', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<ListView>', '</ListView>'],
-        '0': ''
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<ListView>', '</ListView>'],
+          '0': '',
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
     view.handleDiffMessage({
       '0': {
-        's': ['<Text>hello world</Text>']
-      }
+        's': ['<Text>hello world</Text>'],
+      },
     });
     await tester.pump();
 
@@ -25,11 +25,11 @@ main() async {
   });
 
   testWidgets('handles a new component with inside variables', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<ListView>', '</ListView>'],
-        '0': ''
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<ListView>', '</ListView>'],
+          '0': '',
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -37,16 +37,14 @@ main() async {
     view.handleDiffMessage({
       '0': {
         '0': 1,
-        's': ['<Text>the number is ', '</Text>']
-      }
+        's': ['<Text>the number is ', '</Text>'],
+      },
     });
     await tester.pump();
     expect(find.firstText(), 'the number is 1');
 
     view.handleDiffMessage({
-      '0': {
-        '0': 2,
-      }
+      '0': {'0': 2},
     });
     await tester.pump();
 
@@ -54,11 +52,11 @@ main() async {
   });
 
   testWidgets('handles a new component being removed', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<ListView>', '</ListView>'],
-        '0': ''
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<ListView>', '</ListView>'],
+          '0': '',
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -66,8 +64,8 @@ main() async {
     view.handleDiffMessage({
       '0': {
         '0': 1,
-        's': ['<Text>hello</Text>']
-      }
+        's': ['<Text>hello</Text>'],
+      },
     });
 
     await tester.pump();

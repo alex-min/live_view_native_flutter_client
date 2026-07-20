@@ -78,61 +78,69 @@ var tosPage = http.Response(
 
 void main() {
   testWidgets(
-      'stale websocket join after dead-view navigation does not reload in a loop',
-      (tester) async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    SharedPreferences.setMockInitialValues({});
+    'stale websocket join after dead-view navigation does not reload in a loop',
+    (tester) async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      SharedPreferences.setMockInitialValues({});
 
-    final view = LiveView();
-    view.catchExceptions = false;
+      final view = LiveView();
+      view.catchExceptions = false;
 
-    final socket = StaleFakeLiveSocket();
-    final client = MockClient((request) async {
-      socket.httpRequestsMade.add(request);
-      if (request.method == 'GET' && request.url.path == '/users/accept-tos') {
-        return tosPage;
-      }
-      return http.Response(xmlCsrf, 200,
-          headers: const {'set-cookie': 'live_view=session'});
-    });
+      final socket = StaleFakeLiveSocket();
+      final client = MockClient((request) async {
+        socket.httpRequestsMade.add(request);
+        if (request.method == 'GET' &&
+            request.url.path == '/users/accept-tos') {
+          return tosPage;
+        }
+        return http.Response(
+          xmlCsrf,
+          200,
+          headers: const {'set-cookie': 'live_view=session'},
+        );
+      });
 
-    view.liveSocket = socket;
-    view.httpClient = client;
+      view.liveSocket = socket;
+      view.httpClient = client;
 
-    await tester.runLiveView(view);
-    await view.connect('http://localhost:9999/');
+      await tester.runLiveView(view);
+      await view.connect('http://localhost:9999/');
 
-    // Simulate the post-sign-up state: the socket has been disconnected after
-    // the HTTP POST and the client now loads the TOS page via dead view.
-    await view.disconnect();
-    await view.execHrefClick('/users/accept-tos');
-    await tester.pumpAndSettle();
+      // Simulate the post-sign-up state: the socket has been disconnected after
+      // the HTTP POST and the client now loads the TOS page via dead view.
+      await view.disconnect();
+      await view.execHrefClick('/users/accept-tos');
+      await tester.pumpAndSettle();
 
-    expect(find.text('Terms of Service'), findsOneWidget);
+      expect(find.text('Terms of Service'), findsOneWidget);
 
-    // The TOS page should have been fetched exactly once. Before the fix the
-    // client would fall back to execHrefClick('/users/accept-tos') again after
-    // the stale join, causing an infinite loop of GETs.
-    final tosGets = socket.httpRequestsMade
-        .where((r) => r.method == 'GET' && r.url.path == '/users/accept-tos')
-        .toList();
-    expect(
-      tosGets,
-      hasLength(1),
-      reason: 'A stale join should not reload the same dead view in a loop',
-    );
+      // The TOS page should have been fetched exactly once. Before the fix the
+      // client would fall back to execHrefClick('/users/accept-tos') again after
+      // the stale join, causing an infinite loop of GETs.
+      final tosGets =
+          socket.httpRequestsMade
+              .where(
+                (r) => r.method == 'GET' && r.url.path == '/users/accept-tos',
+              )
+              .toList();
+      expect(
+        tosGets,
+        hasLength(1),
+        reason: 'A stale join should not reload the same dead view in a loop',
+      );
 
-    // A fresh dead-view navigation must join with _mounts: 0. Using a global
-    // counter here caused Phoenix to reject the join as stale and triggered
-    // the loop in the first place.
-    final tosChannel = socket.liveSocket?.channelsAdded.lastWhere(
-      (c) => c.topic.startsWith('lv:'),
-      orElse: () => throw StateError('No lv: channel found'),
-    );
-    expect(
-      tosChannel?.params?['params']?['_mounts'],
-      '0',
-      reason: 'A new LiveView join must start with _mounts: 0',
-    );
-  });
+      // A fresh dead-view navigation must join with _mounts: 0. Using a global
+      // counter here caused Phoenix to reject the join as stale and triggered
+      // the loop in the first place.
+      final tosChannel = socket.liveSocket?.channelsAdded.lastWhere(
+        (c) => c.topic.startsWith('lv:'),
+        orElse: () => throw StateError('No lv: channel found'),
+      );
+      expect(
+        tosChannel?.params?['params']?['_mounts'],
+        '0',
+        reason: 'A new LiveView join must start with _mounts: 0',
+      );
+    },
+  );
 }

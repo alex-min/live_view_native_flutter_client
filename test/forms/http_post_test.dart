@@ -7,33 +7,38 @@ import 'package:phoenix_socket/phoenix_socket.dart';
 import '../test_helpers.dart';
 
 var thanksPage = http.Response(
-    """<div id="phx-id" data-phx-session="session" data-phx-static="static" data-phx-main=""><flutter>
+  """<div id="phx-id" data-phx-session="session" data-phx-static="static" data-phx-main=""><flutter>
             <csrf-token value="csrf"></csrf-token>
             <viewBody>
               <Text>thanks for sign-in in</Text>
             </viewBody>
           </flutter></div>
         """,
-    200,
-    headers: {'set-cookie': 'live_view=session2'});
+  200,
+  headers: {'set-cookie': 'live_view=session2'},
+);
 
 main() async {
   testWidgets('supports http form posts', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <Form method="POST">
             <TextField name="user[email]" initialValue="contact@example.org" />
             <ElevatedButton type="submit">Sign-in</ElevatedButton>
           </Form>
-        """
-      ],
-    }, onRequest: (request) {
-      if (request.method == 'POST') {
-        return thanksPage;
-      }
-      return null;
-    });
+        """,
+        ],
+      },
+      onRequest: (request) {
+        if (request.method == 'POST') {
+          return thanksPage;
+        }
+        return null;
+      },
+    );
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
     await tester.tap(find.byType(LiveElevatedButton));
@@ -43,36 +48,47 @@ main() async {
 
     var formPost = server.httpRequestsMade.last;
     expect(formPost.headers['Cookie'], 'live_view=session');
-    expect(formPost.headers['content-type'],
-        'application/x-www-form-urlencoded; charset=utf-8');
+    expect(
+      formPost.headers['content-type'],
+      'application/x-www-form-urlencoded; charset=utf-8',
+    );
     expect(formPost.method, 'POST');
-    expect(formPost.body,
-        'user%5Bemail%5D=contact%40example.org&_csrf_token=csrf');
+    expect(
+      formPost.body,
+      'user%5Bemail%5D=contact%40example.org&_csrf_token=csrf',
+    );
     expect(formPost.url.toString(), 'http://localhost:9999/?_format=flutter');
     expect(view.cookie, 'live_view=session2');
   });
 
   testWidgets('supports form redirects', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <Form method="POST">
             <TextField name="user[email]" initialValue="contact@example.org" />
             <ElevatedButton type="submit">Sign-in</ElevatedButton>
           </Form>
-        """
-      ],
-    }, onRequest: (request) {
-      if (request.method == 'POST') {
-        return http.Response('', 301,
-            headers: {'location': '/private?display=all'});
-      }
+        """,
+        ],
+      },
+      onRequest: (request) {
+        if (request.method == 'POST') {
+          return http.Response(
+            '',
+            301,
+            headers: {'location': '/private?display=all'},
+          );
+        }
 
-      if (request.url.path == '/private') {
-        return thanksPage;
-      }
-      return null;
-    });
+        if (request.url.path == '/private') {
+          return thanksPage;
+        }
+        return null;
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -85,16 +101,19 @@ main() async {
   });
 
   testWidgets('does not dead-post when phx-submit is present', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <Form phx-submit="save" method="POST" action="/users/log_in?_action=registered">
             <TextField name="user[email]" initialValue="contact@example.org" />
             <ElevatedButton type="submit" name="submit_button">Create an account</ElevatedButton>
           </Form>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -103,8 +122,11 @@ main() async {
 
     expect(server.httpRequestsMade.where((r) => r.method == 'POST'), isEmpty);
     expect(
-        server.lastChannelAction,
-        liveEvents.phxFormValidate(
-            'save', 'user%5Bemail%5D=contact%40example.org&_target=submit_button'));
+      server.lastChannelAction,
+      liveEvents.phxFormValidate(
+        'save',
+        'user%5Bemail%5D=contact%40example.org&_target=submit_button',
+      ),
+    );
   });
 }

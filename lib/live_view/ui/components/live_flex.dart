@@ -14,34 +14,34 @@ class LiveFlex extends LiveStateWidget<LiveFlex> {
 class _LiveColState extends StateWidget<LiveFlex> {
   @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
-        'mainAxisAlignment',
-        'crossAxisAlignment',
-        'textDirection',
-        'mainAxisSize',
-        'verticalDirection',
-        'textBaseline',
-        'direction',
-      ]);
+    'mainAxisAlignment',
+    'crossAxisAlignment',
+    'textDirection',
+    'mainAxisSize',
+    'verticalDirection',
+    'textBaseline',
+    'direction',
+  ]);
 
   @override
   Widget render(BuildContext context) {
     return Flex(
-        direction: getAttribute('direction') == 'row'
-            ? Axis.horizontal
-            : Axis.vertical,
-        mainAxisAlignment:
-            getMainAxisAlignment(getAttribute('mainAxisAlignment')) ??
-                MainAxisAlignment.start,
-        crossAxisAlignment:
-            getCrossAxisAlignment(getAttribute('crossAxisAlignment')) ??
-                CrossAxisAlignment.center,
-        mainAxisSize:
-            getMainAxisSize(getAttribute('mainAxisSize')) ?? MainAxisSize.max,
-        textDirection: getTextDirection(getAttribute('textDirection')),
-        verticalDirection:
-            getVerticalDirection(getAttribute('verticalDirection')) ??
-                VerticalDirection.down,
-        textBaseline: getTextBaseline(getAttribute('textBaseline')),
-        children: multipleChildren());
+      direction:
+          getAttribute('direction') == 'row' ? Axis.horizontal : Axis.vertical,
+      mainAxisAlignment:
+          getMainAxisAlignment(getAttribute('mainAxisAlignment')) ??
+          MainAxisAlignment.start,
+      crossAxisAlignment:
+          getCrossAxisAlignment(getAttribute('crossAxisAlignment')) ??
+          CrossAxisAlignment.center,
+      mainAxisSize:
+          getMainAxisSize(getAttribute('mainAxisSize')) ?? MainAxisSize.max,
+      textDirection: getTextDirection(getAttribute('textDirection')),
+      verticalDirection:
+          getVerticalDirection(getAttribute('verticalDirection')) ??
+          VerticalDirection.down,
+      textBaseline: getTextBaseline(getAttribute('textBaseline')),
+      children: multipleChildren(),
+    );
   }
 }

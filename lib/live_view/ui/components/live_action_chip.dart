@@ -33,7 +33,7 @@ class _LiveActionChipState extends StateWidget<LiveActionChip> {
     'materialTapTargetSize',
     'elevation',
     'shadowColor',
-    'surfaceTintColor'
+    'surfaceTintColor',
   ];
 
   @override
@@ -53,28 +53,30 @@ class _LiveActionChipState extends StateWidget<LiveActionChip> {
     avatar ??= iconWidgetFromAttribute('icon');
 
     return ActionChip(
-        label: label,
-        avatar: avatar,
-        labelStyle: textStyleAttribute('labelStyle', context),
-        labelPadding: marginOrPaddingAttribute('labelPadding'),
-        pressElevation: doubleAttribute('pressElevation'),
-        tooltip: getAttribute('tooltip'),
-        side: null, // TODO: BorderSide
-        shape: null, //TODO: OutlinedBorder
-        clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
-        focusNode: null, // TODO: FocusNode
-        autofocus: booleanAttribute('autofocus') ?? false,
-        color: null, //TODO: MaterialStateProperty<Color?>?
-        backgroundColor: colorAttribute(context, 'backgroundColor'),
-        disabledColor: colorAttribute(context, 'disabledColor'),
-        padding: marginOrPaddingAttribute('padding'),
-        visualDensity: visualDensityAttribute('visualDensity'),
-        materialTapTargetSize:
-            materialTapTargetSizeAttribute('materialTapTargetSize'),
-        elevation: doubleAttribute('elevation'),
-        shadowColor: colorAttribute(context, 'shadowColor'),
-        surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
-        iconTheme: null, //TODO: IconThemeData
-        onPressed: () => executeTapEventsManually());
+      label: label,
+      avatar: avatar,
+      labelStyle: textStyleAttribute('labelStyle', context),
+      labelPadding: marginOrPaddingAttribute('labelPadding'),
+      pressElevation: doubleAttribute('pressElevation'),
+      tooltip: getAttribute('tooltip'),
+      side: null, // TODO: BorderSide
+      shape: null, //TODO: OutlinedBorder
+      clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
+      focusNode: null, // TODO: FocusNode
+      autofocus: booleanAttribute('autofocus') ?? false,
+      color: null, //TODO: MaterialStateProperty<Color?>?
+      backgroundColor: colorAttribute(context, 'backgroundColor'),
+      disabledColor: colorAttribute(context, 'disabledColor'),
+      padding: marginOrPaddingAttribute('padding'),
+      visualDensity: visualDensityAttribute('visualDensity'),
+      materialTapTargetSize: materialTapTargetSizeAttribute(
+        'materialTapTargetSize',
+      ),
+      elevation: doubleAttribute('elevation'),
+      shadowColor: colorAttribute(context, 'shadowColor'),
+      surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
+      iconTheme: null, //TODO: IconThemeData
+      onPressed: () => executeTapEventsManually(),
+    );
   }
 }

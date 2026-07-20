@@ -18,8 +18,9 @@ class _LiveCenterState extends StateWidget<LiveCenter> {
   @override
   Widget render(BuildContext context) {
     return Center(
-        widthFactor: doubleAttribute('widthFactor'),
-        heightFactor: doubleAttribute('heightFactor'),
-        child: singleChild());
+      widthFactor: doubleAttribute('widthFactor'),
+      heightFactor: doubleAttribute('heightFactor'),
+      child: singleChild(),
+    );
   }
 }

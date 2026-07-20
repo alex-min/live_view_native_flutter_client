@@ -8,13 +8,19 @@ MaterialStateProperty<TextStyle?>? materialTextStyle() =>
         ?.textStyle;
 
 Future<void> setStyle(WidgetTester tester, String style) async {
-  await tester.pumpWidget(MaterialApp(home: Builder(builder: (context) {
-    return FilledButton(
-      onPressed: () {},
-      style: ButtonStyle(textStyle: getMaterialTextStyle(style, context)),
-      child: const Text('hello'),
-    );
-  })));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (context) {
+          return FilledButton(
+            onPressed: () {},
+            style: ButtonStyle(textStyle: getMaterialTextStyle(style, context)),
+            child: const Text('hello'),
+          );
+        },
+      ),
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -24,8 +30,10 @@ main() {
     expect(materialTextStyle()!.resolve({}), const TextStyle());
 
     await setStyle(tester, 'fontWeight: bold');
-    expect(materialTextStyle()!.resolve({}),
-        const TextStyle(fontWeight: FontWeight.bold));
+    expect(
+      materialTextStyle()!.resolve({}),
+      const TextStyle(fontWeight: FontWeight.bold),
+    );
 
     await setStyle(tester, """'
           pressed: {
@@ -37,9 +45,13 @@ main() {
           }
         """);
     var style = materialTextStyle()!;
-    expect(style.resolve({MaterialState.pressed}),
-        const TextStyle(fontWeight: FontWeight.bold, color: Color(0xfff44336)));
-    expect(style.resolve({MaterialState.disabled}),
-        const TextStyle(fontWeight: FontWeight.w100));
+    expect(
+      style.resolve({MaterialState.pressed}),
+      const TextStyle(fontWeight: FontWeight.bold, color: Color(0xfff44336)),
+    );
+    expect(
+      style.resolve({MaterialState.disabled}),
+      const TextStyle(fontWeight: FontWeight.w100),
+    );
   });
 }

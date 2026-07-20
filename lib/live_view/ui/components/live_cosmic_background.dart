@@ -283,7 +283,8 @@ class LiveCosmicBackgroundState extends StateWidget<LiveCosmicBackground> {
   @override
   Widget render(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    var baseColor = getColor(context, getAttribute('baseColor')) ??
+    var baseColor =
+        getColor(context, getAttribute('baseColor')) ??
         Theme.of(context).scaffoldBackgroundColor;
     var blur = double.tryParse(getAttribute('blur') ?? '') ?? 26;
     var isDark = Theme.of(context).brightness == Brightness.dark;

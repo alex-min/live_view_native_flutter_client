@@ -4,12 +4,13 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('does not flash missing viewBody when Scaffold wraps it',
-      (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': [
-          '''
+  testWidgets('does not flash missing viewBody when Scaffold wraps it', (
+    tester,
+  ) async {
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': [
+            '''
 <flutter>
   <csrf-token value="token"></csrf-token>
   <div data-phx-session="session" data-phx-static="static">
@@ -25,9 +26,9 @@ main() async {
     </Scaffold>
   </div>
 </flutter>
-'''
-        ],
-      });
+''',
+          ],
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

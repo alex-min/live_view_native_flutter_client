@@ -5,26 +5,27 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('root AppBar extracted from dynamic component',
-      (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+  testWidgets('root AppBar extracted from dynamic component', (tester) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <csrf-token value="token"></csrf-token>
           <div id="phx-1" data-phx-session="session" data-phx-static="static" data-phx-main>
             <flutter>
         """,
-        """
+          """
               <viewBody>
                 <Text>Home page</Text>
               </viewBody>
             </flutter>
           </div>
-        """
-      ],
-      '0': {
-        's': [
-          """
+        """,
+        ],
+        '0': {
+          's': [
+            """
             <AppBar backgroundColor="@theme.colorScheme.primary" foregroundColor="@theme.colorScheme.onPrimary" elevation="0">
               <title>
                 <Text style="color: @theme.colorScheme.onPrimary">StartupKit</Text>
@@ -33,10 +34,11 @@ main() async {
                 <TextButton live-patch="/users/log_in"><Text style="color: @theme.colorScheme.onPrimary">Sign in</Text></TextButton>
               </Row>
             </AppBar>
-          """
-        ]
-      }
-    });
+          """,
+          ],
+        },
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

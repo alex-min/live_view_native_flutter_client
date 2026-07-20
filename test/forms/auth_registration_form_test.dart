@@ -8,11 +8,14 @@ import 'package:liveview_flutter/live_view/ui/components/live_text_field.dart';
 import '../test_helpers.dart';
 
 void main() async {
-  testWidgets('registration form renders labels, hint and actions',
-      (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+  testWidgets('registration form renders labels, hint and actions', (
+    tester,
+  ) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <viewBody>
               <SingleChildScrollView padding="24.0">
@@ -65,9 +68,10 @@ void main() async {
               </SingleChildScrollView>
             </viewBody>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

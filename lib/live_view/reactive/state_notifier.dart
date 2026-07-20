@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 
 Map<String, dynamic> nestedDiff(
-    Map<String, dynamic> diff, List<String> nestedState) {
+  Map<String, dynamic> diff,
+  List<String> nestedState,
+) {
   var fullDiff = diff;
   var currentDiff = fullDiff;
   for (var state in nestedState) {

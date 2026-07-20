@@ -5,17 +5,18 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('supports implicit Columns for single child widgets',
-      (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': [
-          """<Container>
+  testWidgets('supports implicit Columns for single child widgets', (
+    tester,
+  ) async {
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': [
+            """<Container>
           <Text>hello</Text>
           <Text>world</Text>
-        </Container>"""
-        ],
-      });
+        </Container>""",
+          ],
+        });
 
     await tester.runLiveView(view);
 

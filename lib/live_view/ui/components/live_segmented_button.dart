@@ -25,7 +25,7 @@ class _LiveSegmentedButtonState extends StateWidget<LiveSegmentedButton> {
     'style',
     'showSelectedIcon',
     'emptySelectionAllowed',
-    'multiSelectionEnabled'
+    'multiSelectionEnabled',
   ];
 
   var unamedInput = const Uuid().v4();
@@ -67,75 +67,82 @@ class _LiveSegmentedButtonState extends StateWidget<LiveSegmentedButton> {
 
   @override
   Widget render(BuildContext context) {
-    var buttons = childrenNodesOf(node, 'ButtonSegment').map((button) {
-      var attributes = bindChildVariableAttributes(
-          button, ['label', 'name', 'icon'], widget.state.variables);
-      Widget? label;
-      Widget? icon;
+    var buttons =
+        childrenNodesOf(node, 'ButtonSegment').map((button) {
+          var attributes = bindChildVariableAttributes(button, [
+            'label',
+            'name',
+            'icon',
+          ], widget.state.variables);
+          Widget? label;
+          Widget? icon;
 
-      var children =
-          StateChild.multipleChildren(widget.state.copyWith(node: button));
-      if (attributes['icon'] != null) {
-        icon = Icon(getIcon(attributes['icon']!));
-      }
-      if (attributes['label'] != null) {
-        label = Text(attributes['label']!);
-      }
-      icon ??= StateChild.extractChild<LiveIcon>(children);
-      label ??= StateChild.extractChild<LiveText>(children);
+          var children = StateChild.multipleChildren(
+            widget.state.copyWith(node: button),
+          );
+          if (attributes['icon'] != null) {
+            icon = Icon(getIcon(attributes['icon']!));
+          }
+          if (attributes['label'] != null) {
+            label = Text(attributes['label']!);
+          }
+          icon ??= StateChild.extractChild<LiveIcon>(children);
+          label ??= StateChild.extractChild<LiveText>(children);
 
-      return (
-        attributes,
-        ButtonSegment<String>(
-            icon: icon,
-            value: attributes['name'] ?? button.hashCode.toString(),
-            label: label)
-      );
-    }).toList();
+          return (
+            attributes,
+            ButtonSegment<String>(
+              icon: icon,
+              value: attributes['name'] ?? button.hashCode.toString(),
+              label: label,
+            ),
+          );
+        }).toList();
 
     var result = {
       for (var (attributes, button) in buttons)
-        attributes['name'] ?? button.hashCode.toString(): (button, attributes)
+        attributes['name'] ?? button.hashCode.toString(): (button, attributes),
     };
 
     return SegmentedButton<String>(
-        showSelectedIcon: booleanAttribute('showSelectedIcon') ?? true,
-        style: buttonStyleAttribute(context, 'style'),
-        segments: result.values.map((b) => b.$1).toList(),
-        emptySelectionAllowed:
-            booleanAttribute('emptySelectionAllowed') ?? false,
-        multiSelectionEnabled:
-            booleanAttribute('multiSelectionEnabled') ?? false,
-        onSelectionChanged: (tapped) {
-          var oldSelection = selected;
-          setState(() {
-            selected = tapped;
-          });
+      showSelectedIcon: booleanAttribute('showSelectedIcon') ?? true,
+      style: buttonStyleAttribute(context, 'style'),
+      segments: result.values.map((b) => b.$1).toList(),
+      emptySelectionAllowed: booleanAttribute('emptySelectionAllowed') ?? false,
+      multiSelectionEnabled: booleanAttribute('multiSelectionEnabled') ?? false,
+      onSelectionChanged: (tapped) {
+        var oldSelection = selected;
+        setState(() {
+          selected = tapped;
+        });
 
-          // child item taped
-          if (selected?.firstOrNull != null) {
-            executeTapEventsManually(
-                fromAttributes: result[selected?.firstOrNull]?.$2 ?? {});
-            // untapping event
-          } else if (booleanAttribute('multiSelectionEnabled') != true &&
-              oldSelection?.firstOrNull != null) {
-            executeTapEventsManually(
-                fromAttributes: result[oldSelection?.firstOrNull]?.$2 ?? {});
-          }
+        // child item taped
+        if (selected?.firstOrNull != null) {
+          executeTapEventsManually(
+            fromAttributes: result[selected?.firstOrNull]?.$2 ?? {},
+          );
+          // untapping event
+        } else if (booleanAttribute('multiSelectionEnabled') != true &&
+            oldSelection?.firstOrNull != null) {
+          executeTapEventsManually(
+            fromAttributes: result[oldSelection?.firstOrNull]?.$2 ?? {},
+          );
+        }
 
-          // tapping itself
-          executeTapEventsManually();
+        // tapping itself
+        executeTapEventsManually();
 
-          // form change event
-          FormFieldEvent(
-            name:
-                getAttribute('name') ?? "unamed-segmented-button-$unamedInput",
-            data: booleanAttribute('multiSelectionEnabled') == true
-                ? selected?.toList()
-                : selected?.firstOrNull,
-            type: FormFieldEventType.change,
-          ).dispatch(context);
-        },
-        selected: selected ?? <String>{});
+        // form change event
+        FormFieldEvent(
+          name: getAttribute('name') ?? "unamed-segmented-button-$unamedInput",
+          data:
+              booleanAttribute('multiSelectionEnabled') == true
+                  ? selected?.toList()
+                  : selected?.firstOrNull,
+          type: FormFieldEventType.change,
+        ).dispatch(context);
+      },
+      selected: selected ?? <String>{},
+    );
   }
 }

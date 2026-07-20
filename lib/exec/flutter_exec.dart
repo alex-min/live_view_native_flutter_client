@@ -17,10 +17,11 @@ import 'package:liveview_flutter/when/when.dart';
 
 Map<String, dynamic> getPhxValues(Map<String, dynamic>? attributes) {
   return Map<String, dynamic>.fromEntries(
-      attributes?.entries.where((e) => e.key.startsWith('phx-value')).map((e) {
-            return MapEntry(e.key.replaceFirst('phx-value-', ''), e.value);
-          }) ??
-          {});
+    attributes?.entries.where((e) => e.key.startsWith('phx-value')).map((e) {
+          return MapEntry(e.key.replaceFirst('phx-value-', ''), e.value);
+        }) ??
+        {},
+  );
 }
 
 class FlutterExecAction {
@@ -44,8 +45,11 @@ class FlutterExecAction {
   }
 
   Exec _getExec(Map<String, dynamic>? attributes) {
-    final exec = LiveViewExecRegistry.instance
-        .exec(name, value: value, attributes: attributes);
+    final exec = LiveViewExecRegistry.instance.exec(
+      name,
+      value: value,
+      attributes: attributes,
+    );
 
     if (exec != null) {
       return exec;
@@ -53,7 +57,10 @@ class FlutterExecAction {
 
     // using a just string triggers a server event
     return ExecLiveEvent(
-        type: 'event', name: value!['name'], value: phxValues(attributes));
+      type: 'event',
+      name: value!['name'],
+      value: phxValues(attributes),
+    );
   }
 
   static void registerDefaultExecs() {
@@ -66,11 +73,11 @@ class FlutterExecAction {
           dataConfirm:
               (attributes?['data-confirm'] as String?)?.isNotEmpty == true
                   ? DataConfirm(
-                      message: attributes!['data-confirm'],
-                      title: attributes['data-confirm-title'],
-                      cancel: attributes['data-confirm-cancel'],
-                      confirm: attributes['data-confirm-confirm'],
-                    )
+                    message: attributes!['data-confirm'],
+                    title: attributes['data-confirm-title'],
+                    cancel: attributes['data-confirm-cancel'],
+                    confirm: attributes['data-confirm-confirm'],
+                  )
                   : null,
         );
       }, triggers: [LiveViewExecTrigger.onTap])
@@ -89,15 +96,18 @@ class FlutterExecAction {
           method: attributes?['method'] ?? 'GET',
         );
       }, triggers: [LiveViewExecTrigger.onTap])
-      ..add(['goBack'], (_, __) => ExecGoBack(),
-          triggers: [LiveViewExecTrigger.onTap])
-      ..add(['toggleTheme'], (_, __) => ExecToggleTheme(),
-          triggers: [LiveViewExecTrigger.onTap])
+      ..add(
+        ['goBack'],
+        (_, __) => ExecGoBack(),
+        triggers: [LiveViewExecTrigger.onTap],
+      )
+      ..add(
+        ['toggleTheme'],
+        (_, __) => ExecToggleTheme(),
+        triggers: [LiveViewExecTrigger.onTap],
+      )
       ..add(['switchTheme'], (value, attributes) {
-        return ExecSwitchTheme(
-          theme: value!['theme'],
-          mode: value['mode'],
-        );
+        return ExecSwitchTheme(theme: value!['theme'], mode: value['mode']);
       })
       ..add(['saveCurrentTheme'], (_, __) => ExecSaveCurrentTheme())
       ..add(['show'], (value, attributes) {
@@ -120,8 +130,11 @@ class FlutterExec {
   static String encode(List<FlutterExecAction> actions) =>
       const HtmlEscape().convert(jsonEncode(actions));
 
-  static List<Exec> parse(String? attribute, String attributeName,
-      Map<String, dynamic>? attributes) {
+  static List<Exec> parse(
+    String? attribute,
+    String attributeName,
+    Map<String, dynamic>? attributes,
+  ) {
     if (attribute == null) {
       return [];
     }
@@ -129,21 +142,22 @@ class FlutterExec {
     dynamic actionList = tryJsonDecode(attribute);
     if (actionList == null || actionList is num || actionList is String) {
       return [
-        FlutterExecAction(name: attributeName, value: {'name': attribute})
-            .parse(attributeName, attributes)
+        FlutterExecAction(
+          name: attributeName,
+          value: {'name': attribute},
+        ).parse(attributeName, attributes),
       ];
     }
 
     List<Exec> ret = [];
 
     for (var action in actionList) {
-      ret.add(FlutterExecAction(
-        name: action[0],
-        value: action.length > 1 ? action[1] : null,
-      ).parse(
-        attributeName,
-        attributes,
-      ));
+      ret.add(
+        FlutterExecAction(
+          name: action[0],
+          value: action.length > 1 ? action[1] : null,
+        ).parse(attributeName, attributes),
+      );
     }
     return ret;
   }

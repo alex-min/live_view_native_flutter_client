@@ -23,7 +23,7 @@ class _LiveListViewState extends StateWidget<LiveListView> {
     'semanticChildCount',
     'dragStartBehavior',
     'keyboardDismissBehavior',
-    'restorationId'
+    'restorationId',
   ];
 
   @override
@@ -33,24 +33,28 @@ class _LiveListViewState extends StateWidget<LiveListView> {
   @override
   Widget render(BuildContext context) {
     return ListView(
-        scrollDirection: axisAttribute('scrollDirection') ?? Axis.vertical,
-        reverse: booleanAttribute('reverse') ?? false,
-        primary: booleanAttribute('primary'),
-        padding: marginOrPaddingAttribute('padding'),
-        itemExtent: doubleAttribute('itemExtent'),
-        addAutomaticKeepAlives:
-            booleanAttribute('addAutomaticKeepAlives') ?? true,
-        addRepaintBoundaries: booleanAttribute('addRepaintBoundaries') ?? true,
-        addSemanticIndexes: booleanAttribute('addSemanticIndexes') ?? true,
-        cacheExtent: doubleAttribute('cacheExtent'),
-        semanticChildCount: intAttribute('semanticChildCount'),
-        dragStartBehavior: dragStartBehaviorAttribute('dragStartBehavior') ??
-            DragStartBehavior.start,
-        keyboardDismissBehavior: scrollViewKeyboardDismissBehaviorAttribute(
-                'keyboardDismissBehavior') ??
-            ScrollViewKeyboardDismissBehavior.manual,
-        restorationId: getAttribute('restorationId'),
-        clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
-        children: multipleChildren());
+      scrollDirection: axisAttribute('scrollDirection') ?? Axis.vertical,
+      reverse: booleanAttribute('reverse') ?? false,
+      primary: booleanAttribute('primary'),
+      padding: marginOrPaddingAttribute('padding'),
+      itemExtent: doubleAttribute('itemExtent'),
+      addAutomaticKeepAlives:
+          booleanAttribute('addAutomaticKeepAlives') ?? true,
+      addRepaintBoundaries: booleanAttribute('addRepaintBoundaries') ?? true,
+      addSemanticIndexes: booleanAttribute('addSemanticIndexes') ?? true,
+      cacheExtent: doubleAttribute('cacheExtent'),
+      semanticChildCount: intAttribute('semanticChildCount'),
+      dragStartBehavior:
+          dragStartBehaviorAttribute('dragStartBehavior') ??
+          DragStartBehavior.start,
+      keyboardDismissBehavior:
+          scrollViewKeyboardDismissBehaviorAttribute(
+            'keyboardDismissBehavior',
+          ) ??
+          ScrollViewKeyboardDismissBehavior.manual,
+      restorationId: getAttribute('restorationId'),
+      clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
+      children: multipleChildren(),
+    );
   }
 }

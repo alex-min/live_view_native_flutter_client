@@ -30,20 +30,20 @@ class _LiveElevatedButtonState extends StateWidget<LiveElevatedButton> {
   @override
   Widget render(BuildContext context) {
     return ElevatedButton(
-        style: buttonStyleAttribute(context, 'style'),
-        autofocus: booleanAttribute('autofocus') ?? false,
-        clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
-        onPressed: () {
-          if (getAttribute('type') == 'submit') {
-            FormFieldEvent(
-                    name: getAttribute('name') ??
-                        'unamed-elevated-button-$unamedInput',
-                    data: null,
-                    type: FormFieldEventType.submit)
-                .dispatch(context);
-          }
-          executeTapEventsManually();
-        },
-        child: AbsorbPointer(child: singleChild()));
+      style: buttonStyleAttribute(context, 'style'),
+      autofocus: booleanAttribute('autofocus') ?? false,
+      clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
+      onPressed: () {
+        if (getAttribute('type') == 'submit') {
+          FormFieldEvent(
+            name: getAttribute('name') ?? 'unamed-elevated-button-$unamedInput',
+            data: null,
+            type: FormFieldEventType.submit,
+          ).dispatch(context);
+        }
+        executeTapEventsManually();
+      },
+      child: AbsorbPointer(child: singleChild()),
+    );
   }
 }

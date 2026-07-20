@@ -15,13 +15,14 @@ class LiveCustomPage extends MaterialPage {
   @override
   Route createRoute(BuildContext context) {
     return PageRouteBuilder(
-        settings: this,
-        pageBuilder: (BuildContext context, Animation<double> animation,
-            Animation<double> secondaryAnimation) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        });
+      settings: this,
+      pageBuilder: (
+        BuildContext context,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,
+      ) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+    );
   }
 }

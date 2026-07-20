@@ -16,8 +16,11 @@ class LivePage {
   bool junk = false;
   NodeState? rootState;
 
-  LivePage(
-      {required this.page, required this.widgets, required this.rootState});
+  LivePage({
+    required this.page,
+    required this.widgets,
+    required this.rootState,
+  });
 
   @override
   String toString() =>
@@ -92,20 +95,27 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
 
   void notify() => notifyListeners();
 
-  void pushPage(
-      {required String url,
-      required List<Widget> widget,
-      required NodeState? rootState}) {
+  void pushPage({
+    required String url,
+    required List<Widget> widget,
+    required NodeState? rootState,
+  }) {
     history[url] = widget;
-    pages.add(_createPage(
-        RouteSettings(name: url), List<Widget>.from(widget), rootState));
+    pages.add(
+      _createPage(
+        RouteSettings(name: url),
+        List<Widget>.from(widget),
+        rootState,
+      ),
+    );
     notifyListeners();
   }
 
-  void updatePage(
-      {required String url,
-      required List<Widget> widget,
-      required NodeState? rootState}) {
+  void updatePage({
+    required String url,
+    required List<Widget> widget,
+    required NodeState? rootState,
+  }) {
     history[url] = widget;
     var pageIndex = pages.length - 1;
     while (pageIndex >= 0 &&
@@ -126,62 +136,74 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
   }
 
   LivePage _createPage(
-      RouteSettings routeSettings, List<Widget> widgets, NodeState? rootState) {
-    var content = Builder(builder: (context) {
-      if (widgets.length == 1) {
-        return widgets.first;
-      }
-
-      // Root layout nodes (csrf-token, meta, iframe) are rendered as no-op
-      // SizedBoxes. Ignore them when looking for the page body so that a
-      // single root widget such as <Scaffold> can be used as the page.
-      var meaningfulWidgets = widgets.where((widget) {
-        if (widget is SizedBox) {
-          return widget.width != 0 || widget.height != 0 || widget.child != null;
+    RouteSettings routeSettings,
+    List<Widget> widgets,
+    NodeState? rootState,
+  ) {
+    var content = Builder(
+      builder: (context) {
+        if (widgets.length == 1) {
+          return widgets.first;
         }
-        return true;
-      }).toList();
 
-      Widget? body;
-      for (var widget in meaningfulWidgets) {
-        if (widget is LiveViewBody) {
-          body = widget;
-          break;
-        } else if (widget is InternalView) {
-          body = widget;
-          break;
+        // Root layout nodes (csrf-token, meta, iframe) are rendered as no-op
+        // SizedBoxes. Ignore them when looking for the page body so that a
+        // single root widget such as <Scaffold> can be used as the page.
+        var meaningfulWidgets =
+            widgets.where((widget) {
+              if (widget is SizedBox) {
+                return widget.width != 0 ||
+                    widget.height != 0 ||
+                    widget.child != null;
+              }
+              return true;
+            }).toList();
+
+        Widget? body;
+        for (var widget in meaningfulWidgets) {
+          if (widget is LiveViewBody) {
+            body = widget;
+            break;
+          } else if (widget is InternalView) {
+            body = widget;
+            break;
+          }
         }
-      }
 
-      // Allow a single meaningful widget that contains a <viewBody> somewhere
-      // in its subtree to be the page. This supports templates that wrap the
-      // whole view in a <Scaffold> instead of placing <viewBody> at the root.
-      if (body == null &&
-          meaningfulWidgets.length == 1 &&
-          _containsViewBody(rootState)) {
-        return meaningfulWidgets.first;
-      }
+        // Allow a single meaningful widget that contains a <viewBody> somewhere
+        // in its subtree to be the page. This supports templates that wrap the
+        // whole view in a <Scaffold> instead of placing <viewBody> at the root.
+        if (body == null &&
+            meaningfulWidgets.length == 1 &&
+            _containsViewBody(rootState)) {
+          return meaningfulWidgets.first;
+        }
 
-      // TODO: not found page + body error page
-      return body ??
-          MissingPageComponent(
+        // TODO: not found page + body error page
+        return body ??
+            MissingPageComponent(
               url: routeSettings.name ?? '(url is null)',
-              html: rootState?.node.outerXml ?? '');
-    });
+              html: rootState?.node.outerXml ?? '',
+            );
+      },
+    );
 
     return LivePage(
-        page: routeSettings.name?.startsWith('/') == true
-            ? LiveCustomPage(
+      page:
+          routeSettings.name?.startsWith('/') == true
+              ? LiveCustomPage(
                 child: content,
                 name: routeSettings.name,
                 arguments: routeSettings.arguments,
               )
-            : NoTransitionPage(
+              : NoTransitionPage(
                 child: content,
                 name: routeSettings.name,
-                arguments: routeSettings.arguments),
-        widgets: _expandDynamicComponents(widgets),
-        rootState: rootState);
+                arguments: routeSettings.arguments,
+              ),
+      widgets: _expandDynamicComponents(widgets),
+      rootState: rootState,
+    );
   }
 
   bool _containsViewBody(NodeState? rootState) {
@@ -204,7 +226,9 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     return expanded;
   }
 
-  List<Widget> _extractDynamicComponentChildren(LiveDynamicComponent component) {
+  List<Widget> _extractDynamicComponentChildren(
+    LiveDynamicComponent component,
+  ) {
     var state = component.state;
     List<Widget> result = [];
 
@@ -213,11 +237,15 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       for (var i = 0; i < state.variables['d'].length; i++) {
         var newState = List<String>.from(state.nestedState);
         newState.add(i.toString());
-        result.addAll(state.parser.parseHtml(
-          List<String>.from(state.variables['s']),
-          state.variables[i.toString()],
-          newState,
-        ).$1);
+        result.addAll(
+          state.parser
+              .parseHtml(
+                List<String>.from(state.variables['s']),
+                state.variables[i.toString()],
+                newState,
+              )
+              .$1,
+        );
       }
       return result;
     }
@@ -233,11 +261,15 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
           var newState = List<String>.from(state.nestedState);
           newState.add(elementKey.key);
           newState.add(i.toString());
-          result.addAll(state.parser.parseHtml(
-            List<String>.from(currentVariables['s']),
-            currentVariables[i.toString()],
-            newState,
-          ).$1);
+          result.addAll(
+            state.parser
+                .parseHtml(
+                  List<String>.from(currentVariables['s']),
+                  currentVariables[i.toString()],
+                  newState,
+                )
+                .$1,
+          );
         }
       } else {
         var newState = List<String>.from(state.nestedState);

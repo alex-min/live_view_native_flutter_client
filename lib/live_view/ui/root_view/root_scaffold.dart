@@ -65,8 +65,9 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       return;
     }
     rootNode = currentRoot;
-    var lastLiveDiff =
-        widget.view.changeNotifier.getNestedDiff(currentRoot.nestedState);
+    var lastLiveDiff = widget.view.changeNotifier.getNestedDiff(
+      currentRoot.nestedState,
+    );
     if (lastLiveDiff.keys.any((key) => isKeyListened(ElementKey(key)))) {
       currentVariables.addAll(lastLiveDiff);
       onStateChange(lastLiveDiff);
@@ -108,10 +109,12 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     if (rootNode != null) {
       var viewBody = childrenNodesOf(rootNode!.node, 'viewBody').firstOrNull;
       if (viewBody != null) {
-        var attributes = bindChildVariableAttributes(
-            viewBody, ['floatingActionButtonLocation'], rootNode!.variables);
+        var attributes = bindChildVariableAttributes(viewBody, [
+          'floatingActionButtonLocation',
+        ], rootNode!.variables);
         var location = getFloatingActionButtonLocation(
-            attributes['floatingActionButtonLocation']);
+          attributes['floatingActionButtonLocation'],
+        );
         if (location != null) {
           floatingActionButtonLocation = location;
         }
@@ -123,14 +126,11 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     if (widget.view.router.pages.last.rootState == null) return null;
 
     var rootNode = widget.view.router.pages.last.rootState!.node;
-    var rootElement =
-        rootNode is XmlDocument ? rootNode.rootElement : rootNode;
+    var rootElement = rootNode is XmlDocument ? rootNode.rootElement : rootNode;
 
-    var attributes = bindChildVariableAttributes(
-      rootElement,
-      [name],
-      widget.view.router.pages.last.rootState!.variables,
-    );
+    var attributes = bindChildVariableAttributes(rootElement, [
+      name,
+    ], widget.view.router.pages.last.rootState!.variables);
 
     return attributes[name];
   }
@@ -152,9 +152,11 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       hasAppBar = widgets.any((widget) => widget is LiveAppBar);
       hasBottomNavigationBar =
           (childrenNodesOf(rootNode!.node, 'BottomAppBar').firstOrNull ??
-                  childrenNodesOf(rootNode!.node, 'BottomNavigationBar')
-                      .firstOrNull) !=
-              null;
+              childrenNodesOf(
+                rootNode!.node,
+                'BottomNavigationBar',
+              ).firstOrNull) !=
+          null;
     } else {
       railBar = null;
       drawer = null;
@@ -195,10 +197,12 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
         },
         child: NotificationListener<ShowBottomSheetNotification>(
           onNotification: (_) {
-            var widgets =
-                List<Widget>.from(widget.view.router.pages.last.widgets);
-            var bottomSheet =
-                StateChild.extractWidgetChild<LiveBottomSheet>(widgets);
+            var widgets = List<Widget>.from(
+              widget.view.router.pages.last.widgets,
+            );
+            var bottomSheet = StateChild.extractWidgetChild<LiveBottomSheet>(
+              widgets,
+            );
             if (bottomSheet == null) {
               debugPrint('No bottomsheet to show');
               return true;
@@ -209,16 +213,18 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
           },
           child: mapRailBar(
             SizeChangedLayoutNotifier(
-              child: widget.view.isLiveReloading
-                  ? Stack(children: [child, const ReloadWidget()])
-                  : child,
+              child:
+                  widget.view.isLiveReloading
+                      ? Stack(children: [child, const ReloadWidget()])
+                      : child,
             ),
           ),
         ),
       ),
-      bottomNavigationBar: hasBottomNavigationBar
-          ? RootBottomNavigationBar(view: widget.view)
-          : null,
+      bottomNavigationBar:
+          hasBottomNavigationBar
+              ? RootBottomNavigationBar(view: widget.view)
+              : null,
       floatingActionButtonLocation: floatingActionButtonLocation,
       floatingActionButton: floatingActionButton,
       persistentFooterButtons:

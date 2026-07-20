@@ -5,22 +5,29 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('phx-onload', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': ['<Text phx-onload="backend_event">The counter is ', '</Text>'],
-      '0': 2
-    });
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<Text phx-onload="backend_event">The counter is ', '</Text>'],
+        '0': 2,
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
-    expect(server.lastChannelActions,
-        [liveEvents.join, liveEvents.event('backend_event')]);
+    expect(server.lastChannelActions, [
+      liveEvents.join,
+      liveEvents.event('backend_event'),
+    ]);
 
     view.handleDiffMessage({'0': 5});
     await tester.pumpAndSettle();
 
-    expect(server.lastChannelActions,
-        [liveEvents.join, liveEvents.event('backend_event')],
-        reason: 'changing the view should not retrigger the event');
+    expect(
+      server.lastChannelActions,
+      [liveEvents.join, liveEvents.event('backend_event')],
+      reason: 'changing the view should not retrigger the event',
+    );
   });
 }

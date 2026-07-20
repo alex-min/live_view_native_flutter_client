@@ -5,18 +5,18 @@ import '../test_helpers.dart';
 
 void main() async {
   testWidgets('handles live components', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": {
+    var view =
+        LiveView()..handleRenderedMessage({
           "0": {
-            "s": ["Hello"]
+            "0": {
+              "s": ["Hello"],
+            },
+            "s": ["<Text>", "</Text>"],
+            "r": 1,
           },
-          "s": ["<Text>", "</Text>"],
-          "r": 1
-        },
-        "s": ["<Container>", "</Container>"],
-        "r": 1
-      });
+          "s": ["<Container>", "</Container>"],
+          "r": 1,
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

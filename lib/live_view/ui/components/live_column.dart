@@ -14,29 +14,29 @@ class LiveColumn extends LiveStateWidget<LiveColumn> {
 class _LiveColState extends StateWidget<LiveColumn> {
   @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
-        'mainAxisAlignment',
-        'mainAxisSize',
-        'crossAxisAlignment',
-        'textDirection',
-        'verticalDirection',
-        'textBaseline'
-      ]);
+    'mainAxisAlignment',
+    'mainAxisSize',
+    'crossAxisAlignment',
+    'textDirection',
+    'verticalDirection',
+    'textBaseline',
+  ]);
 
   @override
   Widget render(BuildContext context) {
     return Column(
       mainAxisAlignment:
           getMainAxisAlignment(getAttribute('mainAxisAlignment')) ??
-              MainAxisAlignment.start,
+          MainAxisAlignment.start,
       mainAxisSize:
           getMainAxisSize(getAttribute('mainAxisSize')) ?? MainAxisSize.max,
       crossAxisAlignment:
           getCrossAxisAlignment(getAttribute('crossAxisAlignment')) ??
-              CrossAxisAlignment.center,
+          CrossAxisAlignment.center,
       textDirection: getTextDirection(getAttribute('textDirection')),
       verticalDirection:
           getVerticalDirection(getAttribute('verticalDirection')) ??
-              VerticalDirection.down,
+          VerticalDirection.down,
       textBaseline: getTextBaseline(getAttribute('textBaseline')),
       children: multipleChildren(),
     );

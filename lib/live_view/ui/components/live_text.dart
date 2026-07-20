@@ -22,9 +22,10 @@ class _LiveViewTextState extends StateWidget<LiveText> {
 
   @override
   Widget render(BuildContext context) {
-    var text = widget.state.node.innerText == ''
-        ? widget.state.node.value ?? ''
-        : widget.state.node.innerText;
+    var text =
+        widget.state.node.innerText == ''
+            ? widget.state.node.value ?? ''
+            : widget.state.node.innerText;
     return Text(
       HtmlUnescape().convert(replaceVariables(text, currentVariables)).trim(),
       style: getTextStyle(getAttribute('style'), context),

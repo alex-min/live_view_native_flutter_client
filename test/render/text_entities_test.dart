@@ -5,11 +5,11 @@ import '../test_helpers.dart';
 
 void main() async {
   testWidgets('decodes HTML entities in dynamic text', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<Text>', '</Text>'],
-        '0': 'S&#39;inscrire'
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<Text>', '</Text>'],
+          '0': 'S&#39;inscrire',
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -17,13 +17,14 @@ void main() async {
     expect(find.firstText(), "S'inscrire");
   });
 
-  testWidgets('decodes mixed static and dynamic text with entities',
-      (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<Text>Create an account: ', '</Text>'],
-        '0': 'S&#39;inscrire'
-      });
+  testWidgets('decodes mixed static and dynamic text with entities', (
+    tester,
+  ) async {
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<Text>Create an account: ', '</Text>'],
+          '0': 'S&#39;inscrire',
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

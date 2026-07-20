@@ -15,10 +15,14 @@ class NoTransitionPage extends MaterialPage {
   @override
   Route createRoute(BuildContext context) {
     return PageRouteBuilder(
-        settings: this,
-        pageBuilder: (BuildContext context, Animation<double> animation,
-            Animation<double> secondaryAnimation) {
-          return child;
-        });
+      settings: this,
+      pageBuilder: (
+        BuildContext context,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,
+      ) {
+        return child;
+      },
+    );
   }
 }

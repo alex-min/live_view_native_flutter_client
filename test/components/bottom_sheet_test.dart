@@ -8,9 +8,11 @@ import '../test_helpers.dart';
 main() async {
   testWidgets('looks okay', (tester) async {
     await loadAppFonts();
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <BottomSheet><Container width="infinity" height="200">bottom sheet</Container></BottomSheet>
             <viewBody>
@@ -19,9 +21,10 @@ main() async {
               </Column>
             </viewBody>
           </flutter>
-        """
-      ],
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -34,6 +37,8 @@ main() async {
     expect(find.text('bottom sheet'), findsOneWidget);
 
     await expectLater(
-        find.byType(MaterialApp), matchesGoldenFile('bottom_sheet_test.png'));
+      find.byType(MaterialApp),
+      matchesGoldenFile('bottom_sheet_test.png'),
+    );
   });
 }

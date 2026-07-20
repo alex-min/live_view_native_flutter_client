@@ -5,22 +5,22 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('handles live components', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": 1,
-        "s": ["<viewBody><Container>", "</Container></viewBody>"],
-        "c": {
-          "1": {
-            "0": "20",
-            "1": 2,
-            "s": ["<Container><Text>A: ", "</Text>", "</Container>"]
+    var view =
+        LiveView()..handleRenderedMessage({
+          "0": 1,
+          "s": ["<viewBody><Container>", "</Container></viewBody>"],
+          "c": {
+            "1": {
+              "0": "20",
+              "1": 2,
+              "s": ["<Container><Text>A: ", "</Text>", "</Container>"],
+            },
+            "2": {
+              "0": "10",
+              "s": ["<Text>B: ", "</Text>"],
+            },
           },
-          "2": {
-            "0": "10",
-            "s": ["<Text>B: ", "</Text>"]
-          }
-        }
-      });
+        });
 
     await tester.runLiveView(view);
 
@@ -28,18 +28,18 @@ main() async {
   });
 
   testWidgets('handles a new live component', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": 1,
-        "s": ["<Container>", "</Container>"],
-        "c": {
-          "1": {
-            "0": "world",
-            "1": "",
-            "s": ["<Container><Text>Hello ", "</Text>", "</Container>"]
-          }
-        }
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          "0": 1,
+          "s": ["<Container>", "</Container>"],
+          "c": {
+            "1": {
+              "0": "world",
+              "1": "",
+              "s": ["<Container><Text>Hello ", "</Text>", "</Container>"],
+            },
+          },
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -51,10 +51,10 @@ main() async {
         "1": {
           "0": "mars",
           "1": {
-            "s": ["<Text>New Home</Text>"]
-          }
-        }
-      }
+            "s": ["<Text>New Home</Text>"],
+          },
+        },
+      },
     });
     await tester.pump();
 
@@ -62,20 +62,20 @@ main() async {
   });
 
   testWidgets('handles remove a live component', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": 1,
-        "s": ["<Container>", "</Container>"],
-        "c": {
-          "1": {
-            "0": "world",
+    var view =
+        LiveView()..handleRenderedMessage({
+          "0": 1,
+          "s": ["<Container>", "</Container>"],
+          "c": {
             "1": {
-              "s": ["<Text>New Home</Text>"]
+              "0": "world",
+              "1": {
+                "s": ["<Text>New Home</Text>"],
+              },
+              "s": ["<Container><Text>Hello ", "</Text>", "</Container>"],
             },
-            "s": ["<Container><Text>Hello ", "</Text>", "</Container>"]
-          }
-        }
-      });
+          },
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -84,8 +84,8 @@ main() async {
     view.handleDiffMessage({
       "0": 1,
       "c": {
-        "1": {"0": "mars", "1": ""}
-      }
+        "1": {"0": "mars", "1": ""},
+      },
     });
     await tester.pump();
 
@@ -93,18 +93,18 @@ main() async {
   });
 
   testWidgets('handles update a different live component', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": 1,
-        "s": ["<Container>", "</Container>"],
-        "c": {
-          "1": {
-            "0": "world",
-            "1": "",
-            "s": ["<Container><Text>Hello ", "</Text>", "</Container>"]
-          }
-        }
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          "0": 1,
+          "s": ["<Container>", "</Container>"],
+          "c": {
+            "1": {
+              "0": "world",
+              "1": "",
+              "s": ["<Container><Text>Hello ", "</Text>", "</Container>"],
+            },
+          },
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -116,10 +116,10 @@ main() async {
         "1": {
           "0": "mars",
           "1": {
-            "s": ["<Text>New Home</Text>"]
-          }
-        }
-      }
+            "s": ["<Text>New Home</Text>"],
+          },
+        },
+      },
     });
     await tester.pump();
 
@@ -128,34 +128,33 @@ main() async {
     view.handleDiffMessage({
       "0": 1,
       "c": {
-        "1": {
-          "0": "world",
-        }
-      }
+        "1": {"0": "world"},
+      },
     });
     await tester.pump();
 
     expect(find.allTexts(), ['Hello world', 'New Home']);
   });
 
-  testWidgets('handles a nested update inside a dynamic component',
-      (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": 1,
-        "s": ["<Container>", "</Container>"],
-        "c": {
-          "1": {
-            "0": "world",
+  testWidgets('handles a nested update inside a dynamic component', (
+    tester,
+  ) async {
+    var view =
+        LiveView()..handleRenderedMessage({
+          "0": 1,
+          "s": ["<Container>", "</Container>"],
+          "c": {
             "1": {
-              "0": "1",
-              "1": "2",
-              "s": ["<Text>Counter: ", " - ", "</Text>"]
+              "0": "world",
+              "1": {
+                "0": "1",
+                "1": "2",
+                "s": ["<Text>Counter: ", " - ", "</Text>"],
+              },
+              "s": ["<Container><Text>Hello ", "</Text>", "</Container>"],
             },
-            "s": ["<Container><Text>Hello ", "</Text>", "</Container>"]
-          }
-        }
-      });
+          },
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -167,9 +166,9 @@ main() async {
       "c": {
         "1": {
           "0": "mars",
-          "1": {"0": "2", "1": "3"}
-        }
-      }
+          "1": {"0": "2", "1": "3"},
+        },
+      },
     });
     await tester.pump();
 
@@ -177,31 +176,31 @@ main() async {
   });
 
   testWidgets('handles a nested live_component update', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        "0": 1,
-        "s": ["<Container>", "</Container>"],
-        "c": {
-          "1": {
-            "0": "world",
+    var view =
+        LiveView()..handleRenderedMessage({
+          "0": 1,
+          "s": ["<Container>", "</Container>"],
+          "c": {
             "1": {
-              "0": "1",
-              "1": "2",
-              "s": ["<Text>Counter1: ", " - ", "</Text>"]
+              "0": "world",
+              "1": {
+                "0": "1",
+                "1": "2",
+                "s": ["<Text>Counter1: ", " - ", "</Text>"],
+              },
+              "2": 2,
+              "s": ["<Container><Text>Hello ", "</Text>", "", "</Container>"],
             },
-            "2": 2,
-            "s": ["<Container><Text>Hello ", "</Text>", "", "</Container>"]
+            "2": {
+              "0": {
+                "0": "1",
+                "1": "2",
+                "s": ["<Text>Counter2: ", " - ", "</Text>"],
+              },
+              "s": ["<Container>", "</Container>"],
+            },
           },
-          "2": {
-            "0": {
-              "0": "1",
-              "1": "2",
-              "s": ["<Text>Counter2: ", " - ", "</Text>"]
-            },
-            "s": ["<Container>", "</Container>"]
-          }
-        }
-      });
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -218,12 +217,12 @@ main() async {
         "1": {
           "0": "mars",
           "1": {"0": "2", "1": "3"},
-          "2": 2
+          "2": 2,
         },
         "2": {
-          "0": {"0": "2", "1": "3"}
-        }
-      }
+          "0": {"0": "2", "1": "3"},
+        },
+      },
     });
     await tester.pump();
 

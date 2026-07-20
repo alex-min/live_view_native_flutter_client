@@ -7,9 +7,12 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('live reloads the page', (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': ['<Text>my page</Text>']
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<Text>my page</Text>'],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -17,7 +20,8 @@ main() async {
     expect(find.firstText(), 'my page');
 
     view.handleLiveReloadMessage(
-        Message(event: PhoenixChannelEvent.custom('assets_change')));
+      Message(event: PhoenixChannelEvent.custom('assets_change')),
+    );
 
     await tester.pumpAndSettle();
 
@@ -27,8 +31,8 @@ main() async {
         <Text>my page edited</Text>
         <link phx-click="${baseActions.goBack}">go back</link>
         </Container>
-      """
-      ]
+      """,
+      ],
     });
 
     await tester.pumpAndSettle();
@@ -36,11 +40,13 @@ main() async {
     expect(find.firstText(), 'my page edited');
 
     expect(
-        view.router.pages.map((p) => {'name': p.page.name, 'junk': p.junk}), [
-      {'name': 'loading', 'junk': false},
-      {'name': '/', 'junk': true},
-      {'name': '/', 'junk': false}
-    ]);
+      view.router.pages.map((p) => {'name': p.page.name, 'junk': p.junk}),
+      [
+        {'name': 'loading', 'junk': false},
+        {'name': '/', 'junk': true},
+        {'name': '/', 'junk': false},
+      ],
+    );
 
     // taping go back should do nothing
     // we only reloaded the first page and we should not have any naviation to go back to
@@ -52,9 +58,12 @@ main() async {
   });
 
   testWidgets('live reloads after redirection', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': ['<link live-patch="/second-page">link</link>']
-    });
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<link live-patch="/second-page">link</link>'],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -64,7 +73,7 @@ main() async {
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
 
     view.handleRenderedMessage({
-      's': ['<Text>second page</Text>']
+      's': ['<Text>second page</Text>'],
     });
 
     await tester.pumpAndSettle();
@@ -74,13 +83,14 @@ main() async {
     // we receive this event 3 times from the server
     for (var i = 0; i < 3; i++) {
       view.handleLiveReloadMessage(
-          Message(event: PhoenixChannelEvent.custom('assets_change')));
+        Message(event: PhoenixChannelEvent.custom('assets_change')),
+      );
     }
 
     await tester.pumpAndSettle();
 
     view.handleRenderedMessage({
-      's': ['<Text>second page reloaded</Text>']
+      's': ['<Text>second page reloaded</Text>'],
     });
 
     await tester.pumpAndSettle();
@@ -94,11 +104,13 @@ main() async {
 
       // reconnect after live reload
       'GET http://localhost:9999/second-page?_format=flutter',
-      'GET http://localhost:9999/flutter/themes/default/light.json'
+      'GET http://localhost:9999/flutter/themes/default/light.json',
     ]);
 
-    expect(server.lastChannel?.parameters['redirect'],
-        'http://localhost:9999/second-page');
+    expect(
+      server.lastChannel?.parameters['redirect'],
+      'http://localhost:9999/second-page',
+    );
     expect(view.router.pages.last.page.name, '/second-page');
   });
 }

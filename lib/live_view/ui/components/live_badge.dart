@@ -20,7 +20,7 @@ class _LiveBadgeState extends StateWidget<LiveBadge> {
     'textStyle',
     'padding',
     'label',
-    'isLabelVisible'
+    'isLabelVisible',
   ];
 
   @override

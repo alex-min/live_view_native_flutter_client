@@ -45,8 +45,10 @@ extension Matches on String {
   bool matches(String regex) => RegExp(regex).firstMatch(this) != null;
 }
 
-dynamic tryJsonDecode(String? source,
-    {Object? Function(Object?, Object?)? reviver}) {
+dynamic tryJsonDecode(
+  String? source, {
+  Object? Function(Object?, Object?)? reviver,
+}) {
   if (source == null) {
     return null;
   }

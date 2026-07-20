@@ -8,7 +8,9 @@ bool? checkValue() =>
     (find.byType(Checkbox).evaluate().first.widget as Checkbox).value;
 
 main() async {
-  testWidgets('looks okay', (tester) => tester.checkScreenshot("""
+  testWidgets(
+    'looks okay',
+    (tester) => tester.checkScreenshot("""
           <flutter>
             <viewBody>
               <Container>
@@ -25,21 +27,25 @@ main() async {
               </Container>
             </viewBody>
           </flutter>
-        """, 'action_chip_test.png'));
+        """, 'action_chip_test.png'),
+  );
 
   testWidgets('phx click works', (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """<flutter>
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """<flutter>
         <viewBody>
           <Container>
             <ActionChip label="hello" phx-click="server_event" icon="home" />
           </Container>
         </viewBody>
       </flutter>
-      """
-      ],
-    });
+      """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -47,7 +53,9 @@ main() async {
     await tester.tap(find.text('hello'), warnIfMissed: false);
     await tester.pumpAndSettle();
 
-    expect(server.lastChannelAction,
-        liveEvents.phxClick({}, eventName: 'server_event'));
+    expect(
+      server.lastChannelAction,
+      liveEvents.phxClick({}, eventName: 'server_event'),
+    );
   });
 }

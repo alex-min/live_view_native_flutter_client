@@ -8,9 +8,11 @@ import '../test_helpers.dart';
 main() async {
   testWidgets('show scaffold test', (tester) async {
     await loadAppFonts();
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <viewBody>
               <ScaffoldMessage kind="info">
@@ -18,9 +20,10 @@ main() async {
               </ScaffoldMessage>
             </viewBody>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
     await expectLater(
@@ -32,10 +35,11 @@ main() async {
 
   testWidgets('does not show the scaffold on dead view', (tester) async {
     await loadAppFonts();
-    var (view, _) = await connect(LiveView(),
-        rendered: {
-          's': [
-            """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <viewBody>
               <ScaffoldMessage kind="info">
@@ -43,23 +47,26 @@ main() async {
               </ScaffoldMessage>
             </viewBody>
           </flutter>
-        """
-          ]
-        },
-        viewType: ViewType.deadView);
+        """,
+        ],
+      },
+      viewType: ViewType.deadView,
+    );
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
     expect(find.allTexts(), []);
     await tester.pumpAndSettle(const Duration(seconds: 5));
   });
 
-  testWidgets('Show the scaffold on dead view on the documentation',
-      (tester) async {
+  testWidgets('Show the scaffold on dead view on the documentation', (
+    tester,
+  ) async {
     await loadAppFonts();
-    var (view, _) = await connect(LiveView()..clientType = ClientType.webDocs,
-        rendered: {
-          's': [
-            """
+    var (view, _) = await connect(
+      LiveView()..clientType = ClientType.webDocs,
+      rendered: {
+        's': [
+          """
           <flutter>
             <viewBody>
               <ScaffoldMessage kind="info">
@@ -67,10 +74,11 @@ main() async {
               </ScaffoldMessage>
             </viewBody>
           </flutter>
-        """
-          ]
-        },
-        viewType: ViewType.deadView);
+        """,
+        ],
+      },
+      viewType: ViewType.deadView,
+    );
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
     expect(find.allTexts(), ['Scaffold Message']);
@@ -79,9 +87,11 @@ main() async {
 
   testWidgets('remove scaffold after 5 seconds', (tester) async {
     await loadAppFonts();
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <viewBody>
               <ScaffoldMessage kind="info" duration="5000">
@@ -89,9 +99,10 @@ main() async {
               </ScaffoldMessage>
             </viewBody>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
     await expectLater(
@@ -120,8 +131,8 @@ main() async {
               </ScaffoldMessage>
             </viewBody>
           </flutter>
-        """
-      ]
+        """,
+      ],
     });
     await tester.pumpAndSettle(const Duration(seconds: 2));
     await expectLater(

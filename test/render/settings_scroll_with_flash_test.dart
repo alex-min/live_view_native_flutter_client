@@ -5,13 +5,16 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('settings page scrolls when flash message is present',
-      (tester) async {
+  testWidgets('settings page scrolls when flash message is present', (
+    tester,
+  ) async {
     tester.setScreenSize(const Size(1280, 720));
 
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <AppBar>
               <title><Text>Settings</Text></title>
@@ -27,9 +30,10 @@ main() async {
               </SingleChildScrollView>
             </viewBody>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -38,7 +42,8 @@ main() async {
     expect(find.text('Scrollable content'), findsOneWidget);
     expect(
       find.text(
-          'A link to confirm your email change has been sent to the new address.'),
+        'A link to confirm your email change has been sent to the new address.',
+      ),
       findsOneWidget,
     );
 

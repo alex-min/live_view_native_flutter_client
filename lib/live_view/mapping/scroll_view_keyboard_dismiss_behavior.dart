@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 ScrollViewKeyboardDismissBehavior? getScrollViewKeyboardDismissBehavior(
-    String? prop) {
+  String? prop,
+) {
   switch (prop) {
     case 'manual':
       return ScrollViewKeyboardDismissBehavior.manual;

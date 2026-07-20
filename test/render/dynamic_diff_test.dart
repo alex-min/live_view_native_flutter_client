@@ -5,13 +5,13 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('Dynamic diffs are working', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<viewBody><Container>', '</Container>', '</viewBody>'],
-        '1': {
-          's': ['<Text>something</Text>'],
-        }
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<viewBody><Container>', '</Container>', '</viewBody>'],
+          '1': {
+            's': ['<Text>something</Text>'],
+          },
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -22,7 +22,7 @@ main() async {
         'd': [
           ['kind="info"', "hello"],
           ['kind="error"', "world"],
-        ]
+        ],
       },
     });
 
@@ -31,7 +31,7 @@ main() async {
     expect(find.allTexts(), ['hello', 'world', 'something']);
 
     view.handleDiffMessage({
-      '0': {'d': []}
+      '0': {'d': []},
     });
 
     await tester.pumpAndSettle();
@@ -40,13 +40,13 @@ main() async {
   });
 
   testWidgets('dynamic diffs with empty spots are working', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<viewBody>', '', '</viewBody>'],
-        '1': {
-          's': ['<Text>hello</Text>'],
-        }
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<viewBody>', '', '</viewBody>'],
+          '1': {
+            's': ['<Text>hello</Text>'],
+          },
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -56,7 +56,7 @@ main() async {
         's': ['<Text>', '</Text>'],
         'd': [
           ["other text"],
-        ]
+        ],
       },
     });
 

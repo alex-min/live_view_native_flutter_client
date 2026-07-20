@@ -14,8 +14,8 @@ main() async {
 
     view.handleRenderedMessage({
       's': [
-        '<ElevatedButton phx-window-resize="backend_event">hello</ElevatedButton>'
-      ]
+        '<ElevatedButton phx-window-resize="backend_event">hello</ElevatedButton>',
+      ],
     });
 
     await tester.pumpAndSettle();
@@ -40,8 +40,8 @@ main() async {
         <ElevatedButton 
           phx-responsive="${baseActions.hide}"
           phx-responsive-when="window_width > 1">hello</ElevatedButton>
-      """
-      ]
+      """,
+      ],
     });
     await tester.pumpAndSettle();
 
@@ -60,8 +60,8 @@ main() async {
           phx-window-resize="backend_event"
           phx-window-resize-when="window_width > 600">  
         >hello</ElevatedButton>
-      """
-      ]
+      """,
+      ],
     });
 
     await tester.pumpAndSettle();
@@ -72,29 +72,39 @@ main() async {
 
     await tester.pumpAndSettle();
 
-    expect(server.lastChannelActions?.last, liveEvents.join,
-        reason: 'it does not trigger the condition');
+    expect(
+      server.lastChannelActions?.last,
+      liveEvents.join,
+      reason: 'it does not trigger the condition',
+    );
 
     tester.setScreenSize(const Size(700, 700));
 
     await tester.pumpAndSettle();
 
     expect(
-        server.lastChannelActions?.last,
-        const EventSent(
-            'event', {'type': 'event', 'event': 'backend_event', 'value': {}}),
-        reason: 'the width is enough to trigger the event');
+      server.lastChannelActions?.last,
+      const EventSent('event', {
+        'type': 'event',
+        'event': 'backend_event',
+        'value': {},
+      }),
+      reason: 'the width is enough to trigger the event',
+    );
   });
 
-  testGoldens('hide with conditions reverses if the conditions are not met',
-      (tester) async {
+  testGoldens('hide with conditions reverses if the conditions are not met', (
+    tester,
+  ) async {
     loadAppFonts();
 
     tester.setScreenSize(const Size(400, 400));
 
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
         <Container padding="10">
           <Row>
             <ElevatedButton
@@ -103,9 +113,10 @@ main() async {
             >hello</ElevatedButton>
           </Row>
         </Container>
-      """
-      ]
-    });
+      """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
 
@@ -129,22 +140,26 @@ main() async {
     expect(find.firstText(), "hello");
   });
 
-  testWidgets('shows with conditions reverses if the conditions are not met',
-      (tester) async {
+  testWidgets('shows with conditions reverses if the conditions are not met', (
+    tester,
+  ) async {
     tester.setScreenSize(const Size(400, 400));
 
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
         <Container>
           <ElevatedButton 
             phx-window-resize="${baseActions.show}"
             phx-window-resize-when="window_width > 800" 
           >hello</ElevatedButton>
         </Container>
-      """
-      ]
-    });
+      """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
 

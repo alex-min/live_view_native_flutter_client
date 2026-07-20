@@ -25,9 +25,10 @@ class _LiveCachedNetworkImageState extends StateWidget<LiveCachedNetworkImage> {
     }
 
     return CachedNetworkImage(
-        placeholder: (context, url) => const CircularProgressIndicator(),
-        imageUrl: url,
-        width: doubleAttribute('width'),
-        height: doubleAttribute('height'));
+      placeholder: (context, url) => const CircularProgressIndicator(),
+      imageUrl: url,
+      width: doubleAttribute('width'),
+      height: doubleAttribute('height'),
+    );
   }
 }

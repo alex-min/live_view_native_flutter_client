@@ -5,12 +5,18 @@ import 'package:liveview_flutter/when/when.dart';
 import '../test_helpers.dart';
 
 Future<void> checkCondition(
-    WidgetTester tester, String conditions, dynamic result) async {
+  WidgetTester tester,
+  String conditions,
+  dynamic result,
+) async {
   await tester.pumpWidget(
     MaterialApp(
-        home: Builder(
-            builder: (context) => Text(
-                When(conditions: conditions).execute(context).toString()))),
+      home: Builder(
+        builder:
+            (context) =>
+                Text(When(conditions: conditions).execute(context).toString()),
+      ),
+    ),
   );
   expect(find.firstText(), result.toString());
 }

@@ -24,20 +24,22 @@ class _LiveIconState extends StateWidget<LiveIcon> {
       'opticalSize',
       'color',
       'semanticLabel',
-      'textDirection'
+      'textDirection',
     ]);
   }
 
   @override
   Widget render(BuildContext context) {
-    return Icon(getIcon(getAttribute('name')),
-        size: getDouble(getAttribute('size')),
-        fill: getDouble(getAttribute('fill')),
-        weight: getDouble(getAttribute('weight')),
-        grade: getDouble(getAttribute('grade')),
-        opticalSize: getDouble(getAttribute('opticalSize')),
-        color: getColor(context, getAttribute('color')),
-        semanticLabel: getAttribute('semanticLabel'),
-        textDirection: getTextDirection(getAttribute('textDirection')));
+    return Icon(
+      getIcon(getAttribute('name')),
+      size: getDouble(getAttribute('size')),
+      fill: getDouble(getAttribute('fill')),
+      weight: getDouble(getAttribute('weight')),
+      grade: getDouble(getAttribute('grade')),
+      opticalSize: getDouble(getAttribute('opticalSize')),
+      color: getColor(context, getAttribute('color')),
+      semanticLabel: getAttribute('semanticLabel'),
+      textDirection: getTextDirection(getAttribute('textDirection')),
+    );
   }
 }

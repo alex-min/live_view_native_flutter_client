@@ -17,7 +17,7 @@ class _LiveBottomAppBarState extends StateWidget<LiveBottomAppBar> {
     'color',
     'elevation',
     'shape',
-    'height'
+    'height',
   ];
 
   @override
@@ -27,14 +27,15 @@ class _LiveBottomAppBarState extends StateWidget<LiveBottomAppBar> {
   @override
   Widget render(BuildContext context) {
     return BottomAppBar(
-        height: doubleAttribute('height'),
-        clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
-        padding: marginOrPaddingAttribute('padding'),
-        shape: notchedShapeAttribute('shape'),
-        color: colorAttribute(context, 'color'),
-        elevation: doubleAttribute('elevation'),
-        surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
-        shadowColor: colorAttribute(context, 'shadowColor'),
-        child: singleChild());
+      height: doubleAttribute('height'),
+      clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
+      padding: marginOrPaddingAttribute('padding'),
+      shape: notchedShapeAttribute('shape'),
+      color: colorAttribute(context, 'color'),
+      elevation: doubleAttribute('elevation'),
+      surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
+      shadowColor: colorAttribute(context, 'shadowColor'),
+      child: singleChild(),
+    );
   }
 }

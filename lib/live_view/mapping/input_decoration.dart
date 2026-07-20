@@ -5,8 +5,13 @@ import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
 import 'package:liveview_flutter/live_view/mapping/edge_insets.dart';
 
-InputDecoration getInputDecoration(BuildContext context, String? css,
-    {Widget? icon, String? labelText, String? hintText}) {
+InputDecoration getInputDecoration(
+  BuildContext context,
+  String? css, {
+  Widget? icon,
+  String? labelText,
+  String? hintText,
+}) {
   Color? fillColor;
   bool? filled;
   bool? isDense;
@@ -56,16 +61,16 @@ InputDecoration getInputDecoration(BuildContext context, String? css,
 }
 
 ({InputBorder enabled, InputBorder focused})? _parseInputBorder(
-    BuildContext context, String value, BorderRadius? borderRadius) {
+  BuildContext context,
+  String value,
+  BorderRadius? borderRadius,
+) {
   var outlineColor = Theme.of(context).colorScheme.outline;
   var primaryColor = Theme.of(context).colorScheme.primary;
 
   switch (value.trim().toLowerCase()) {
     case 'none':
-      return (
-        enabled: InputBorder.none,
-        focused: InputBorder.none,
-      );
+      return (enabled: InputBorder.none, focused: InputBorder.none);
     case 'underline':
       return (
         enabled: UnderlineInputBorder(

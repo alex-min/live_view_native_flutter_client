@@ -16,14 +16,18 @@ class CustomPageTransition extends MaterialPage {
 
 class PageTransition<T> extends MaterialPageRoute<T> {
   PageTransition({required WidgetBuilder builder, RouteSettings? settings})
-      : super(builder: builder, settings: settings);
+    : super(builder: builder, settings: settings);
 
   @override
   get transitionDuration => const Duration(milliseconds: 250);
 
   @override
-  Widget buildTransitions(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation, Widget child) {
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     return CupertinoPageTransition(
       primaryRouteAnimation: animation,
       secondaryRouteAnimation: secondaryAnimation,

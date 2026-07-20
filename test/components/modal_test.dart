@@ -5,7 +5,9 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('modal test', (tester) => tester.checkScreenshot("""
+  testWidgets(
+    'modal test',
+    (tester) => tester.checkScreenshot("""
           <flutter>
             <viewBody>
               <modal close-event="hideModal">
@@ -25,7 +27,8 @@ main() async {
               </Container>
             </viewBody>
           </flutter>
-        """, 'modal_test.png'));
+        """, 'modal_test.png'),
+  );
 
   testWidgets('navigate to another page and back', (tester) async {
     var modal = {
@@ -41,21 +44,24 @@ main() async {
                 <Text>Modal Content</Text>
               </Container>
             </content>
-          </modal>"""
-      ]
+          </modal>""",
+      ],
     };
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        """<flutter>
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """<flutter>
             <viewBody>""",
-        """<Container> 
+          """<Container> 
                 <Text>demo</Text>
               </Container>
             </viewBody>
           </flutter>""",
-      ],
-      '0': modal
-    });
+        ],
+        '0': modal,
+      },
+    );
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
     await expectLater(

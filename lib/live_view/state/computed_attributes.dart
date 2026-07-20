@@ -18,7 +18,7 @@ mixin ComputedAttributes {
     'data-confirm-cancel',
     'data-confirm-confirm',
     'self-padding',
-    'self-margin'
+    'self-margin',
   ];
   Map<String, dynamic> currentVariables = {};
 
@@ -53,17 +53,26 @@ mixin ComputedAttributes {
     }
 
     var attrs = getVariableAttributes(
-        node, defaultListenedAttributes, currentVariables);
+      node,
+      defaultListenedAttributes,
+      currentVariables,
+    );
     computedAttributes.merge(attrs);
   }
 
   void reloadAttributes(XmlNode node, List<String> attributes) {
-    computedAttributes =
-        getVariableAttributes(node, attributes, currentVariables);
+    computedAttributes = getVariableAttributes(
+      node,
+      attributes,
+      currentVariables,
+    );
   }
 
-  Map<String, String?> bindChildVariableAttributes(XmlNode node,
-      List<String> attributes, Map<String, dynamic> stateVariables) {
+  Map<String, String?> bindChildVariableAttributes(
+    XmlNode node,
+    List<String> attributes,
+    Map<String, dynamic> stateVariables,
+  ) {
     for (var attribute in node.attributes) {
       var name = attribute.name.toString();
       if ((name.startsWith('phx-') ||

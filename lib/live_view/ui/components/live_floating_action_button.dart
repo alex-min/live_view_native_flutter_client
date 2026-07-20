@@ -51,16 +51,18 @@ class _LiveFloatingActionButtonState
       String? textLabel = getAttribute('label');
       String? iconLabel = getAttribute('icon');
 
-      Widget? label =
-          StateChild.extractChild<LiveLabelAttribute>(multipleChildren());
+      Widget? label = StateChild.extractChild<LiveLabelAttribute>(
+        multipleChildren(),
+      );
       label ??= StateChild.extractChild<LiveText>(multipleChildren());
       if (textLabel != null && label == null) {
         label ??= Text(textLabel);
       }
       label ??= const Text('');
 
-      Widget? icon =
-          StateChild.extractChild<LiveIconAttribute>(multipleChildren());
+      Widget? icon = StateChild.extractChild<LiveIconAttribute>(
+        multipleChildren(),
+      );
       icon ??= StateChild.extractChild<LiveIcon>(multipleChildren());
       if (iconLabel != null && icon == null) {
         icon ??= Icon(getIcon(iconLabel));
@@ -82,8 +84,9 @@ class _LiveFloatingActionButtonState
         mouseCursor: mouseCursorAttribute('mouseCursor'),
         clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
         autofocus: booleanAttribute('autofocus') ?? false,
-        materialTapTargetSize:
-            materialTapTargetSizeAttribute('materialTapTargetSize'),
+        materialTapTargetSize: materialTapTargetSizeAttribute(
+          'materialTapTargetSize',
+        ),
         isExtended: true,
         enableFeedback: booleanAttribute('enableFeedback'),
         onPressed: () {
@@ -107,8 +110,9 @@ class _LiveFloatingActionButtonState
       mini: booleanAttribute('mini') ?? false,
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
       autofocus: booleanAttribute('autofocus') ?? false,
-      materialTapTargetSize:
-          materialTapTargetSizeAttribute('materialTapTargetSize'),
+      materialTapTargetSize: materialTapTargetSizeAttribute(
+        'materialTapTargetSize',
+      ),
       isExtended: false,
       enableFeedback: booleanAttribute('enableFeedback'),
       onPressed: () {

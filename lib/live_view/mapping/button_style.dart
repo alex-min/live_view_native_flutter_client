@@ -24,11 +24,13 @@ ButtonStyle? getButtonStyle(BuildContext context, String? style) {
       case 'textStyle':
         textStyle = getMaterialTextStyle(styleValue, context);
       case 'backgroundColor':
-        backgroundColor =
-            MaterialStateProperty.all(getColor(context, styleValue));
+        backgroundColor = MaterialStateProperty.all(
+          getColor(context, styleValue),
+        );
       case 'foregroundColor':
-        foregroundColor =
-            MaterialStateProperty.all(getColor(context, styleValue));
+        foregroundColor = MaterialStateProperty.all(
+          getColor(context, styleValue),
+        );
       case 'minimumSize':
         minimumSize = _parseSize(styleValue);
       case 'maximumSize':
@@ -80,9 +82,7 @@ MaterialStateProperty<OutlinedBorder?>? _parseShape(String? value) {
     var radius = double.tryParse(parts[1]);
     if (radius != null) {
       return MaterialStateProperty.all(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radius),
-        ),
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
       );
     }
   }

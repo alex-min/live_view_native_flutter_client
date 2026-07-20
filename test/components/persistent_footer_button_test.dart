@@ -7,7 +7,9 @@ bool? checkValue() =>
     (find.byType(Checkbox).evaluate().first.widget as Checkbox).value;
 
 main() async {
-  testWidgets('looks okay', (tester) => tester.checkScreenshot("""
+  testWidgets(
+    'looks okay',
+    (tester) => tester.checkScreenshot("""
           <flutter>
             <PersistentFooterButton><ElevatedButton>hello</ElevatedButton></PersistentFooterButton>
             <PersistentFooterButton><ElevatedButton>hello</ElevatedButton></PersistentFooterButton>
@@ -17,5 +19,6 @@ main() async {
               </Column>
             </viewBody>
           </flutter>
-        """, 'persistent_footer_button_test.png'));
+        """, 'persistent_footer_button_test.png'),
+  );
 }

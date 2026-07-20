@@ -18,7 +18,7 @@ class _LiveCardState extends StateWidget<LiveCard> {
     'borderOnForeground',
     'margin',
     'clipBehavior',
-    'semanticContainer'
+    'semanticContainer',
   ];
 
   @override
@@ -28,15 +28,16 @@ class _LiveCardState extends StateWidget<LiveCard> {
   @override
   Widget render(BuildContext context) {
     return Card(
-        color: colorAttribute(context, 'color'),
-        shadowColor: colorAttribute(context, 'shadowColor'),
-        surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
-        elevation: doubleAttribute('elevation'),
-        shape: shapeBorderAttribute('shape'),
-        borderOnForeground: booleanAttribute('borderOnForeground') ?? true,
-        margin: marginOrPaddingAttribute('margin'),
-        clipBehavior: clipAttribute('clipBehavior'),
-        semanticContainer: booleanAttribute('semanticContainer') ?? true,
-        child: singleChild());
+      color: colorAttribute(context, 'color'),
+      shadowColor: colorAttribute(context, 'shadowColor'),
+      surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
+      elevation: doubleAttribute('elevation'),
+      shape: shapeBorderAttribute('shape'),
+      borderOnForeground: booleanAttribute('borderOnForeground') ?? true,
+      margin: marginOrPaddingAttribute('margin'),
+      clipBehavior: clipAttribute('clipBehavior'),
+      semanticContainer: booleanAttribute('semanticContainer') ?? true,
+      child: singleChild(),
+    );
   }
 }

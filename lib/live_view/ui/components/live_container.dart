@@ -13,8 +13,14 @@ class LiveContainer extends LiveStateWidget<LiveContainer> {
 
 class _LiveContainerState extends StateWidget<LiveContainer> {
   @override
-  void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node,
-      ['margin', 'padding', 'decoration', 'height', 'width', 'alignment']);
+  void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
+    'margin',
+    'padding',
+    'decoration',
+    'height',
+    'width',
+    'alignment',
+  ]);
 
   @override
   Widget render(BuildContext context) {

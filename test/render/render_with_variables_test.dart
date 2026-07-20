@@ -5,19 +5,21 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('handles variable inside text', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': [
-          '<Text>the first counter is (',
-          ') and the second one is (',
-          ')</Text>'
-        ],
-        '0': 10,
-        '1': 12
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': [
+            '<Text>the first counter is (',
+            ') and the second one is (',
+            ')</Text>',
+          ],
+          '0': 10,
+          '1': 12,
+        });
 
     await tester.runLiveView(view);
-    expect(find.firstText(),
-        'the first counter is (10) and the second one is (12)');
+    expect(
+      find.firstText(),
+      'the first counter is (10) and the second one is (12)',
+    );
   });
 }

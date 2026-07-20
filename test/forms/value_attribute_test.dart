@@ -6,12 +6,12 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('changing value does not reset the input', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<TextField ', '', '></TextField>'],
-        '0': 'name="myfield"',
-        '1': 'initialValue="content"',
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<TextField ', '', '></TextField>'],
+          '0': 'name="myfield"',
+          '1': 'initialValue="content"',
+        });
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

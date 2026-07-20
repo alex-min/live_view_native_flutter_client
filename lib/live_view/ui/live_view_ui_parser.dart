@@ -78,13 +78,13 @@ class LiveViewUiParser {
   String urlPath;
   ViewType viewType;
 
-  LiveViewUiParser(
-      {required this.html,
-      required Map<String, dynamic> htmlVariables,
-      required this.liveView,
-      required this.urlPath,
-      required this.viewType})
-      : _htmlVariables = htmlVariables;
+  LiveViewUiParser({
+    required this.html,
+    required Map<String, dynamic> htmlVariables,
+    required this.liveView,
+    required this.urlPath,
+    required this.viewType,
+  }) : _htmlVariables = htmlVariables;
 
   (List<Widget>, NodeState?) parse() => parseHtml(html, _htmlVariables, []);
 
@@ -94,28 +94,29 @@ class LiveViewUiParser {
     String? componentId,
     List<String> nestedState,
   ) {
-    var res = html.joinWith((i) {
-      if (variables.containsKey(i.toString())) {
-        var currentVariable = variables[i.toString()];
-        var injectedValue = currentVariable.toString().trim();
+    var res =
+        html.joinWith((i) {
+          if (variables.containsKey(i.toString())) {
+            var currentVariable = variables[i.toString()];
+            var injectedValue = currentVariable.toString().trim();
 
-        while (currentVariable is Map) {
-          currentVariable = currentVariable[i.toString()];
-          injectedValue = currentVariable.toString().trim();
-        }
+            while (currentVariable is Map) {
+              currentVariable = currentVariable[i.toString()];
+              injectedValue = currentVariable.toString().trim();
+            }
 
-        if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
-          var split = injectedValue.indexOf('="');
-          var key = injectedValue.substring(0, split);
-          return ' $key="[[flutterState key=$i]]" ';
-        }
-      }
-      if (componentId != null) {
-        return '[[flutterState key=$i component=$componentId]]';
-      }
+            if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
+              var split = injectedValue.indexOf('="');
+              var key = injectedValue.substring(0, split);
+              return ' $key="[[flutterState key=$i]]" ';
+            }
+          }
+          if (componentId != null) {
+            return '[[flutterState key=$i component=$componentId]]';
+          }
 
-      return '[[flutterState key=$i]]';
-    }).trim();
+          return '[[flutterState key=$i]]';
+        }).trim();
 
     return res;
   }
@@ -130,12 +131,7 @@ class LiveViewUiParser {
       return ([const SizedBox.shrink()], null);
     }
 
-    var fullHtml = recursiveRender(
-      html,
-      variables,
-      null,
-      nestedState,
-    );
+    var fullHtml = recursiveRender(html, variables, null, nestedState);
 
     late XmlDocument xml;
 
@@ -192,88 +188,121 @@ class LiveViewUiParser {
 
   static void registerDefaultComponents() {
     LiveViewUiRegistry.instance
-      ..add(['Scaffold'],
-          (state) => [LiveScaffold(state: state, key: Key(uuid.v4()))])
-      ..add(['Container'],
-          (state) => [LiveContainer(state: state, key: Key(uuid.v4()))])
-      ..add(['Tooltip'],
-          (state) => [LiveTooltip(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Scaffold',
+      ], (state) => [LiveScaffold(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Container',
+      ], (state) => [LiveContainer(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Tooltip',
+      ], (state) => [LiveTooltip(state: state, key: Key(uuid.v4()))])
       ..add(['Text'], (state) => [LiveText(state: state, key: Key(uuid.v4()))])
-      ..add(['HtmlView'],
-          (state) => [LiveHtmlView(state: state, key: Key(uuid.v4()))])
-      ..add(['ElevatedButton'],
-          (state) => [LiveElevatedButton(state: state, key: Key(uuid.v4()))])
-      ..add(['Center'],
-          (state) => [LiveCenter(state: state, key: Key(uuid.v4()))])
-      ..add(['ListView'],
-          (state) => [LiveListView(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'HtmlView',
+      ], (state) => [LiveHtmlView(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'ElevatedButton',
+      ], (state) => [LiveElevatedButton(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Center',
+      ], (state) => [LiveCenter(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'ListView',
+      ], (state) => [LiveListView(state: state, key: Key(uuid.v4()))])
       ..add(['Form'], (state) => [LiveForm(state: state, key: Key(uuid.v4()))])
-      ..add(['TextField'],
-          (state) => [LiveTextField(state: state, key: Key(uuid.v4()))])
-      ..add(['hidden'],
-          (state) => [LiveHiddenInput(state: state, key: Key(uuid.v4()))])
-      ..add(['AppBar'],
-          (state) => [LiveAppBar(state: state, key: Key(uuid.v4()))])
-      ..add(['title'],
-          (state) => [LiveTitleAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(['leading'],
-          (state) => [LiveLeadingAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'TextField',
+      ], (state) => [LiveTextField(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'hidden',
+      ], (state) => [LiveHiddenInput(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'AppBar',
+      ], (state) => [LiveAppBar(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'title',
+      ], (state) => [LiveTitleAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'leading',
+      ], (state) => [LiveLeadingAttribute(state: state, key: Key(uuid.v4()))])
       ..add(['link'], (state) => [LiveLink(state: state, key: Key(uuid.v4()))])
-      ..add(['icon'],
-          (state) => [LiveIconAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(['label'],
-          (state) => [LiveLabelAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'icon',
+      ], (state) => [LiveIconAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'label',
+      ], (state) => [LiveLabelAttribute(state: state, key: Key(uuid.v4()))])
       ..add(
-          ['selectedIcon'],
-          (state) =>
-              [LiveIconSelectedAttribute(state: state, key: Key(uuid.v4()))])
+        ['selectedIcon'],
+        (state) => [
+          LiveIconSelectedAttribute(state: state, key: Key(uuid.v4())),
+        ],
+      )
       ..add(['Icon'], (state) => [LiveIcon(state: state, key: Key(uuid.v4()))])
-      ..add(['Column'],
-          (state) => [LiveColumn(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Column',
+      ], (state) => [LiveColumn(state: state, key: Key(uuid.v4()))])
       ..add(['Row'], (state) => [LiveRow(state: state, key: Key(uuid.v4()))])
       ..add(['Flex'], (state) => [LiveFlex(state: state, key: Key(uuid.v4()))])
       ..add(
-          ['PersistentFooterButton'],
-          (state) =>
-              [LivePersistentFooterButton(state: state, key: Key(uuid.v4()))])
-      ..add(['BottomSheet'],
-          (state) => [LiveBottomSheet(state: state, key: Key(uuid.v4()))])
-      ..add(['Drawer'],
-          (state) => [LiveDrawer(state: state, key: Key(uuid.v4()))])
-      ..add(['EndDrawer'],
-          (state) => [LiveEndDrawer(state: state, key: Key(uuid.v4()))])
-      ..add(['DrawerHeader'],
-          (state) => [LiveDrawerHeader(state: state, key: Key(uuid.v4()))])
+        ['PersistentFooterButton'],
+        (state) => [
+          LivePersistentFooterButton(state: state, key: Key(uuid.v4())),
+        ],
+      )
+      ..add([
+        'BottomSheet',
+      ], (state) => [LiveBottomSheet(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Drawer',
+      ], (state) => [LiveDrawer(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'EndDrawer',
+      ], (state) => [LiveEndDrawer(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'DrawerHeader',
+      ], (state) => [LiveDrawerHeader(state: state, key: Key(uuid.v4()))])
       ..add(
-          ['BottomNavigationBar'],
-          (state) =>
-              [LiveBottomNavigationBar(state: state, key: Key(uuid.v4()))])
-      ..add(['BottomAppBar'],
-          (state) => [LiveBottomAppBar(state: state, key: Key(uuid.v4()))])
-      ..add(['DropdownButton'],
-          (state) => [LiveDropdownButton(state: state, key: Key(uuid.v4()))])
+        ['BottomNavigationBar'],
+        (state) => [LiveBottomNavigationBar(state: state, key: Key(uuid.v4()))],
+      )
+      ..add([
+        'BottomAppBar',
+      ], (state) => [LiveBottomAppBar(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'DropdownButton',
+      ], (state) => [LiveDropdownButton(state: state, key: Key(uuid.v4()))])
       ..add(['BottomNavigationBarItem'], (state) => [const SizedBox.shrink()])
-      ..add(['Positioned'],
-          (state) => [LivePositioned(state: state, key: Key(uuid.v4()))])
-      ..add(
-          ['Stack'], (state) => [LiveStack(state: state, key: Key(uuid.v4()))])
-      ..add(['NavigationRail'],
-          (state) => [LiveNavigationRail(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Positioned',
+      ], (state) => [LivePositioned(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Stack',
+      ], (state) => [LiveStack(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'NavigationRail',
+      ], (state) => [LiveNavigationRail(state: state, key: Key(uuid.v4()))])
       ..add(['NavigationRailDestination'], (state) => [const SizedBox.shrink()])
       ..add([
         'CachedNetworkImage',
-        'Image'
+        'Image',
       ], (state) => [LiveCachedNetworkImage(state: state, key: Key(uuid.v4()))])
-      ..add(['CosmicBackground'],
-          (state) => [LiveCosmicBackground(state: state, key: Key(uuid.v4()))])
-      ..add(['Expanded'],
-          (state) => [LiveExpanded(state: state, key: Key(uuid.v4()))])
-      ..add(['FilledButton'],
-          (state) => [LiveFilledButton(state: state, key: Key(uuid.v4()))])
-      ..add(['viewBody'],
-          (state) => [LiveViewBody(state: state, key: Key(uuid.v4()))])
-      ..add(
-          ['modal'], (state) => [LiveModal(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'CosmicBackground',
+      ], (state) => [LiveCosmicBackground(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Expanded',
+      ], (state) => [LiveExpanded(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'FilledButton',
+      ], (state) => [LiveFilledButton(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'viewBody',
+      ], (state) => [LiveViewBody(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'modal',
+      ], (state) => [LiveModal(state: state, key: Key(uuid.v4()))])
       // Those xml nodes are transparent and aren't rendered in the client
       // We just traverse them
       ..add(['compiled-lvn-stylesheet', 'div', 'flutter'], (state) {
@@ -283,58 +312,84 @@ class LiveViewUiParser {
         }
         return ret;
       })
-      ..add(['Checkbox'],
-          (state) => [LiveCheckbox(state: state, key: Key(uuid.v4()))])
-      ..add(['SafeArea'],
-          (state) => [LiveSafeArea(state: state, key: Key(uuid.v4()))])
-      ..add(['SegmentedButton'],
-          (state) => [LiveSegmentedButton(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Checkbox',
+      ], (state) => [LiveCheckbox(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'SafeArea',
+      ], (state) => [LiveSafeArea(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'SegmentedButton',
+      ], (state) => [LiveSegmentedButton(state: state, key: Key(uuid.v4()))])
       ..add(['LiveButtonSegment'], (state) => [const SizedBox.shrink()])
       ..add(
-          ['FloatingActionButton'],
-          (state) =>
-              [LiveFloatingActionButton(state: state, key: Key(uuid.v4()))])
-      ..add(['avatar'],
-          (state) => [LiveAvatarAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(['ActionChip'],
-          (state) => [LiveActionChip(state: state, key: Key(uuid.v4()))])
-      ..add(['content'],
-          (state) => [LiveContentAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(['MaterialBanner'],
-          (state) => [LiveMaterialBanner(state: state, key: Key(uuid.v4()))])
-      ..add(['TextButton'],
-          (state) => [LiveTextButton(state: state, key: Key(uuid.v4()))])
-      ..add(['Autocomplete'],
-          (state) => [LiveAutocomplete(state: state, key: Key(uuid.v4()))])
-      ..add(
-          ['Badge'], (state) => [LiveBadge(state: state, key: Key(uuid.v4()))])
-      ..add(['hint'],
-          (state) => [LiveHintAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(
-          ['disabledHint'],
-          (state) =>
-              [LiveDisabledHintAttribute(state: state, key: Key(uuid.v4()))])
+        ['FloatingActionButton'],
+        (state) => [
+          LiveFloatingActionButton(state: state, key: Key(uuid.v4())),
+        ],
+      )
       ..add([
-        'underline'
-      ], (state) => [LiveUnderlineAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(['IconButton'],
-          (state) => [LiveIconButton(state: state, key: Key(uuid.v4()))])
-      ..add(['Card'], (state) => [LiveCard(state: state, key: Key(uuid.v4()))])
-      ..add(['subtitle'],
-          (state) => [LiveSubtitleAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(['trailing'],
-          (state) => [LiveTrailingAttribute(state: state, key: Key(uuid.v4()))])
-      ..add(['ListTile'],
-          (state) => [LiveListTile(state: state, key: Key(uuid.v4()))])
-      ..add(['ScaffoldMessage'],
-          (state) => [LiveScaffoldMessage(state: state, key: Key(uuid.v4()))])
-      ..add(['meta', 'csrf-token', 'iframe'],
-          (state) => [const SizedBox.shrink()])
+        'avatar',
+      ], (state) => [LiveAvatarAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'ActionChip',
+      ], (state) => [LiveActionChip(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'content',
+      ], (state) => [LiveContentAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'MaterialBanner',
+      ], (state) => [LiveMaterialBanner(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'TextButton',
+      ], (state) => [LiveTextButton(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Autocomplete',
+      ], (state) => [LiveAutocomplete(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Badge',
+      ], (state) => [LiveBadge(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'hint',
+      ], (state) => [LiveHintAttribute(state: state, key: Key(uuid.v4()))])
       ..add(
-          ['SingleChildScrollView'],
-          (state) =>
-              [LiveSingleChildScrollView(state: state, key: Key(uuid.v4()))])
-      ..add(['SizedBox'],
-          (state) => [LiveSizedBox(state: state, key: Key(uuid.v4()))]);
+        ['disabledHint'],
+        (state) => [
+          LiveDisabledHintAttribute(state: state, key: Key(uuid.v4())),
+        ],
+      )
+      ..add([
+        'underline',
+      ], (state) => [LiveUnderlineAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'IconButton',
+      ], (state) => [LiveIconButton(state: state, key: Key(uuid.v4()))])
+      ..add(['Card'], (state) => [LiveCard(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'subtitle',
+      ], (state) => [LiveSubtitleAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'trailing',
+      ], (state) => [LiveTrailingAttribute(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'ListTile',
+      ], (state) => [LiveListTile(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'ScaffoldMessage',
+      ], (state) => [LiveScaffoldMessage(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'meta',
+        'csrf-token',
+        'iframe',
+      ], (state) => [const SizedBox.shrink()])
+      ..add(
+        ['SingleChildScrollView'],
+        (state) => [
+          LiveSingleChildScrollView(state: state, key: Key(uuid.v4())),
+        ],
+      )
+      ..add([
+        'SizedBox',
+      ], (state) => [LiveSizedBox(state: state, key: Key(uuid.v4()))]);
   }
 }

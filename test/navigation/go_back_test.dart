@@ -8,25 +8,28 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('navigate to another page and back', (tester) async {
-    var (view, server) = await connect(LiveView(), onRequest: (request) {
-      if (request.url.path == '/') {
-        return textFlutterHttpResponse("""<flutter>
+    var (view, server) = await connect(
+      LiveView(),
+      onRequest: (request) {
+        if (request.url.path == '/') {
+          return textFlutterHttpResponse("""<flutter>
               $xmlCsrf 
               <viewBody><link live-patch="/second-page"><Text>variable: 0</Text></link></viewBody>
               </flutter>
             """);
-      }
-      return textFlutterHttpResponse(xmlCsrf);
-    });
+        }
+        return textFlutterHttpResponse(xmlCsrf);
+      },
+    );
 
     await tester.runLiveView(view);
 
     view.handleRenderedMessage({
       's': [
         '<link live-patch="/second-page"><Text>variable: ',
-        '</Text></link>'
+        '</Text></link>',
       ],
-      '0': 1
+      '0': 1,
     });
 
     await tester.pumpAndSettle();
@@ -36,15 +39,18 @@ main() async {
     await tester.tap(find.byType(LiveLink));
 
     view.handleRenderedMessage({
-      's': ['<Text phx-click="${baseActions.goBack}">go back</Text>']
+      's': ['<Text phx-click="${baseActions.goBack}">go back</Text>'],
     });
 
     await tester.pumpAndSettle();
     await tester.tap(find.byType(LiveText));
 
     await tester.runAsync(() => Future.delayed(const Duration(seconds: 2)));
-    expect(server.lastChannelActions,
-        [liveEvents.join, liveEvents.phxLeave, liveEvents.phxLeave]);
+    expect(server.lastChannelActions, [
+      liveEvents.join,
+      liveEvents.phxLeave,
+      liveEvents.phxLeave,
+    ]);
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
     expect(server.lastChannelActions, [liveEvents.join]);
 
@@ -56,12 +62,15 @@ main() async {
 
     view.handleRenderedMessage({
       's': ['<link patch="/second-page"><Text>variable: ', '</Text></link>'],
-      '0': 1
+      '0': 1,
     });
 
     await tester.pumpAndSettle();
-    expect(find.firstText(), 'variable: 1',
-        reason:
-            "it resets the state properly and there's no ghost variables change kept from the first view");
+    expect(
+      find.firstText(),
+      'variable: 1',
+      reason:
+          "it resets the state properly and there's no ghost variables change kept from the first view",
+    );
   });
 }

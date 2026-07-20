@@ -12,7 +12,8 @@ BottomNavigationBarType? getBottomNavigationBarType(String? prop) {
 }
 
 BottomNavigationBarLandscapeLayout? getBottomNavigationBarLandscapeLayout(
-    String? prop) {
+  String? prop,
+) {
   switch (prop) {
     case 'centered':
       return BottomNavigationBarLandscapeLayout.centered;

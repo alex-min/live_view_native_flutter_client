@@ -5,11 +5,14 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('settings page shows flash message as scaffold banner',
-      (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+  testWidgets('settings page shows flash message as scaffold banner', (
+    tester,
+  ) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <AppBar>
               <title><Text>Settings</Text></title>
@@ -21,9 +24,10 @@ main() async {
               <Text>Change email</Text>
             </viewBody>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -31,7 +35,8 @@ main() async {
     expect(find.text('Change email'), findsOneWidget);
     expect(
       find.text(
-          'A link to confirm your email change has been sent to the new address.'),
+        'A link to confirm your email change has been sent to the new address.',
+      ),
       findsOneWidget,
     );
 

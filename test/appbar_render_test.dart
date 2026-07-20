@@ -6,7 +6,9 @@ import 'package:liveview_flutter/live_view/ui/live_view_ui_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('parses a server response with a top-level AppBar', (tester) async {
+  testWidgets('parses a server response with a top-level AppBar', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final view = LiveView();
     view.catchExceptions = false;
@@ -32,13 +34,14 @@ void main() {
 </div>
 ''';
 
-    final (widgets, rootState) = LiveViewUiParser(
-      html: [body],
-      htmlVariables: {},
-      liveView: view,
-      urlPath: '/',
-      viewType: ViewType.liveView,
-    ).parse();
+    final (widgets, rootState) =
+        LiveViewUiParser(
+          html: [body],
+          htmlVariables: {},
+          liveView: view,
+          urlPath: '/',
+          viewType: ViewType.liveView,
+        ).parse();
 
     expect(
       widgets.whereType<LiveAppBar>(),
@@ -46,11 +49,7 @@ void main() {
       reason: 'Expected a LiveAppBar in parsed widgets, got: $widgets',
     );
 
-    view.router.updatePage(
-      url: '/',
-      widget: widgets,
-      rootState: rootState,
-    );
+    view.router.updatePage(url: '/', widget: widgets, rootState: rootState);
 
     await tester.pumpAndSettle();
 

@@ -69,10 +69,12 @@ class _LiveScaffoldMessageState extends StateWidget<LiveScaffoldMessage> {
   void closeScaffold(String kind) {
     timer?.cancel();
     timer = null;
-    widget.state.liveView.sendEvent(ExecLiveEvent(
-      type: 'click',
-      name: "lv:clear-flash",
-      value: {"key": kind},
-    ));
+    widget.state.liveView.sendEvent(
+      ExecLiveEvent(
+        type: 'click',
+        name: "lv:clear-flash",
+        value: {"key": kind},
+      ),
+    );
   }
 }

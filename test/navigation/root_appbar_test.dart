@@ -5,11 +5,12 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('root AppBar persists across navigation',
-      (tester) async {
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+  testWidgets('root AppBar persists across navigation', (tester) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
           <flutter>
             <csrf-token value="token"></csrf-token>
             <div data-phx-session="session" data-phx-static="static">
@@ -22,9 +23,10 @@ main() async {
               </viewBody>
             </div>
           </flutter>
-        """
-      ]
-    });
+        """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -47,8 +49,8 @@ main() async {
               </viewBody>
             </div>
           </flutter>
-        """
-      ]
+        """,
+      ],
     });
     await tester.pumpAndSettle();
 

@@ -41,7 +41,7 @@ class _LiveListTileState extends StateWidget<LiveListTile> {
     'horizontalTitleGap',
     'minVerticalPadding',
     'minLeadingWidth',
-    'titleAlignment'
+    'titleAlignment',
   ];
 
   @override
@@ -71,8 +71,10 @@ class _LiveListTileState extends StateWidget<LiveListTile> {
       textColor: colorAttribute(context, 'textColor'),
       titleTextStyle: textStyleAttribute('titleTextStyle', context),
       subtitleTextStyle: textStyleAttribute('subtitleTextStyle', context),
-      leadingAndTrailingTextStyle:
-          textStyleAttribute('leadingAndTrailingTextStyle', context),
+      leadingAndTrailingTextStyle: textStyleAttribute(
+        'leadingAndTrailingTextStyle',
+        context,
+      ),
       contentPadding: marginOrPaddingAttribute('contentPadding'),
       enabled: booleanAttribute('enabled') ?? true,
       onTap: () => executeTapEventsManually(),

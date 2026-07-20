@@ -16,7 +16,7 @@ class _LiveAutocompleteState extends StateWidget<LiveAutocomplete> {
     'name',
     'initialValue',
     'optionsViewOpenDirection',
-    'optionsMaxHeight'
+    'optionsMaxHeight',
   ];
   bool allowInitialValueChange = true;
   var unamedInput = const Uuid().v4();
@@ -59,27 +59,29 @@ class _LiveAutocompleteState extends StateWidget<LiveAutocomplete> {
 
   @override
   Widget render(BuildContext context) {
-    var options = childrenNodesOf(node, 'Result').map((result) {
-      var attributes = bindChildVariableAttributes(
-          result, ['value'], widget.state.variables);
-      return attributes['value'] ?? '';
-    }).toList();
+    var options =
+        childrenNodesOf(node, 'Result').map((result) {
+          var attributes = bindChildVariableAttributes(result, [
+            'value',
+          ], widget.state.variables);
+          return attributes['value'] ?? '';
+        }).toList();
 
     return Autocomplete<String>(
-        initialValue: initialValue,
-        optionsBuilder: (field) {
-          FormFieldEvent(
-                  name: getAttribute('name') ??
-                      'unamed-autocomplete-$unamedInput',
-                  data: field.text,
-                  type: FormFieldEventType.change)
-              .dispatch(context);
-          return options;
-        },
-        optionsViewOpenDirection:
-            optionsViewOpenDirectionAttribute('optionsViewOpenDirection') ??
-                OptionsViewOpenDirection.down,
-        optionsMaxHeight: doubleAttribute('optionsMaxHeight') ?? 200.0,
-        onSelected: (selected) {});
+      initialValue: initialValue,
+      optionsBuilder: (field) {
+        FormFieldEvent(
+          name: getAttribute('name') ?? 'unamed-autocomplete-$unamedInput',
+          data: field.text,
+          type: FormFieldEventType.change,
+        ).dispatch(context);
+        return options;
+      },
+      optionsViewOpenDirection:
+          optionsViewOpenDirectionAttribute('optionsViewOpenDirection') ??
+          OptionsViewOpenDirection.down,
+      optionsMaxHeight: doubleAttribute('optionsMaxHeight') ?? 200.0,
+      onSelected: (selected) {},
+    );
   }
 }

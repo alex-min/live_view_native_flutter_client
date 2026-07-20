@@ -45,9 +45,11 @@ class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
   Widget build(BuildContext context) {
     if (widget.view.router.pages.last.containsGlobalNavigationWidgets) {
       bar = extractChild<LiveBottomNavigationBar>(
-          widget.view.router.pages.last.widgets);
-      bar ??=
-          extractChild<LiveBottomAppBar>(widget.view.router.pages.last.widgets);
+        widget.view.router.pages.last.widgets,
+      );
+      bar ??= extractChild<LiveBottomAppBar>(
+        widget.view.router.pages.last.widgets,
+      );
     } else {
       bar = null;
     }

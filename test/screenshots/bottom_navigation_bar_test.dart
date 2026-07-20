@@ -8,9 +8,11 @@ import '../test_helpers.dart';
 main() async {
   testGoldens('appbar', (tester) async {
     loadAppFonts();
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
       <Scaffold>
         <BottomNavigationBar>
           <BottomNavigationBarItem live-patch="/second-page" icon="display_settings" label="Display Settings" />
@@ -19,15 +21,18 @@ main() async {
           <BottomNavigationBarItem icon="drafts" label="Drafts" />
         </BottomNavigationBar>
       </Scaffold>
-      """
-      ]
-    });
+      """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
 
     await tester.pumpAndSettle();
 
-    await expectLater(find.byType(MaterialApp),
-        matchesGoldenFile('bottom_navigation_bar.png'));
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('bottom_navigation_bar.png'),
+    );
   });
 }

@@ -36,8 +36,9 @@ class StateChild {
       case 0:
         return const SizedBox.shrink();
       case 1:
-        var components =
-            (LiveViewUiParser.traverse(state.copyWith(node: children[0])));
+        var components = (LiveViewUiParser.traverse(
+          state.copyWith(node: children[0]),
+        ));
         if (components.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -45,11 +46,14 @@ class StateChild {
           return components.first;
         }
         return Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: components);
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: components,
+        );
       default:
         return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: multipleChildren(state));
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: multipleChildren(state),
+        );
     }
   }
 
@@ -65,12 +69,14 @@ class StateChild {
   }
 
   static List<LiveStateWidget> extractChildren<Type extends LiveStateWidget>(
-      List<Widget> children) {
+    List<Widget> children,
+  ) {
     List<LiveStateWidget> ret = [];
-    var refType = (Type.toString()
-        .replaceAll('Live', '')
-        .replaceAll('Attribute', '')
-        .toLowerCase());
+    var refType =
+        (Type.toString()
+            .replaceAll('Live', '')
+            .replaceAll('Attribute', '')
+            .toLowerCase());
     for (var child in children) {
       if (child is Type) {
         ret.add(child);
@@ -117,12 +123,14 @@ class StateChild {
   /// ```
   /// The Row here will be picked up as the ```text``` property. This concept is useful to map unusual widgets to properties.
   static LiveStateWidget? extractChild<Type extends LiveStateWidget>(
-      List<Widget> children) {
+    List<Widget> children,
+  ) {
     LiveStateWidget? ret;
-    var refType = (Type.toString()
-        .replaceAll('Live', '')
-        .replaceAll('Attribute', '')
-        .toLowerCase());
+    var refType =
+        (Type.toString()
+            .replaceAll('Live', '')
+            .replaceAll('Attribute', '')
+            .toLowerCase());
     for (var child in children) {
       if (child is Type) {
         ret = child;

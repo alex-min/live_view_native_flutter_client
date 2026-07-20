@@ -13,12 +13,13 @@ EdgeInsets? getEdgeInsets(String? edges) {
     return EdgeInsets.zero;
   }
 
-  var values = edges
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .replaceAll(RegExp(r'[^\d\s.]'), '')
-      .split(' ')
-      .map((e) => double.tryParse(e))
-      .toList();
+  var values =
+      edges
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .replaceAll(RegExp(r'[^\d\s.]'), '')
+          .split(' ')
+          .map((e) => double.tryParse(e))
+          .toList();
 
   if (values.any((e) => e == null)) {
     return null;

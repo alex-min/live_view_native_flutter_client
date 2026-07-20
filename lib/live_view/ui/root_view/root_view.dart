@@ -20,17 +20,17 @@ class _LiveRootViewState extends State<LiveRootView> {
       ErrorWidget.builder = (err) {
         return liveView.fallbackPages.buildFlutterError(
           liveView,
-          FlutterErrorDetails(
-            exception: err,
-            stack: StackTrace.current,
-          ),
+          FlutterErrorDetails(exception: err, stack: StackTrace.current),
         );
       };
     }
-    return MultiProvider(providers: [
-      ChangeNotifierProvider.value(value: liveView.changeNotifier),
-      ChangeNotifierProvider.value(value: liveView.connectionNotifier),
-      ChangeNotifierProvider.value(value: liveView.themeSettings)
-    ], child: LiveViewRootMaterialApp(view: widget.view));
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: liveView.changeNotifier),
+        ChangeNotifierProvider.value(value: liveView.connectionNotifier),
+        ChangeNotifierProvider.value(value: liveView.themeSettings),
+      ],
+      child: LiveViewRootMaterialApp(view: widget.view),
+    );
   }
 }

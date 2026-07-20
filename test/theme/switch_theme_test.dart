@@ -12,14 +12,14 @@ import '../test_helpers.dart';
 
 var redButtonTheme = jsonHttpResponse({
   "elevatedButtonTheme": {
-    "style": {"backgroundColor": "#ff0000"}
-  }
+    "style": {"backgroundColor": "#ff0000"},
+  },
 });
 
 var blueButtonTheme = jsonHttpResponse({
   "elevatedButtonTheme": {
-    "style": {"backgroundColor": "#0000ff"}
-  }
+    "style": {"backgroundColor": "#0000ff"},
+  },
 });
 
 main() async {
@@ -35,22 +35,22 @@ main() async {
 
   testGoldens('switching themes', (tester) async {
     await loadAppFonts();
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        '<ElevatedButton ',
-        '>button theme</ElevatedButton>',
-      ],
-      '0': 'phx-click="${FlutterExec.encode([
-            FlutterExecAction(
-                name: 'switchTheme',
-                value: {'theme': 'default', 'mode': 'dark'}),
-          ])}"',
-    }, onRequest: (request) {
-      if (request.url.path == '/flutter/themes/default/dark.json') {
-        return redButtonTheme;
-      }
-      return null;
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<ElevatedButton ', '>button theme</ElevatedButton>'],
+        '0':
+            'phx-click="${FlutterExec.encode([
+              FlutterExecAction(name: 'switchTheme', value: {'theme': 'default', 'mode': 'dark'}),
+            ])}"',
+      },
+      onRequest: (request) {
+        if (request.url.path == '/flutter/themes/default/dark.json') {
+          return redButtonTheme;
+        }
+        return null;
+      },
+    );
 
     await tester.runLiveView(view);
 
@@ -63,70 +63,83 @@ main() async {
     await tester.pumpAndSettle();
 
     await expectLater(
-        find.byType(MaterialApp), matchesGoldenFile('switch_theme_test.png'));
+      find.byType(MaterialApp),
+      matchesGoldenFile('switch_theme_test.png'),
+    );
   });
 
   testWidgets('loads a theme from the storage', (tester) async {
     var once = false;
-    var (view, _) = await connect(LiveView(), onRequest: (request) {
-      if (request.url.path == '/flutter/themes/default/light.json' &&
-          once == false) {
-        once = true;
-        return redButtonTheme;
-      }
-      return null;
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      onRequest: (request) {
+        if (request.url.path == '/flutter/themes/default/light.json' &&
+            once == false) {
+          once = true;
+          return redButtonTheme;
+        }
+        return null;
+      },
+    );
 
     view.themeSettings = ThemeSettings()..httpClient = view.httpClient;
     await view.themeSettings.loadCurrentTheme();
 
     expect(
-        view.themeSettings.lightTheme?.elevatedButtonTheme.style
-            ?.backgroundColor
-            ?.resolve({}),
-        const Color.fromARGB(255, 255, 0, 0));
+      view.themeSettings.lightTheme?.elevatedButtonTheme.style?.backgroundColor
+          ?.resolve({}),
+      const Color.fromARGB(255, 255, 0, 0),
+    );
   });
 
   testWidgets('refetches the theme when switching', (tester) async {
     var count = 0;
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        '<ElevatedButton ',
-        '>button theme</ElevatedButton>',
-      ],
-      '0': 'phx-click="${FlutterExec.encode([
-            FlutterExecAction(
-                name: 'switchTheme',
-                value: {'theme': 'default', 'mode': 'light'}),
-          ])}"',
-    }, onRequest: (request) {
-      if (request.url.path == '/flutter/themes/default/light.json') {
-        count++;
-        return count == 1 ? redButtonTheme : blueButtonTheme;
-      }
-      return null;
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<ElevatedButton ', '>button theme</ElevatedButton>'],
+        '0':
+            'phx-click="${FlutterExec.encode([
+              FlutterExecAction(name: 'switchTheme', value: {'theme': 'default', 'mode': 'light'}),
+            ])}"',
+      },
+      onRequest: (request) {
+        if (request.url.path == '/flutter/themes/default/light.json') {
+          count++;
+          return count == 1 ? redButtonTheme : blueButtonTheme;
+        }
+        return null;
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
     expect(
-        view.themeSettings.lightTheme?.elevatedButtonBgColor, BasicColors.red);
+      view.themeSettings.lightTheme?.elevatedButtonBgColor,
+      BasicColors.red,
+    );
 
     await tester.tap(find.byType(LiveElevatedButton));
     await tester.pumpAndSettle();
 
     expect(
-        view.themeSettings.lightTheme?.elevatedButtonBgColor, BasicColors.blue);
+      view.themeSettings.lightTheme?.elevatedButtonBgColor,
+      BasicColors.blue,
+    );
   });
 
   testWidgets('toggleTheme switches between light and dark', (tester) async {
-    var toggleAction =
-        FlutterExec.encode([FlutterExecAction(name: 'toggleTheme')]);
+    var toggleAction = FlutterExec.encode([
+      FlutterExecAction(name: 'toggleTheme'),
+    ]);
 
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': ['<IconButton phx-click="$toggleAction" icon="dark_mode" />'],
-    });
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<IconButton phx-click="$toggleAction" icon="dark_mode" />'],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();

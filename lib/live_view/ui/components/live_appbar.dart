@@ -7,7 +7,7 @@ import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 class LiveAppBar extends LiveStateWidget<LiveAppBar>
     implements PreferredSizeWidget {
   const LiveAppBar({super.key, required super.state})
-      : preferredSize = const Size.fromHeight(kToolbarHeight);
+    : preferredSize = const Size.fromHeight(kToolbarHeight);
 
   @override
   final Size preferredSize;
@@ -32,7 +32,7 @@ class _LiveAppBarState extends StateWidget<LiveAppBar> {
       'toolbarOpacity',
       'toolbarHeight',
       'leadingWidth',
-      'shape'
+      'shape',
     ]);
   }
 

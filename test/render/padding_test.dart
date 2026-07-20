@@ -6,10 +6,10 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('global padding', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<Container padding="10" />'],
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<Container padding="10" />'],
+        });
 
     await tester.runLiveView(view);
 
@@ -17,36 +17,30 @@ main() async {
   });
 
   testWidgets('symetric padding', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<Container padding="10 20" />'],
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<Container padding="10 20" />'],
+        });
 
     await tester.runLiveView(view);
 
     expect(
-        find.firstOf<Container>().padding,
-        const EdgeInsets.symmetric(
-          vertical: 10.0,
-          horizontal: 20.0,
-        ));
+      find.firstOf<Container>().padding,
+      const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+    );
   });
 
   testWidgets('full padding', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<Container padding="10 20 30 40" />'],
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<Container padding="10 20 30 40" />'],
+        });
 
     await tester.runLiveView(view);
 
     expect(
-        find.firstOf<Container>().padding,
-        const EdgeInsets.only(
-          top: 10.0,
-          right: 20.0,
-          bottom: 30.0,
-          left: 40.0,
-        ));
+      find.firstOf<Container>().padding,
+      const EdgeInsets.only(top: 10.0, right: 20.0, bottom: 30.0, left: 40.0),
+    );
   });
 }

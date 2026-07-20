@@ -14,11 +14,13 @@ var _redirectResponse = http.Response(
 
 main() async {
   testWidgets(
-      'phx-trigger-action is only submitted once across offstage rebuilds',
-      (tester) async {
-    var (view, server) = await connect(LiveView(), rendered: {
-      's': [
-        '''
+    'phx-trigger-action is only submitted once across offstage rebuilds',
+    (tester) async {
+      var (view, server) = await connect(
+        LiveView(),
+        rendered: {
+          's': [
+            '''
           <flutter>
             <csrf-token value="csrf"></csrf-token>
             <viewBody>
@@ -27,33 +29,42 @@ main() async {
               </Form>
             </viewBody>
           </flutter>
-        '''
-      ],
-    }, onRequest: (request) {
-      if (request.method == 'POST') {
-        return _redirectResponse;
-      }
-      return null;
-    });
+        ''',
+          ],
+        },
+        onRequest: (request) {
+          if (request.method == 'POST') {
+            return _redirectResponse;
+          }
+          return null;
+        },
+      );
 
-    await tester.runLiveView(view);
-    await tester.pumpAndSettle();
+      await tester.runLiveView(view);
+      await tester.pumpAndSettle();
 
-    expect(server.httpRequestsMade.where((r) => r.method == 'POST').length, 1);
+      expect(
+        server.httpRequestsMade.where((r) => r.method == 'POST').length,
+        1,
+      );
 
-    // Simulate navigation to another page. The original form is kept offstage
-    // and will be rebuilt; it must not post again.
-    view.currentUrl = '/other';
-    view.handleRenderedMessage({
-      's': [
-        '''<div id="phx-id" data-phx-session="session" data-phx-static="static" data-phx-main=""><flutter>
+      // Simulate navigation to another page. The original form is kept offstage
+      // and will be rebuilt; it must not post again.
+      view.currentUrl = '/other';
+      view.handleRenderedMessage({
+        's': [
+          '''<div id="phx-id" data-phx-session="session" data-phx-static="static" data-phx-main=""><flutter>
           <csrf-token value="csrf"></csrf-token>
           <viewBody><Text>other page</Text></viewBody>
-        </flutter></div>'''
-      ],
-    });
-    await tester.pumpAndSettle();
+        </flutter></div>''',
+        ],
+      });
+      await tester.pumpAndSettle();
 
-    expect(server.httpRequestsMade.where((r) => r.method == 'POST').length, 1);
-  });
+      expect(
+        server.httpRequestsMade.where((r) => r.method == 'POST').length,
+        1,
+      );
+    },
+  );
 }

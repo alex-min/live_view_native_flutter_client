@@ -6,52 +6,56 @@ import '../test_helpers.dart';
 
 main() async {
   testWidgets('rext styling', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': [
-          '<Text style="textTheme: headlineMedium; fontWeight: bold; fontStyle: italic">my text</Text>'
-        ],
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': [
+            '<Text style="textTheme: headlineMedium; fontWeight: bold; fontStyle: italic">my text</Text>',
+          ],
+        });
 
     await tester.runLiveView(view);
 
     var text = find.firstOf<Text>();
     expect(
-        text.style!.debugLabel,
-        [
-          '(((englishLike headlineSmall 2021)',
-          '.merge((blackMountainView headlineSmall).apply))',
-          '.merge(fontWeight FontWeight.w700))',
-          '.merge(fontStyle FontStyle.italic)'
-        ].join());
+      text.style!.debugLabel,
+      [
+        '(((englishLike headlineSmall 2021)',
+        '.merge((blackMountainView headlineSmall).apply))',
+        '.merge(fontWeight FontWeight.w700))',
+        '.merge(fontStyle FontStyle.italic)',
+      ].join(),
+    );
   });
 
   testWidgets('handles dynamic styling', (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': ['<Text ', '>my test</Text>'],
-        '0': 'style="fontWeight: bold"',
-      });
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<Text ', '>my test</Text>'],
+          '0': 'style="fontWeight: bold"',
+        });
 
     await tester.runLiveView(view);
 
     var text = find.firstOf<Text>();
-    expect(text.style!.toString(),
-        'TextStyle(debugLabel: (unknown).merge(fontWeight FontWeight.w700), inherit: true, weight: 700)');
+    expect(
+      text.style!.toString(),
+      'TextStyle(debugLabel: (unknown).merge(fontWeight FontWeight.w700), inherit: true, weight: 700)',
+    );
   });
 
-  testWidgets('text rendering remove extra spaces, similar as html',
-      (tester) async {
-    var view = LiveView()
-      ..handleRenderedMessage({
-        's': [
-          """<Text>
+  testWidgets('text rendering remove extra spaces, similar as html', (
+    tester,
+  ) async {
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': [
+            """<Text>
         
             my test
           </Text>
-        """
-        ]
-      });
+        """,
+          ],
+        });
 
     await tester.runLiveView(view);
 

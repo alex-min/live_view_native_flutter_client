@@ -10,9 +10,11 @@ import '../test_helpers.dart';
 main() async {
   testGoldens('transitions', (tester) async {
     loadAppFonts();
-    var (view, _) = await connect(LiveView(), rendered: {
-      's': [
-        """
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
         <flutter>
           <AppBar><Text as="title">My App</Text></AppBar>
           <viewBody>
@@ -27,9 +29,10 @@ main() async {
             <BottomNavigationBarItem icon="drafts" label="Drafts" />
           </BottomNavigationBar>
         </flutter>
-      """
-      ]
-    });
+      """,
+        ],
+      },
+    );
 
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
@@ -40,11 +43,16 @@ main() async {
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-    await expectLater(find.byType(MaterialApp),
-        matchesGoldenFile('transitions_test_loading.png'));
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('transitions_test_loading.png'),
+    );
 
-    expect(view.router.pages.map((p) => p.page.name),
-        ['loading', '/', 'loading;/second-page']);
+    expect(view.router.pages.map((p) => p.page.name), [
+      'loading',
+      '/',
+      'loading;/second-page',
+    ]);
 
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
     view.handleRenderedMessage({
@@ -64,12 +72,14 @@ main() async {
             <BottomNavigationBarItem icon="drafts" label="Drafts" />
           </BottomNavigationBar>
         </flutter>
-        """
-      ]
+        """,
+      ],
     });
 
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp),
-        matchesGoldenFile('transitions_test_second_page.png'));
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('transitions_test_second_page.png'),
+    );
   });
 }

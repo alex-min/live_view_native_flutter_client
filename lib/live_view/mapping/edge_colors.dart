@@ -35,10 +35,10 @@ class EdgeColors {
   });
 
   const EdgeColors.all(Color value)
-      : left = value,
-        top = value,
-        right = value,
-        bottom = value;
+    : left = value,
+      top = value,
+      right = value,
+      bottom = value;
 
   const EdgeColors.only({
     this.left = Colors.black,
@@ -50,10 +50,10 @@ class EdgeColors {
   const EdgeColors.symmetric({
     Color vertical = Colors.black,
     Color horizontal = Colors.black,
-  })  : left = horizontal,
-        top = vertical,
-        right = horizontal,
-        bottom = vertical;
+  }) : left = horizontal,
+       top = vertical,
+       right = horizontal,
+       bottom = vertical;
 
   static const EdgeColors zero = EdgeColors.all(Colors.black);
 

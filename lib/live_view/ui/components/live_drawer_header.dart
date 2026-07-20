@@ -9,13 +9,7 @@ class LiveDrawerHeader extends LiveStateWidget<LiveDrawerHeader> {
 }
 
 class _LiveDrawerHeaderState extends StateWidget<LiveDrawerHeader> {
-  final attributes = [
-    'decoration',
-    'margin',
-    'padding',
-    'duration',
-    'curve',
-  ];
+  final attributes = ['decoration', 'margin', 'padding', 'duration', 'curve'];
 
   @override
   void onStateChange(Map<String, dynamic> diff) =>
@@ -27,10 +21,12 @@ class _LiveDrawerHeaderState extends StateWidget<LiveDrawerHeader> {
       decoration: decorationAttribute(context, 'decoration'),
       margin:
           edgeInsetsAttribute('margin') ?? const EdgeInsets.only(bottom: 8.0),
-      padding: edgeInsetsAttribute('padding') ??
+      padding:
+          edgeInsetsAttribute('padding') ??
           const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-      duration:
-          Duration(milliseconds: (doubleAttribute('duration') ?? 250).toInt()),
+      duration: Duration(
+        milliseconds: (doubleAttribute('duration') ?? 250).toInt(),
+      ),
       curve: curveAttribute('curve') ?? Curves.fastOutSlowIn,
       child: singleChild(),
     );

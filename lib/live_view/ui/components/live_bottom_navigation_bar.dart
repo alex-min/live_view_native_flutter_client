@@ -34,7 +34,7 @@ class _LiveBottomNavigationBarState
     'fixedColor',
     'iconSize',
     'enableFeedback',
-    'landscapeLayout'
+    'landscapeLayout',
   ];
   List<String> childAttributes = [
     'label',
@@ -64,9 +64,13 @@ class _LiveBottomNavigationBarState
   List<(Map<String, String?>, BottomNavigationBarItem)> bottomBarItems() {
     return childrenNodesOf(node, 'BottomNavigationBarItem').map((button) {
       var attributes = bindChildVariableAttributes(
-          button, childAttributes, widget.state.variables);
-      var children =
-          StateChild.multipleChildren(widget.state.copyWith(node: button));
+        button,
+        childAttributes,
+        widget.state.variables,
+      );
+      var children = StateChild.multipleChildren(
+        widget.state.copyWith(node: button),
+      );
 
       Widget? icon;
       if (attributes['icon'] != null) {
@@ -77,10 +81,11 @@ class _LiveBottomNavigationBarState
       return (
         attributes,
         BottomNavigationBarItem(
-            icon: icon ?? defaultIcon,
-            label: attributes['label'] ?? '',
-            backgroundColor: getColor(context, attributes['backgroundColor']),
-            tooltip: attributes['tooltip'])
+          icon: icon ?? defaultIcon,
+          label: attributes['label'] ?? '',
+          backgroundColor: getColor(context, attributes['backgroundColor']),
+          tooltip: attributes['tooltip'],
+        ),
       );
     }).toList();
   }
@@ -92,7 +97,8 @@ class _LiveBottomNavigationBarState
     if (children.length < 2) {
       if (kDebugMode) {
         throw Exception(
-            'Please add more than one "BottomNavigationBarItem" to <BottomNavigationBar>, flutter needs more than two at a minimum');
+          'Please add more than one "BottomNavigationBarItem" to <BottomNavigationBar>, flutter needs more than two at a minimum',
+        );
       } else {
         return const SizedBox.shrink();
       }
@@ -106,32 +112,34 @@ class _LiveBottomNavigationBarState
     }
 
     return BottomNavigationBar(
-        type: type,
-        elevation: doubleAttribute('elevation'),
-        currentIndex: _currentIndex,
-        onTap: (selected) {
-          setState(() {
-            _currentIndex = selected;
-          });
+      type: type,
+      elevation: doubleAttribute('elevation'),
+      currentIndex: _currentIndex,
+      onTap: (selected) {
+        setState(() {
+          _currentIndex = selected;
+        });
 
-          // tapping on the item
-          executeTapEventsManually(fromAttributes: children[selected].$1);
+        // tapping on the item
+        executeTapEventsManually(fromAttributes: children[selected].$1);
 
-          // tapping itself
-          executeTapEventsManually();
-        },
-        enableFeedback: booleanAttribute('enableFeedback'),
-        iconSize: doubleAttribute('iconSize') ?? 24.0,
-        fixedColor: colorAttribute(context, 'fixedColor'),
-        unselectedItemColor: colorAttribute(context, 'unselectedItemColor'),
-        selectedItemColor: colorAttribute(context, 'selectedItemColor'),
-        backgroundColor: colorAttribute(context, 'backgroundColor'),
-        showSelectedLabels: booleanAttribute('showSelectedLabels') ?? true,
-        showUnselectedLabels: booleanAttribute('showUnselectedLabels') ?? true,
-        selectedFontSize: doubleAttribute('selectedFontSize') ?? 14.0,
-        unselectedFontSize: doubleAttribute('unselectedFontSize') ?? 12.0,
-        landscapeLayout: getBottomNavigationBarLandscapeLayout(
-            getAttribute('landscapeLayout')),
-        items: children.map((c) => c.$2).toList());
+        // tapping itself
+        executeTapEventsManually();
+      },
+      enableFeedback: booleanAttribute('enableFeedback'),
+      iconSize: doubleAttribute('iconSize') ?? 24.0,
+      fixedColor: colorAttribute(context, 'fixedColor'),
+      unselectedItemColor: colorAttribute(context, 'unselectedItemColor'),
+      selectedItemColor: colorAttribute(context, 'selectedItemColor'),
+      backgroundColor: colorAttribute(context, 'backgroundColor'),
+      showSelectedLabels: booleanAttribute('showSelectedLabels') ?? true,
+      showUnselectedLabels: booleanAttribute('showUnselectedLabels') ?? true,
+      selectedFontSize: doubleAttribute('selectedFontSize') ?? 14.0,
+      unselectedFontSize: doubleAttribute('unselectedFontSize') ?? 12.0,
+      landscapeLayout: getBottomNavigationBarLandscapeLayout(
+        getAttribute('landscapeLayout'),
+      ),
+      items: children.map((c) => c.$2).toList(),
+    );
   }
 }

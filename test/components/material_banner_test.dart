@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('looks okay', (tester) => tester.checkScreenshot("""
+  testWidgets(
+    'looks okay',
+    (tester) => tester.checkScreenshot("""
           <flutter>
             <viewBody>
               <MaterialBanner content="hello" leading="home" backgroundColor="amberShade400">
@@ -19,5 +21,6 @@ main() async {
               <Text>hello</Text>
             </viewBody>
           </flutter>
-        """, 'material_banner_test.png'));
+        """, 'material_banner_test.png'),
+  );
 }

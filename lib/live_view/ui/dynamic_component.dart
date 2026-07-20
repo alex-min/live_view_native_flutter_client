@@ -4,9 +4,11 @@ import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 
-Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
-    {Map<String, dynamic> templates = const {},
-    Map<String, dynamic>? component}) {
+Map<String, dynamic> expandVariables(
+  Map<String, dynamic> diff, {
+  Map<String, dynamic> templates = const {},
+  Map<String, dynamic>? component,
+}) {
   var ret = Map<String, dynamic>.from(diff);
   var nextTemplate = Map<String, dynamic>.from(templates);
 
@@ -32,7 +34,7 @@ Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
     }
     for (List<dynamic> forList in ret['d']) {
       var localVar = {
-        for (var localVar in forList.indexed) '${localVar.$1}': localVar.$2
+        for (var localVar in forList.indexed) '${localVar.$1}': localVar.$2,
       };
       ret[count.toString()] = localVar;
       count++;
@@ -45,9 +47,13 @@ Map<String, dynamic> expandVariables(Map<String, dynamic> diff,
   return ret.map((k, v) {
     if (v is Map) {
       return MapEntry(
-          k,
-          expandVariables(Map<String, dynamic>.from(v),
-              templates: nextTemplate, component: component));
+        k,
+        expandVariables(
+          Map<String, dynamic>.from(v),
+          templates: nextTemplate,
+          component: component,
+        ),
+      );
     }
     return MapEntry(k, v);
   });
@@ -113,11 +119,13 @@ List<Widget> renderDynamicComponent(NodeState state) {
   if (dynamicKeys.length > 1 && comps.isEmpty) {
     for (var elementKey in dynamicKeys) {
       comps.addAll(
-        state.parser.parseHtml(
-          ["[[flutterState key=${elementKey.key}]]"],
-          state.variables,
-          state.nestedState,
-        ).$1,
+        state.parser
+            .parseHtml(
+              ["[[flutterState key=${elementKey.key}]]"],
+              state.variables,
+              state.nestedState,
+            )
+            .$1,
       );
     }
   }

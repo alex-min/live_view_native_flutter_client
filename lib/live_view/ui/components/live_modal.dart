@@ -61,19 +61,18 @@ class _LiveModalState extends StateWidget<LiveModal> {
               if (didPop) {
                 return;
               }
-              widget.state.liveView.sendEvent(ExecLiveEvent(
-                type: 'event',
-                name: closeEvent,
-                value: {},
-              ));
+              widget.state.liveView.sendEvent(
+                ExecLiveEvent(type: 'event', name: closeEvent, value: {}),
+              );
             },
             child: Scaffold(
-              appBar: title != null
-                  ? PreferredSize(
-                      preferredSize: const Size.fromHeight(kToolbarHeight),
-                      child: title,
-                    )
-                  : null,
+              appBar:
+                  title != null
+                      ? PreferredSize(
+                        preferredSize: const Size.fromHeight(kToolbarHeight),
+                        child: title,
+                      )
+                      : null,
               body: content,
             ),
           );

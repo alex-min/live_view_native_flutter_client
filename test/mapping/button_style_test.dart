@@ -4,10 +4,16 @@ import 'package:liveview_flutter/live_view/mapping/button_style.dart';
 
 Future<ButtonStyle?> loadStyle(WidgetTester tester, String style) async {
   ButtonStyle? loadedStyle;
-  await tester.pumpWidget(MaterialApp(home: Builder(builder: (context) {
-    loadedStyle = getButtonStyle(context, style);
-    return const SizedBox.shrink();
-  })));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (context) {
+          loadedStyle = getButtonStyle(context, style);
+          return const SizedBox.shrink();
+        },
+      ),
+    ),
+  );
   await tester.pumpAndSettle();
   return loadedStyle;
 }
@@ -15,19 +21,27 @@ Future<ButtonStyle?> loadStyle(WidgetTester tester, String style) async {
 void main() {
   testWidgets('parse text style', (tester) async {
     var style = await loadStyle(tester, 'textStyle: { fontWeight: bold }');
-    expect(style?.textStyle?.resolve({}), const TextStyle(fontWeight: FontWeight.bold));
+    expect(
+      style?.textStyle?.resolve({}),
+      const TextStyle(fontWeight: FontWeight.bold),
+    );
   });
 
   testWidgets('parse colors', (tester) async {
     var style = await loadStyle(
-        tester, 'backgroundColor: #5353E5; foregroundColor: #FFFFFF');
+      tester,
+      'backgroundColor: #5353E5; foregroundColor: #FFFFFF',
+    );
     expect(style?.backgroundColor?.resolve({}), const Color(0xFF5353E5));
     expect(style?.foregroundColor?.resolve({}), Colors.white);
   });
 
   testWidgets('parse padding', (tester) async {
     var style = await loadStyle(tester, 'padding: { 12 24 }');
-    expect(style?.padding?.resolve({}), const EdgeInsets.symmetric(vertical: 12, horizontal: 24));
+    expect(
+      style?.padding?.resolve({}),
+      const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+    );
   });
 
   testWidgets('parse size', (tester) async {

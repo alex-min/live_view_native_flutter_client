@@ -112,10 +112,10 @@ void main() {
 
         // The email is inside a TextButton wrapped with AbsorbPointer, so the
         // text itself is not hit-testable. Tap the button that contains it.
-        final settingsButton =
-            find.widgetWithText(LiveTextButton, email).last;
+        final settingsButton = find.widgetWithText(LiveTextButton, email).last;
         expect(settingsButton, findsOneWidget,
-            reason: 'The app bar should contain a settings button for the user');
+            reason:
+                'The app bar should contain a settings button for the user');
         await tester.tap(settingsButton);
         await tester.pump();
 
@@ -192,7 +192,8 @@ Future<void> _ensureServer() async {
     environment: {'MIX_ENV': 'dev'},
   );
   if (seed.exitCode != 0) {
-    throw Exception('mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+    throw Exception(
+        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
   }
 
   final process = await Process.start(

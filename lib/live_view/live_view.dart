@@ -131,9 +131,7 @@ class LiveView {
   /// Holds all fallback widgets that will be used in the live view lifecycle
   LiveViewFallbackPages fallbackPages;
 
-  LiveView({
-    this.fallbackPages = const LiveViewFallbackPages(),
-  }) {
+  LiveView({this.fallbackPages = const LiveViewFallbackPages()}) {
     currentUrl = '/';
     router = LiveRouterDelegate(this);
     changeNotifier = StateNotifier();
@@ -212,7 +210,7 @@ class LiveView {
             fallbackPages.buildNoServerError(
               this,
               FlutterErrorDetails(exception: e, stack: stack),
-            )
+            ),
           ],
           rootState: null,
         );
@@ -223,7 +221,7 @@ class LiveView {
             fallbackPages.buildFlutterError(
               this,
               FlutterErrorDetails(exception: e, stack: stack),
-            )
+            ),
           ],
           rootState: null,
         );
@@ -304,7 +302,8 @@ class LiveView {
 
   void _readInitialSession(Document content) {
     try {
-      _csrf = (content
+      _csrf =
+          (content
               .querySelector('meta[name="csrf-token"]')
               ?.attributes['content']) ??
           (content
@@ -312,12 +311,14 @@ class LiveView {
               .first
               .attributes['value'])!;
 
-      _session = (content
-          .querySelector('[data-phx-session]')
-          ?.attributes['data-phx-session'])!;
-      _phxStatic = (content
-          .querySelector('[data-phx-static]')
-          ?.attributes['data-phx-static'])!;
+      _session =
+          (content
+              .querySelector('[data-phx-session]')
+              ?.attributes['data-phx-session'])!;
+      _phxStatic =
+          (content
+              .querySelector('[data-phx-static]')
+              ?.attributes['data-phx-static'])!;
 
       _liveViewId =
           (content.querySelector('[data-phx-main]')?.attributes['id'])!;
@@ -343,25 +344,25 @@ class LiveView {
   String get websocketScheme => endpointScheme == 'https' ? 'wss' : 'ws';
 
   Map<String, dynamic> _requiredSocketParams() => {
-        '_platform': 'flutter',
-        '_format': 'flutter',
-        '_lvn': {'os': getPlatformName()},
-        'vsn': '2.0.0',
-      };
+    '_platform': 'flutter',
+    '_format': 'flutter',
+    '_lvn': {'os': getPlatformName()},
+    'vsn': '2.0.0',
+  };
 
   Map<String, dynamic> _socketParams() => {
-        ..._requiredSocketParams(),
-        '_csrf_token': _csrf,
-        '_mounts': mount.toString(),
-        '_mount_attempts': '0',
-        'client_id': _clientId,
-      };
+    ..._requiredSocketParams(),
+    '_csrf_token': _csrf,
+    '_mounts': mount.toString(),
+    '_mount_attempts': '0',
+    'client_id': _clientId,
+  };
 
   Map<String, dynamic> _fullsocketParams({bool redirect = false}) {
     var params = {
       'session': _session,
       'static': _phxStatic,
-      'params': _socketParams()
+      'params': _socketParams(),
     };
     var nextUrl = "$endpointScheme://$host$currentUrl";
     if (redirect) {
@@ -445,12 +446,12 @@ class LiveView {
     _liveReloadSocket = liveSocket.create(
       url: "$websocketScheme://$host/phoenix/live_reload/socket/websocket",
       params: _requiredSocketParams(),
-      headers: {
-        'Accept': 'text/flutter',
-      },
+      headers: {'Accept': 'text/flutter'},
     );
-    var liveReload = _liveReloadSocket
-        .addChannel(topic: "phoenix:live_reload", parameters: {});
+    var liveReload = _liveReloadSocket.addChannel(
+      topic: "phoenix:live_reload",
+      parameters: {},
+    );
     liveReload.messages.listen(handleLiveReloadMessage);
 
     try {
@@ -486,8 +487,10 @@ class LiveView {
       return;
     }
     if (event.payload!['response']?.containsKey('rendered') ?? false) {
-      handleRenderedMessage(event.payload!['response']!['rendered'],
-          viewType: ViewType.liveView);
+      handleRenderedMessage(
+        event.payload!['response']!['rendered'],
+        viewType: ViewType.liveView,
+      );
     } else if (event.payload!['response']?.containsKey('diff') ?? false) {
       handleDiffMessage(event.payload!['response']!['diff']);
     } else if (event.payload!['response']?['redirect'] is Map) {
@@ -502,20 +505,23 @@ class LiveView {
     }
   }
 
-  handleRenderedMessage(Map<String, dynamic> rendered,
-      {ViewType viewType = ViewType.liveView}) {
+  handleRenderedMessage(
+    Map<String, dynamic> rendered, {
+    ViewType viewType = ViewType.liveView,
+  }) {
     // A full render replaces whatever diffs were targeting the previous page,
     // so drop stale diff state before the new widgets read it.
     changeNotifier.emptyData();
     var elements = List<String>.from(rendered['s']);
 
-    var render = LiveViewUiParser(
-      html: elements,
-      htmlVariables: expandVariables(rendered),
-      liveView: this,
-      urlPath: currentUrl,
-      viewType: viewType,
-    ).parse();
+    var render =
+        LiveViewUiParser(
+          html: elements,
+          htmlVariables: expandVariables(rendered),
+          liveView: this,
+          urlPath: currentUrl,
+          viewType: viewType,
+        ).parse();
     lastRender = render.$1;
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
@@ -545,12 +551,14 @@ class LiveView {
     var eventData = {
       'type': event.type,
       'event': event.name,
-      'value': event.value
+      'value': event.value,
     };
 
     if (clientType == ClientType.webDocs) {
-      web_html.window.parent
-          ?.postMessage({'type': 'event', 'data': eventData}, "*");
+      web_html.window.parent?.postMessage({
+        'type': 'event',
+        'data': eventData,
+      }, "*");
     } else if (_channel?.state != PhoenixChannelState.closed) {
       _channel?.push('event', eventData);
     }
@@ -564,22 +572,25 @@ class LiveView {
     var previousWidgets = router.lastRealPage?.widgets ?? [];
 
     List<Widget> ret = [
-      InternalView(child: fallbackPages.buildLoading(this, url))
+      InternalView(child: fallbackPages.buildLoading(this, url)),
     ];
 
     // we keep the previous navigation items to avoid flickering with the load screen
     // the loading page doesn't stay very long but it's enough to cause a flickering
-    var previousNavigation = previousWidgets
-        .where((element) =>
-            element is LiveDrawer ||
-            element is LiveAppBar ||
-            element is LiveBottomNavigationBar ||
-            element is LiveBottomAppBar ||
-            element is LiveNavigationRail ||
-            element is LiveFloatingActionButton ||
-            element is LivePersistentFooterButton ||
-            element is LiveBottomSheet)
-        .toList();
+    var previousNavigation =
+        previousWidgets
+            .where(
+              (element) =>
+                  element is LiveDrawer ||
+                  element is LiveAppBar ||
+                  element is LiveBottomNavigationBar ||
+                  element is LiveBottomAppBar ||
+                  element is LiveNavigationRail ||
+                  element is LiveFloatingActionButton ||
+                  element is LivePersistentFooterButton ||
+                  element is LiveBottomSheet,
+            )
+            .toList();
 
     ret.addAll(previousNavigation);
 
@@ -598,8 +609,10 @@ class LiveView {
   Future<void> livePatch(String url) async {
     changeNotifier.emptyData();
     if (clientType == ClientType.webDocs) {
-      web_html.window.parent
-          ?.postMessage({'type': 'live-patch', 'url': url}, "*");
+      web_html.window.parent?.postMessage({
+        'type': 'live-patch',
+        'url': url,
+      }, "*");
     }
     router.pushPage(
       url: 'loading;$url',
@@ -628,15 +641,19 @@ class LiveView {
   }
 
   Future<http.Response> deadViewPostQuery(
-      String url, Map<String, dynamic> formValues) async {
+    String url,
+    Map<String, dynamic> formValues,
+  ) async {
     formValues['_csrf_token'] = _csrf;
 
-    var r = await httpClient.post(shortUrlToUri(url),
-        headers: {
-          ...httpHeaders(),
-          'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
-        },
-        body: formValues);
+    var r = await httpClient.post(
+      shortUrlToUri(url),
+      headers: {
+        ...httpHeaders(),
+        'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
+      },
+      body: formValues,
+    );
     await disconnect();
 
     if (r.headers['set-cookie'] != null) {
@@ -655,17 +672,17 @@ class LiveView {
     }
 
     handleRenderedMessage({
-      's': [r.body]
+      's': [r.body],
     }, viewType: ViewType.deadView);
 
     return r;
   }
 
   Future<http.Response> deadViewDeleteQuery(String url) async {
-    var r = await httpClient.delete(shortUrlToUri(url), headers: {
-      ...httpHeaders(),
-      'x-csrf-token': _csrf ?? '',
-    });
+    var r = await httpClient.delete(
+      shortUrlToUri(url),
+      headers: {...httpHeaders(), 'x-csrf-token': _csrf ?? ''},
+    );
 
     if (r.headers['set-cookie'] != null) {
       await _parseAndSaveCookie(r.headers['set-cookie']!);
@@ -720,7 +737,7 @@ class LiveView {
     redirectToUrl = url;
 
     handleRenderedMessage({
-      's': [response.body]
+      's': [response.body],
     }, viewType: ViewType.deadView);
 
     if (_socket?.isConnected == true) {

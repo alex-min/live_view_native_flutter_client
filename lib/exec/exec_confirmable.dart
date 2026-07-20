@@ -13,9 +13,9 @@ class DataConfirm {
     String? title,
     String? confirm,
     String? cancel,
-  })  : title = title ?? 'Confirm?',
-        confirm = confirm ?? 'Ok',
-        cancel = cancel ?? 'Cancel';
+  }) : title = title ?? 'Confirm?',
+       confirm = confirm ?? 'Ok',
+       cancel = cancel ?? 'Cancel';
 }
 
 abstract class ExecConfirmable extends Exec {
@@ -32,20 +32,21 @@ abstract class ExecConfirmable extends Exec {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(dataConfirm!.title),
-        content: Text(dataConfirm!.message),
-        actions: [
-          TextButton(
-            child: Text(dataConfirm!.cancel),
-            onPressed: () => Navigator.of(context).pop(),
+      builder:
+          (context) => AlertDialog(
+            title: Text(dataConfirm!.title),
+            content: Text(dataConfirm!.message),
+            actions: [
+              TextButton(
+                child: Text(dataConfirm!.cancel),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              TextButton(
+                child: Text(dataConfirm!.confirm),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
           ),
-          TextButton(
-            child: Text(dataConfirm!.confirm),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
     ).then((result) {
       if (result == true) return handler(context, widget);
     });
