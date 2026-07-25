@@ -5,6 +5,7 @@ import 'package:liveview_flutter/exec/exec_confirmable.dart';
 import 'package:liveview_flutter/exec/exec_go_back.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/exec_live_patch.dart';
+import 'package:liveview_flutter/exec/exec_navigate.dart';
 import 'package:liveview_flutter/exec/exec_phx_href.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
 import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
@@ -95,6 +96,9 @@ class FlutterExecAction {
           url: value!['name'],
           method: attributes?['method'] ?? 'GET',
         );
+      }, triggers: [LiveViewExecTrigger.onTap])
+      ..add(['navigate'], (value, attributes) {
+        return ExecNavigate(url: value!['name']);
       }, triggers: [LiveViewExecTrigger.onTap])
       ..add(
         ['goBack'],

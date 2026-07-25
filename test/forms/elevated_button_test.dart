@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
 
@@ -76,5 +78,46 @@ main() async {
         'value': 'my_field=hello&_target=submit',
       }),
     ]);
+  });
+
+  testWidgets('navigate attribute navigates to a new page', (tester) async {
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
+          <ElevatedButton navigate="/users/sudo_mode/log_in?redirect=/users/settings">Unlock</ElevatedButton>
+        """,
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Unlock'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(view.router.pages.map((p) => p.page.name), [
+      'loading',
+      '/',
+      'loading;/users/sudo_mode/log_in?redirect=/users/settings',
+    ]);
+    expect(server.lastChannelActions, contains(liveEvents.phxLeave));
+
+    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleRenderedMessage({
+      's': [
+        """
+        <flutter>
+          <viewBody><Text>Sudo mode</Text></viewBody>
+        </flutter>
+      """,
+      ],
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sudo mode'), findsOneWidget);
   });
 }
