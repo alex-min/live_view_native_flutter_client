@@ -57,7 +57,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   /// Animation used for hiding or showing the widget (in milliseconds)
   int? animationDuration;
   Status status = Status.visible;
-  late StreamSubscription _eventSubscription;
+  StreamSubscription? _globalActionSubscription;
+  StreamSubscription? _windowResizeSubscription;
 
   /// Dirty flag to indicate that the state needs wiping.
   /// The state isn't wiped instantly due to some side effects when switching views.
@@ -84,10 +85,12 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     stateNotifier.addListener(onDiffUpdateEvent);
     widget.state.liveView.connectionNotifier.addListener(onWipeState);
     widget.state.liveView.goBackNotifier.addListener(onGoBack);
-    _eventSubscription = liveView.eventHub.on('globalAction', (data) {
+    _globalActionSubscription = liveView.eventHub.on('globalAction', (data) {
       handleGlobalAction(data);
     });
-    _eventSubscription = liveView.eventHub.on('phx:window:resize', (data) {
+    _windowResizeSubscription = liveView.eventHub.on('phx:window:resize', (
+      data,
+    ) {
       onWindowResize();
     });
     if (node.getAttribute('phx-onload') != null ||
@@ -102,7 +105,8 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     stateNotifier.removeListener(onDiffUpdateEvent);
     widget.state.liveView.connectionNotifier.removeListener(onWipeState);
     widget.state.liveView.goBackNotifier.removeListener(onGoBack);
-    _eventSubscription.cancel();
+    _globalActionSubscription?.cancel();
+    _windowResizeSubscription?.cancel();
     super.dispose();
   }
 

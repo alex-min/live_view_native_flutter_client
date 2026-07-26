@@ -143,6 +143,50 @@ void main() {
     },
   );
 
+  testWidgets('bottom navigation bar rebuilds on phx:window:resize event', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 800));
+
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
+          <flutter>
+            <viewBody>
+              <Text>Home page</Text>
+            </viewBody>
+            <BottomNavigationBar selectedItemColor="blue-500">
+              <BottomNavigationBarItem icon="home" label="Home" />
+              <BottomNavigationBarItem icon="settings" label="Settings" />
+            </BottomNavigationBar>
+          </flutter>
+          """,
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomNavigationBar), findsOneWidget);
+
+    // Change the screen size without pumping, then trigger a window resize
+    // event. The bottom nav should rebuild and hide on the wide screen.
+    tester.setScreenSize(const Size(1200, 800));
+    view.eventHub.fire('phx:window:resize');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomNavigationBar), findsNothing);
+
+    // And show again when resized back to narrow via the event.
+    tester.setScreenSize(const Size(400, 800));
+    view.eventHub.fire('phx:window:resize');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomNavigationBar), findsOneWidget);
+  });
+
   testWidgets('bottom navigation bar item phx-click fires event', (
     tester,
   ) async {

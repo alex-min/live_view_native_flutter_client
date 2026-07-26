@@ -53,6 +53,13 @@ class _LiveBottomNavigationBarState
   bool allowInitialValueChange = true;
 
   @override
+  void onWindowResize() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   void onWipeState() {
     allowInitialValueChange = true;
     super.onWipeState();
