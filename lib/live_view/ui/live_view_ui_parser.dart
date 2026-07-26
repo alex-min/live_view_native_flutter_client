@@ -94,31 +94,89 @@ class LiveViewUiParser {
     String? componentId,
     List<String> nestedState,
   ) {
-    var res =
-        html.joinWith((i) {
-          if (variables.containsKey(i.toString())) {
-            var currentVariable = variables[i.toString()];
-            var injectedValue = currentVariable.toString().trim();
+    if (html.isEmpty) {
+      return '';
+    }
 
-            while (currentVariable is Map) {
-              currentVariable = currentVariable[i.toString()];
-              injectedValue = currentVariable.toString().trim();
-            }
+    var buffer = StringBuffer();
+    for (var i = 0; i < html.length; i++) {
+      buffer.write(html[i]);
 
-            if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
-              var split = injectedValue.indexOf('="');
-              var key = injectedValue.substring(0, split);
-              return ' $key="[[flutterState key=$i]]" ';
-            }
-          }
-          if (componentId != null) {
-            return '[[flutterState key=$i component=$componentId]]';
-          }
+      if (i >= html.length - 1) {
+        continue;
+      }
 
-          return '[[flutterState key=$i]]';
-        }).trim();
+      var key = i.toString();
+      String replacement;
 
-    return res;
+      if (variables.containsKey(key)) {
+        var currentVariable = variables[key];
+        var injectedValue = currentVariable.toString().trim();
+
+        while (currentVariable is Map) {
+          currentVariable = currentVariable[key];
+          injectedValue = currentVariable.toString().trim();
+        }
+
+        var afterContext = html.sublist(i + 1).join();
+
+        if (RegExp(r'^[ a-zA-Z_-]+=\".*\"$').hasMatch(injectedValue)) {
+          var split = injectedValue.indexOf('="');
+          var attributeKey = injectedValue.substring(0, split);
+          replacement = ' $attributeKey="[[flutterState key=$i]]" ';
+        } else if (injectedValue.isEmpty &&
+            _isBetweenAttributes(buffer.toString(), afterContext)) {
+          // The variable represents an optional attribute that is currently
+          // empty. Dropping it keeps the surrounding XML valid.
+          replacement = '';
+        } else if (componentId != null) {
+          replacement = '[[flutterState key=$i component=$componentId]]';
+        } else {
+          replacement = '[[flutterState key=$i]]';
+        }
+      } else if (componentId != null) {
+        replacement = '[[flutterState key=$i component=$componentId]]';
+      } else {
+        replacement = '[[flutterState key=$i]]';
+      }
+
+      buffer.write(replacement);
+    }
+
+    return buffer.toString().trim();
+  }
+
+  /// Returns true when the current insertion point sits inside an opening tag
+  /// but outside of any quoted attribute value (i.e. between two attributes).
+  bool _isBetweenAttributes(String before, String after) {
+    var lastOpen = before.lastIndexOf('<');
+    if (lastOpen == -1) {
+      return false;
+    }
+
+    // If the opening tag has already been closed, we are not inside it.
+    if (before.indexOf('>', lastOpen) != -1) {
+      return false;
+    }
+
+    // And the tag must close later in the document.
+    if (!after.contains('>')) {
+      return false;
+    }
+
+    var inDoubleQuote = false;
+    var inSingleQuote = false;
+
+    for (var j = lastOpen; j < before.length; j++) {
+      var char = before[j];
+      if (char == '"' && !inSingleQuote) {
+        inDoubleQuote = !inDoubleQuote;
+      } else if (char == "'" && !inDoubleQuote) {
+        inSingleQuote = !inSingleQuote;
+      }
+    }
+
+    return !inDoubleQuote && !inSingleQuote;
   }
 
   (List<Widget>, NodeState?) parseHtml(

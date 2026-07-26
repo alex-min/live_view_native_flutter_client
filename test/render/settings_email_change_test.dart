@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
 
 import '../test_helpers.dart';
 
 main() async {
-  testWidgets('settings email form shows email validation error', (
+  testWidgets('settings email change form submits without current password', (
     tester,
   ) async {
-    var (view, _) = await connect(
+    var (view, server) = await connect(
       LiveView(),
       rendered: {
         's': [
@@ -27,11 +28,10 @@ main() async {
                       keyboardType="emailAddress"
                       autocorrect="false"
                       initialValue="user@example.com"
-                      errors='[{"message": "must have the @ sign and no spaces", "options": {}}]'
                       decoration="filled: true"
                     />
                     <SizedBox height="20.0" />
-                    <ElevatedButton type="submit">Change email</ElevatedButton>
+                    <ElevatedButton type="submit" name="submit">Change email</ElevatedButton>
                   </Form>
                 </Column>
               </SingleChildScrollView>
@@ -45,6 +45,16 @@ main() async {
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
-    expect(find.text('must have the @ sign and no spaces'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'new@example.com');
+    await tester.tap(find.byType(LiveElevatedButton));
+    await tester.pumpAndSettle();
+
+    expect(
+      server.lastChannelAction,
+      liveEvents.phxFormValidate(
+        'update_email',
+        'user%5Bemail%5D=new%40example.com&_target=submit',
+      ),
+    );
   });
 }

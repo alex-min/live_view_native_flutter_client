@@ -3,6 +3,26 @@ import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
+Map<String, dynamic> _mergeDiff(
+  Map<String, dynamic> base,
+  Map<String, dynamic> overlay,
+) {
+  var result = Map<String, dynamic>.from(base);
+  for (var entry in overlay.entries) {
+    var existing = result[entry.key];
+    var value = entry.value;
+    if (existing is Map && value is Map) {
+      result[entry.key] = _mergeDiff(
+        Map<String, dynamic>.from(existing),
+        Map<String, dynamic>.from(value),
+      );
+    } else {
+      result[entry.key] = value;
+    }
+  }
+  return result;
+}
+
 class LiveDynamicComponent extends LiveStateWidget<LiveDynamicComponent> {
   const LiveDynamicComponent({super.key, required super.state});
 
@@ -17,7 +37,7 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    lastLiveDiff = diff;
+    lastLiveDiff = _mergeDiff(lastLiveDiff, diff);
     listenInnerTextKeys();
     if (extraKeysListened.isNotEmpty) {
       if (lastLiveDiff.containsKey(extraKeysListened[0]) &&

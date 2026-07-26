@@ -28,6 +28,26 @@ abstract class LiveStateWidget<T extends StatefulWidget>
 
 typedef EventHandler = void Function(BuildContext context);
 
+Map<String, dynamic> mergeVariables(
+  Map<String, dynamic> base,
+  Map<String, dynamic> overlay,
+) {
+  var result = Map<String, dynamic>.from(base);
+  for (var entry in overlay.entries) {
+    var existing = result[entry.key];
+    var value = entry.value;
+    if (existing is Map && value is Map) {
+      result[entry.key] = mergeVariables(
+        Map<String, dynamic>.from(existing),
+        Map<String, dynamic>.from(value),
+      );
+    } else {
+      result[entry.key] = value;
+    }
+  }
+  return result;
+}
+
 abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     with TickerProviderStateMixin, AttributeHelpers, ComputedAttributes {
   /// What is notifying the widget of changes
@@ -53,7 +73,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     currentVariables = Map<String, dynamic>.from(widget.state.variables);
     if (stateNotifier.getDiff().isNotEmpty) {
       var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
-      currentVariables.addAll(lastLiveDiff);
+      currentVariables = mergeVariables(currentVariables, lastLiveDiff);
       reloadPredefinedAttributes(node);
     }
     computedAttributes = VariableAttributes({}, []);
@@ -142,7 +162,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
 
     if (lastLiveDiff.keys.any((key) => isKeyListened(ElementKey(key)))) {
-      currentVariables.addAll(lastLiveDiff);
+      currentVariables = mergeVariables(currentVariables, lastLiveDiff);
       onStateChange(lastLiveDiff);
       reloadPredefinedAttributes(node);
       return true;

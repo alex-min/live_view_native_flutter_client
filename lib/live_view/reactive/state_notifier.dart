@@ -14,6 +14,10 @@ Map<String, dynamic> nestedDiff(
       } else {
         currentDiff = Map<String, dynamic>.from(currentDiff[state]);
       }
+    } else {
+      // This subtree did not change; return an empty diff so the widget keeps
+      // its existing state instead of receiving the parent diff.
+      return {};
     }
   }
   return currentDiff;
