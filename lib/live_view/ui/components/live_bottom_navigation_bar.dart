@@ -18,6 +18,10 @@ class LiveBottomNavigationBar extends LiveStateWidget<LiveBottomNavigationBar> {
 
 class _LiveBottomNavigationBarState
     extends StateWidget<LiveBottomNavigationBar> {
+  /// Width threshold below which the bottom navigation bar is shown.
+  /// Matches the common Material Design mobile / tablet cutoff.
+  static const double _mobileBreakpoint = 600;
+
   @override
   HandleClickState handleClickState() => HandleClickState.manual;
   List<String> attributes = [
@@ -42,6 +46,8 @@ class _LiveBottomNavigationBarState
     'icon',
     'backgroundColor',
     'tooltip',
+    'live-patch',
+    'phx-click',
   ];
   int _currentIndex = 0;
   bool allowInitialValueChange = true;
@@ -92,6 +98,10 @@ class _LiveBottomNavigationBarState
 
   @override
   Widget render(BuildContext context) {
+    if (MediaQuery.of(context).size.width >= _mobileBreakpoint) {
+      return const SizedBox.shrink();
+    }
+
     var children = bottomBarItems();
 
     if (children.length < 2) {

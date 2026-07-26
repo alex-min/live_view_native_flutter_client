@@ -25,11 +25,14 @@ class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
 
   @override
   void dispose() {
+    widget.view.router.removeListener(routeChange);
     super.dispose();
   }
 
   void routeChange() {
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   T? extractChild<T extends LiveStateWidget>(List<Widget> children) {

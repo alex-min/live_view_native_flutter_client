@@ -38,6 +38,8 @@ main() async {
   });
 
   testWidgets('phx click on a bottom bar item', (tester) async {
+    tester.setScreenSize(const Size(400, 800));
+
     var (view, server) = await connect(
       LiveView(),
       rendered: {

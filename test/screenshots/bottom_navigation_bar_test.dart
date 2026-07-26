@@ -26,6 +26,8 @@ main() async {
       },
     );
 
+    tester.setScreenSize(const Size(400, 800));
+
     await tester.runLiveView(view);
 
     await tester.pumpAndSettle();
