@@ -601,7 +601,8 @@ class LiveView {
     if (themeName == null || themeMode == null) {
       return;
     }
-    return themeSettings.setTheme(themeName, themeMode);
+    await themeSettings.setTheme(themeName, themeMode);
+    await themeSettings.save();
   }
 
   Future<void> saveCurrentTheme() => themeSettings.save();

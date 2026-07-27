@@ -7,6 +7,7 @@ import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/reactive/theme_settings.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../test_helpers.dart';
 
@@ -155,5 +156,40 @@ main() async {
     await tester.pumpAndSettle();
 
     expect(view.themeSettings.themeMode, ThemeMode.light);
+  });
+
+  testWidgets('toggleTheme persists the selected mode across reconnects', (
+    tester,
+  ) async {
+    var toggleAction = FlutterExec.encode([
+      FlutterExecAction(name: 'toggleTheme'),
+    ]);
+
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<IconButton phx-click="$toggleAction" icon="dark_mode" />'],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(LiveIconButton));
+    await tester.pumpAndSettle();
+
+    expect(view.themeSettings.themeMode, ThemeMode.dark);
+
+    var prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('themeName'), 'default');
+    expect(prefs.getString('themeMode'), 'dark');
+
+    var freshThemeSettings =
+        ThemeSettings()
+          ..httpClient = view.httpClient
+          ..host = view.themeSettings.host;
+    await freshThemeSettings.loadPreferences();
+
+    expect(freshThemeSettings.themeMode, ThemeMode.dark);
   });
 }
