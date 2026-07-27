@@ -42,6 +42,13 @@ class LiveForm extends LiveStateWidget<LiveForm> {
 class _LiveFormState extends StateWidget<LiveForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> formValues = {};
+  bool _dependenciesReady = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _dependenciesReady = true;
+  }
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
@@ -66,6 +73,15 @@ class _LiveFormState extends StateWidget<LiveForm> {
     // receive diffs that target the current page. They must never auto-submit.
     if (!widget.state.isOnTheCurrentPage) {
       return;
+    }
+    // The URL check above is not enough: two routes can share the same URL
+    // (e.g. navigating register -> log_in -> register). Only the currently
+    // visible route should auto-submit its form.
+    if (_dependenciesReady && mounted) {
+      var route = ModalRoute.of(context);
+      if (route != null && !route.isCurrent) {
+        return;
+      }
     }
     var triggerAction = getAttribute('phx-trigger-action') ?? 'false';
     var action = getAttribute('action') ?? '';

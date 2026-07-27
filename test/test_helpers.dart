@@ -249,6 +249,7 @@ Future<(LiveView, FakeLiveSocket)> connect(
   http.Response? Function(http.Request)? onRequest,
   ViewType viewType = ViewType.liveView,
   Map<String, Object> sharedPreferences = const {},
+  String url = 'http://localhost:9999',
 }) async {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues(sharedPreferences);
@@ -271,7 +272,7 @@ Future<(LiveView, FakeLiveSocket)> connect(
 
   view.liveSocket = socket;
   view.httpClient = client;
-  await view.connect('http://localhost:9999');
+  await view.connect(url);
   if (rendered != null) {
     view.handleRenderedMessage(rendered, viewType: viewType);
   }
