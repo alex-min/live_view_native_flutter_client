@@ -65,6 +65,18 @@ class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
     } else {
       bar = null;
     }
-    return bar ?? const SizedBox.shrink();
+
+    // The extracted navigation bar widget is created once during XML parsing.
+    // Without a changing key, Flutter would treat it as the same widget across
+    // rebuilds and skip calling its build even when the window size changes.
+    // Keying it by the current width forces the bar to rebuild with the latest
+    // MediaQuery so the mobile breakpoint is re-evaluated.
+    if (bar != null) {
+      return KeyedSubtree(
+        key: ValueKey(MediaQuery.of(context).size.width),
+        child: bar!,
+      );
+    }
+    return const SizedBox.shrink();
   }
 }
