@@ -7,6 +7,8 @@ import 'package:liveview_flutter/live_view/state/computed_attributes.dart';
 import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_end_drawer.dart';
@@ -150,13 +152,10 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       persistentButtons =
           StateChild.extractChildren<LivePersistentFooterButton>(widgets);
       hasAppBar = widgets.any((widget) => widget is LiveAppBar);
-      hasBottomNavigationBar =
-          (childrenNodesOf(rootNode!.node, 'BottomAppBar').firstOrNull ??
-              childrenNodesOf(
-                rootNode!.node,
-                'BottomNavigationBar',
-              ).firstOrNull) !=
-          null;
+      hasBottomNavigationBar = widgets.any(
+        (widget) =>
+            widget is LiveBottomNavigationBar || widget is LiveBottomAppBar,
+      );
     } else {
       railBar = null;
       drawer = null;
