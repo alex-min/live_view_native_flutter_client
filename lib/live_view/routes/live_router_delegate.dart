@@ -283,6 +283,17 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       }
     }
 
+    // Recurse into nested dynamic components so conditional function components
+    // (e.g. <.bottom_navigation_bar>) that wrap another dynamic component are
+    // fully expanded and their global navigation widgets can be discovered.
+    List<Widget> nested = [];
+    for (var widget in result) {
+      if (widget is LiveDynamicComponent) {
+        nested.addAll(_extractDynamicComponentChildren(widget));
+      }
+    }
+    result.addAll(nested);
+
     return result;
   }
 }
