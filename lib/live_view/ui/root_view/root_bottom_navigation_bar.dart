@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dart';
@@ -15,10 +17,16 @@ class RootBottomNavigationBar extends StatefulWidget {
 
 class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
   Widget? bar;
+  StreamSubscription? _resizeSubscription;
 
   @override
   void initState() {
     widget.view.router.addListener(routeChange);
+    _resizeSubscription = widget.view.eventHub.on('phx:window:resize', (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
 
     super.initState();
   }
@@ -26,6 +34,7 @@ class _RootBottomNavigationBarState extends State<RootBottomNavigationBar> {
   @override
   void dispose() {
     widget.view.router.removeListener(routeChange);
+    _resizeSubscription?.cancel();
     super.dispose();
   }
 
