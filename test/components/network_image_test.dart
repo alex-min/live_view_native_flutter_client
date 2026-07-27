@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 
@@ -59,5 +60,33 @@ void main() async {
             as CachedNetworkImage;
 
     expect(image.imageUrl, 'https://example.com/icon.png');
+  });
+
+  testWidgets('Image with live-patch navigates on tap', (tester) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
+          <flutter>
+            <viewBody>
+              <Image src="/images/logo.png" width="64" height="64" live-patch="/" />
+            </viewBody>
+          </flutter>
+        """,
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pump();
+
+    await tester.tap(find.byType(CachedNetworkImage), warnIfMissed: false);
+    await tester.pump();
+
+    expect(
+      view.router.pages.map((p) => p.page.name),
+      contains('loading;/'),
+    );
   });
 }
