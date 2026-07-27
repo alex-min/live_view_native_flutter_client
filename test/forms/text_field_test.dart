@@ -54,4 +54,19 @@ main() async {
       ),
     );
   });
+
+  testWidgets('interpolates error message variables', (tester) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<TextField name="password" errors="', '" />'],
+        '0':
+            '[{"message":"should be at least %{count} characters","options":{"count":8}}]',
+      },
+    );
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(find.text('should be at least 8 characters'), findsOneWidget);
+  });
 }

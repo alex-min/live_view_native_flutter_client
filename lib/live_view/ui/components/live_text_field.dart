@@ -80,6 +80,15 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   }
 
   void validateInput() => key.currentState?.validate();
+
+  String interpolateError(FormError error) {
+    var message = error.message;
+    error.options?.forEach((key, value) {
+      message = message.replaceAll('%{$key}', value.toString());
+    });
+    return message;
+  }
+
   void sendInitialState() {
     reloadAttributes(node, attributes);
     FormFieldEvent(
@@ -127,7 +136,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
               : intAttribute('maxLines') ?? 1,
       autovalidateMode: AutovalidateMode.disabled,
       validator: (_) {
-        var message = errors.map((e) => e.message).join('\n');
+        var message = errors.map((e) => interpolateError(e)).join('\n');
         return message == '' ? null : message;
       },
       key: key,
