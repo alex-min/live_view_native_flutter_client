@@ -84,9 +84,6 @@ void main() async {
     await tester.tap(find.byType(CachedNetworkImage), warnIfMissed: false);
     await tester.pump();
 
-    expect(
-      view.router.pages.map((p) => p.page.name),
-      contains('loading;/'),
-    );
+    expect(view.router.pages.map((p) => p.page.name), contains('loading;/'));
   });
 }
