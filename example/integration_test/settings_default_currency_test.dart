@@ -92,7 +92,7 @@ void main() {
 
         // Navigate directly to the settings page.
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
-        await _waitFor(tester, find.text('Default currency'), seconds: 30);
+        await _waitFor(tester, find.text('Devise par défaut'), seconds: 30);
 
         // A fresh user defaults to EUR.
         expect(
@@ -102,7 +102,7 @@ void main() {
         );
 
         // Search for another currency and select it.
-        final searchField = find.widgetWithText(TextField, 'Change currency');
+        final searchField = find.widgetWithText(TextField, 'Changer de devise');
         await _waitFor(tester, searchField, seconds: 30);
         await tester.ensureVisible(searchField);
         await tester.enterText(searchField, 'dollar');
