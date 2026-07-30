@@ -9,11 +9,33 @@ class LiveStack extends LiveStateWidget<LiveStack> {
 }
 
 class _LiveStackState extends StateWidget<LiveStack> {
+  final attributes = ['clipBehavior'];
+
   @override
-  void onStateChange(Map<String, dynamic> diff) {}
+  void onStateChange(Map<String, dynamic> diff) {
+    reloadAttributes(node, attributes);
+  }
 
   @override
   Widget render(BuildContext context) {
-    return Stack(children: multipleChildren());
+    return Stack(
+      clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
+      children: multipleChildren(),
+    );
+  }
+
+  Clip? clipAttribute(String name) {
+    switch (getAttribute(name)) {
+      case 'none':
+        return Clip.none;
+      case 'antiAlias':
+        return Clip.antiAlias;
+      case 'antiAliasWithSaveLayer':
+        return Clip.antiAliasWithSaveLayer;
+      case 'hardEdge':
+        return Clip.hardEdge;
+      default:
+        return null;
+    }
   }
 }

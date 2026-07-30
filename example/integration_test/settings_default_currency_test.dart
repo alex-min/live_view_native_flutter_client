@@ -105,7 +105,7 @@ void main() {
         final searchField = find.widgetWithText(TextField, 'Changer de devise');
         await _waitFor(tester, searchField, seconds: 30);
         await tester.ensureVisible(searchField);
-        await tester.enterText(searchField, 'dollar');
+        await tester.enterText(searchField, 'US Dollar');
         await tester.pump();
         await _waitFor(tester, find.text('USD (\$)'), seconds: 30);
 
@@ -114,13 +114,22 @@ void main() {
         await tester.tap(find.text('USD (\$)'));
         await tester.pump();
 
-        // The selection replaces the current currency and collapses the list.
-        await _waitFor(tester, find.text('USD (\$)'), seconds: 30);
+        // Selecting only stages the currency in the form: the dropdown
+        // collapses and the staged currency is shown in the card.
         await _waitForDisappearance(tester, find.text('EUR (€)'), seconds: 30);
+
+        // Saving persists the new default currency.
+        final saveButton = find.widgetWithText(ElevatedButton, 'Enregistrer');
+        await tester.ensureVisible(saveButton);
+        await tester.pumpAndSettle();
+        await tester.tap(saveButton);
+        await tester.pump();
+
+        await _waitFor(tester, find.text('US Dollar'), seconds: 30);
         expect(
-          find.text('US Dollar'),
+          find.text('USD (\$)'),
           findsOneWidget,
-          reason: 'The selected currency should be shown in the card',
+          reason: 'The saved currency should be shown in the card',
         );
       },
       timeout: const Timeout(Duration(minutes: 3)),
