@@ -45,6 +45,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.da
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_overlay_portal.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_currency_input.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_row.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_safe_area.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_scaffold.dart';
@@ -343,6 +344,10 @@ class LiveViewUiParser {
       ..add([
         'OverlayPortal',
       ], (state) => [LiveOverlayPortal(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'CurrencyInput',
+      ], (state) => [LiveCurrencyInput(state: state, key: Key(uuid.v4()))])
+      ..add(['Option'], (state) => [const SizedBox.shrink()])
       ..add([
         'NavigationRail',
       ], (state) => [LiveNavigationRail(state: state, key: Key(uuid.v4()))])

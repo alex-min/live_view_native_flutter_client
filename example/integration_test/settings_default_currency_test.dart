@@ -94,29 +94,41 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
         await _waitFor(tester, find.text('Devise par défaut'), seconds: 30);
 
-        // A fresh user defaults to EUR.
-        expect(
-          find.text('EUR (€)'),
-          findsOneWidget,
-          reason: 'A new user should default to EUR',
+        // A fresh user defaults to EUR, shown in the currency input.
+        final currentCurrency = find.textContaining('EUR (€)');
+        await _waitFor(tester, currentCurrency, seconds: 30);
+
+        // Open the dropdown by tapping the field.
+        await tester.ensureVisible(currentCurrency);
+        await tester.tap(currentCurrency);
+        await tester.pump();
+
+        // The overlay search field is identified by its hint (autofocus is
+        // not reliable in headless runs where the window has no focus).
+        await _waitFor(tester, find.byType(TextField), seconds: 30);
+        final searchField = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              (widget.decoration?.hintText?.contains('devise') ?? false),
         );
-
-        // Search for another currency and select it.
-        final searchField = find.widgetWithText(TextField, 'Changer de devise');
         await _waitFor(tester, searchField, seconds: 30);
-        await tester.ensureVisible(searchField);
-        await tester.enterText(searchField, 'US Dollar');
-        await tester.pump();
-        await _waitFor(tester, find.text('USD (\$)'), seconds: 30);
 
-        await tester.ensureVisible(find.text('USD (\$)'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('USD (\$)'));
+        // Filtering happens client-side; search by code to stay
+        // locale-independent.
+        await tester.enterText(searchField.first, 'USD');
         await tester.pump();
 
-        // Selecting only stages the currency in the form: the dropdown
-        // collapses and the staged currency is shown in the card.
-        await _waitForDisappearance(tester, find.text('EUR (€)'), seconds: 30);
+        final usdRow = find.textContaining('USD (');
+        await _waitFor(tester, usdRow, seconds: 30);
+        await tester.tap(usdRow.last);
+        await tester.pump();
+
+        // The dropdown closes and the field shows the staged currency.
+        await _waitForDisappearance(
+          tester,
+          find.textContaining('EUR (€)'),
+          seconds: 30,
+        );
 
         // Saving persists the new default currency.
         final saveButton = find.widgetWithText(ElevatedButton, 'Enregistrer');
@@ -125,11 +137,11 @@ void main() {
         await tester.tap(saveButton);
         await tester.pump();
 
-        await _waitFor(tester, find.text('US Dollar'), seconds: 30);
+        await _waitFor(tester, find.textContaining('USD ('), seconds: 30);
         expect(
-          find.text('USD (\$)'),
+          find.textContaining('USD ('),
           findsOneWidget,
-          reason: 'The saved currency should be shown in the card',
+          reason: 'The saved currency should be shown in the currency input',
         );
       },
       timeout: const Timeout(Duration(minutes: 3)),

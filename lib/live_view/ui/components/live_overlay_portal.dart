@@ -78,21 +78,33 @@ class _LiveOverlayPortalState extends StateWidget<LiveOverlayPortal> {
             doubleAttribute('offsetX') ?? 0,
             doubleAttribute('offsetY') ?? 0,
           ),
-          child: SizedBox(
-            width: _overlayWidth,
-            child:
-                overlayNodes.isEmpty
-                    ? const SizedBox.shrink()
-                    : singleChild(
-                      state: widget.state.copyWith(node: overlayNodes.first),
-                    ),
+          child: UnconstrainedBox(
+            // The overlay entry imposes the full overlay size; the content
+            // must size to itself instead.
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              // Falls back to a sane width on the first frame, before the
+              // trigger width has been measured.
+              width: _overlayWidth ?? 320,
+              child:
+                  overlayNodes.isEmpty
+                      ? const SizedBox.shrink()
+                      : singleChild(
+                        state: widget.state.copyWith(node: overlayNodes.first),
+                      ),
+            ),
           ),
         );
       },
-      child: CompositedTransformTarget(
-        key: _targetKey,
-        link: _link,
-        child: trigger,
+      child: Align(
+        // The parent may impose tight constraints; the target must hug the
+        // trigger so the overlay anchors right below it.
+        alignment: Alignment.topCenter,
+        child: CompositedTransformTarget(
+          key: _targetKey,
+          link: _link,
+          child: trigger,
+        ),
       ),
     );
   }
