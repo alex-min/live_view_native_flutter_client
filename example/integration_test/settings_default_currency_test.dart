@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -25,9 +23,9 @@ class _TestApp extends StatelessWidget {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Email change flow', () {
+  group('Default currency settings', () {
     testWidgets(
-      'sign up, unlock sudo mode and change email without current password',
+      'sign up and change the default currency from the settings',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -80,11 +78,6 @@ void main() {
           of: find.byType(Form),
           matching: find.byType(ElevatedButton),
         );
-        expect(
-          submitButton,
-          findsOneWidget,
-          reason: 'The registration form should have a submit button',
-        );
         await tester.tap(submitButton);
 
         // Accept the terms of service.
@@ -97,83 +90,37 @@ void main() {
         await _waitFor(tester, find.text(email), seconds: 30);
         await tester.pumpAndSettle();
 
-        // Navigate to the settings page.
-        final settingsButton = find.widgetWithText(LiveTextButton, email).last;
+        // Navigate directly to the settings page.
+        await view.connect('http://$_serverHost:$_serverPort/users/settings');
+        await _waitFor(tester, find.text('Default currency'), seconds: 30);
+
+        // A fresh user defaults to EUR.
         expect(
-          settingsButton,
+          find.text('EUR (€)'),
           findsOneWidget,
-          reason: 'The app bar should contain a settings button for the user',
+          reason: 'A new user should default to EUR',
         );
-        await tester.tap(settingsButton);
+
+        // Search for another currency and select it.
+        final searchField = find.widgetWithText(TextField, 'Change currency');
+        await _waitFor(tester, searchField, seconds: 30);
+        await tester.ensureVisible(searchField);
+        await tester.enterText(searchField, 'dollar');
         await tester.pump();
-        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+        await _waitFor(tester, find.text('USD (\$)'), seconds: 30);
+
+        await tester.ensureVisible(find.text('USD (\$)'));
         await tester.pumpAndSettle();
-
-        // Sensitive changes are locked, so unlock sudo mode first.
-        final unlockButton =
-            find.widgetWithText(ElevatedButton, 'Déverrouiller').first;
-        await _waitFor(tester, unlockButton, seconds: 30);
-        await tester.tap(unlockButton);
-        await tester.pump();
-        await _waitForUrl(
-          tester,
-          view,
-          '/users/sudo_mode/log_in',
-          seconds: 30,
-        );
-        await tester.pumpAndSettle();
-
-        await _waitFor(tester, find.byType(TextField));
-        await tester.enterText(find.byType(TextField), password);
+        await tester.tap(find.text('USD (\$)'));
         await tester.pump();
 
-        final confirmButton = find.widgetWithText(
-          ElevatedButton,
-          'Confirmer votre mot de passe',
-        );
+        // The selection replaces the current currency and collapses the list.
+        await _waitFor(tester, find.text('USD (\$)'), seconds: 30);
+        await _waitForDisappearance(tester, find.text('EUR (€)'), seconds: 30);
         expect(
-          confirmButton,
+          find.text('US Dollar'),
           findsOneWidget,
-          reason: 'The sudo mode form should have a confirm button',
-        );
-        await tester.tap(confirmButton);
-
-        // The POST redirect should bring us back to settings with sudo mode active.
-        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
-        await tester.pumpAndSettle();
-
-        expect(
-          find.text('Les modifications sensibles sont verrouillées'),
-          findsNothing,
-          reason: 'Sudo mode should be unlocked after password confirmation',
-        );
-
-        // Change the email address.
-        final emailField = find.widgetWithText(TextField, 'Courriel');
-        await _waitFor(tester, emailField, seconds: 30);
-        await tester.enterText(emailField, 'updated+$email');
-        await tester.pump();
-
-        final changeEmailButton = find.widgetWithText(
-          ElevatedButton,
-          'Changez votre courriel',
-        );
-        expect(
-          changeEmailButton,
-          findsOneWidget,
-          reason: 'The email form should have a change button',
-        );
-        await tester.tap(changeEmailButton);
-        await tester.pumpAndSettle();
-
-        // Wait for the success flash from the server (the dev server default
-        // locale is French).
-        await _waitFor(
-          tester,
-          find.text(
-            'Un lien pour confirmer votre courriel à été envoyé à la nouvelle adresse',
-          ),
-          seconds: 30,
+          reason: 'The selected currency should be shown in the card',
         );
       },
       timeout: const Timeout(Duration(minutes: 3)),
@@ -193,6 +140,19 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
     await Future.delayed(const Duration(seconds: 1));
   }
   throw Exception('Timed out waiting for $finder');
+}
+
+/// Waits up to [seconds] for [finder] to stop matching any widget.
+Future<void> _waitForDisappearance(WidgetTester tester, Finder finder,
+    {int seconds = 30}) async {
+  for (var i = 0; i < seconds; i++) {
+    await tester.pump();
+    if (finder.evaluate().isEmpty) {
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+  throw Exception('Timed out waiting for $finder to disappear');
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
