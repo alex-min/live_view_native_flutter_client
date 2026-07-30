@@ -312,7 +312,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   /// You can call hide or show events on a id which is anywhere in the page
   /// To support that, each widget is listening to global events and checks if the id matches the current widget itself.
   /// The ids work exactly as the id attribute in the HTML DOM
-  void handleGlobalAction(FlutterExecAction action) {
+  void handleGlobalAction(Exec action) {
     if (!mounted) {
       return;
     }

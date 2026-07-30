@@ -331,6 +331,7 @@ class LiveViewUiParser {
       ..add([
         'DropdownButton',
       ], (state) => [LiveDropdownButton(state: state, key: Key(uuid.v4()))])
+      ..add(['DropdownMenuItem'], (state) => [const SizedBox.shrink()])
       ..add(['BottomNavigationBarItem'], (state) => [const SizedBox.shrink()])
       ..add([
         'Positioned',
