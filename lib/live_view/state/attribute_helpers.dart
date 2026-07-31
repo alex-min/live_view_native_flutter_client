@@ -32,6 +32,7 @@ import 'package:liveview_flutter/live_view/mapping/text_style_map.dart';
 import 'package:liveview_flutter/live_view/mapping/tooltip_trigger_mode.dart';
 import 'package:liveview_flutter/live_view/mapping/visual_density.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
+import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 
 mixin AttributeHelpers {
@@ -136,9 +137,12 @@ mixin AttributeHelpers {
     return Text(attr);
   }
 
-  Widget? textWidgetFromAttributeOrChild<T>(NodeState state, String attribute) {
+  Widget? textWidgetFromAttributeOrChild<T extends LiveStateWidget>(
+    NodeState state,
+    String attribute,
+  ) {
     return textWidgetFromAttribute(attribute) ??
-        StateChild.extractChild(StateChild.multipleChildren(state));
+        StateChild.extractChild<T>(StateChild.multipleChildren(state));
   }
 
   Icon? iconWidgetFromAttribute(String attribute) {
