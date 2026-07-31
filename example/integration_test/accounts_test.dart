@@ -52,7 +52,9 @@ void main() {
             seconds: 30);
         expect(find.text('Relevé'), findsWidgets);
         expect(
-          find.text('€0'),
+          // The statement total is formatted server-side per the French
+          // locale: "0,00 €" with a no-break space.
+          find.text('0,00\u{00A0}€'),
           findsWidgets,
           reason: 'The statement total should be zero before any account',
         );
@@ -102,7 +104,8 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         expect(
-          find.text('€42.50'),
+          // French locale: "42,50 €" with a no-break space.
+          find.text('42,50\u{00A0}€'),
           findsAtLeastNWidgets(2),
           reason: 'The balance should appear in the row and in the statement',
         );
