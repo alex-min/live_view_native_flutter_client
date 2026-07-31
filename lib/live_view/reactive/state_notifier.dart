@@ -9,10 +9,14 @@ Map<String, dynamic> nestedDiff(
   var currentDiff = fullDiff;
   for (var state in nestedState) {
     if (currentDiff.containsKey(state)) {
-      if (currentDiff[state] == '') {
-        currentDiff = {};
-      } else {
+      if (currentDiff[state] is Map) {
         currentDiff = Map<String, dynamic>.from(currentDiff[state]);
+      } else {
+        // The subtree was replaced by a leaf value (or removed); return an
+        // empty diff so the widget keeps its existing state instead of
+        // crashing on a non-map diff (e.g. stale widgets from a previous
+        // route still listening to the notifier).
+        return {};
       }
     } else {
       // This subtree did not change; return an empty diff so the widget keeps
