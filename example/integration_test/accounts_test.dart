@@ -53,8 +53,9 @@ void main() {
         expect(find.text('Relevé'), findsWidgets);
         expect(
           // The statement total is formatted server-side per the French
-          // locale: "0,00 €" with a no-break space.
-          find.text('0,00\u{00A0}€'),
+          // locale, without decimals for whole numbers: "0 €" with a
+          // no-break space.
+          find.text('0\u{00A0}€'),
           findsWidgets,
           reason: 'The statement total should be zero before any account',
         );
