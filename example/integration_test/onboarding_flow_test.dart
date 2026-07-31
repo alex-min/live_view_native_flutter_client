@@ -26,7 +26,7 @@ void main() {
 
   group('Onboarding flow', () {
     testWidgets(
-      'sign up, accept the terms of service and open the settings page',
+      'sign up, accept the terms of service, pick a currency and open the settings page',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -105,6 +105,20 @@ void main() {
         final acceptButton = find.byType(ElevatedButton).last;
         await tester.ensureVisible(acceptButton);
         await tester.tap(acceptButton);
+
+        // The next onboarding step asks for the default currency, with EUR
+        // pre-selected.
+        await _waitForUrl(tester, view, '/users/onboarding/currency',
+            seconds: 30);
+        await _waitFor(tester, find.textContaining('EUR (€)'), seconds: 30);
+
+        // Keep EUR and move on with the onboarding.
+        final nextButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await _waitFor(tester, nextButton, seconds: 30);
+        await tester.tap(nextButton.last);
 
         // Wait for the app bar to show the signed-in user's email.
         await _waitFor(tester, find.text(email), seconds: 30);

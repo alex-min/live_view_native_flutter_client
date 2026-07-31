@@ -86,6 +86,16 @@ void main() {
         await tester.ensureVisible(acceptButton);
         await tester.tap(acceptButton);
 
+        // Complete the currency onboarding step (EUR is pre-selected).
+        await _waitForUrl(tester, view, '/users/onboarding/currency',
+            seconds: 30);
+        final nextButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await _waitFor(tester, nextButton, seconds: 30);
+        await tester.tap(nextButton.last);
+
         // Wait for the app bar to show the signed-in user's email.
         await _waitFor(tester, find.text(email), seconds: 30);
         await tester.pumpAndSettle();
