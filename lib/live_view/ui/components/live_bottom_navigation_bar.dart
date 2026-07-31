@@ -9,6 +9,10 @@ import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 
 class LiveBottomNavigationBar extends LiveStateWidget<LiveBottomNavigationBar> {
+  /// Width threshold below which the bottom navigation bar is shown.
+  /// Matches the common Material Design mobile / tablet cutoff.
+  static const double mobileBreakpoint = 600;
+
   const LiveBottomNavigationBar({super.key, required super.state});
 
   @override
@@ -18,10 +22,6 @@ class LiveBottomNavigationBar extends LiveStateWidget<LiveBottomNavigationBar> {
 
 class _LiveBottomNavigationBarState
     extends StateWidget<LiveBottomNavigationBar> {
-  /// Width threshold below which the bottom navigation bar is shown.
-  /// Matches the common Material Design mobile / tablet cutoff.
-  static const double _mobileBreakpoint = 600;
-
   @override
   HandleClickState handleClickState() => HandleClickState.manual;
   List<String> attributes = [
@@ -105,7 +105,8 @@ class _LiveBottomNavigationBarState
 
   @override
   Widget render(BuildContext context) {
-    if (MediaQuery.of(context).size.width >= _mobileBreakpoint) {
+    if (MediaQuery.of(context).size.width >=
+        LiveBottomNavigationBar.mobileBreakpoint) {
       return const SizedBox.shrink();
     }
 

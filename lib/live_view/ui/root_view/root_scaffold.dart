@@ -37,6 +37,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
   List<Widget> children = [];
   bool isLiveReloading = false;
   bool hasBottomNavigationBar = false;
+  bool hasMobileBottomNavigationBar = false;
   bool hasAppBar = false;
   LiveNavigationRail? railBar;
   LiveDrawer? drawer;
@@ -156,17 +157,30 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
         (widget) =>
             widget is LiveBottomNavigationBar || widget is LiveBottomAppBar,
       );
+      hasMobileBottomNavigationBar = widgets.any(
+        (widget) => widget is LiveBottomNavigationBar,
+      );
     } else {
       railBar = null;
       drawer = null;
       floatingActionButton = null;
       hasAppBar = false;
       hasBottomNavigationBar = false;
+      hasMobileBottomNavigationBar = false;
       persistentButtons = [];
     }
 
     var extendBodyBehindAppBar =
         getBoolean(getRootAttribute('extendBodyBehindAppBar')) ?? false;
+
+    // The bottom navigation bar only appears under the mobile breakpoint;
+    // the top bar is hidden with the same condition, like a native app.
+    var hideAppBar =
+        hasAppBar &&
+        hasMobileBottomNavigationBar &&
+        MediaQuery.of(context).size.width <
+            LiveBottomNavigationBar.mobileBreakpoint;
+
     var router = Router(
       routerDelegate: widget.view.router,
       backButtonDispatcher: RootBackButtonDispatcher(),
@@ -180,7 +194,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       endDrawer: endDrawer,
       primary: getBoolean(getRootAttribute('primary')) ?? true,
       extendBodyBehindAppBar: extendBodyBehindAppBar,
-      appBar: hasAppBar ? RootAppBar(view: widget.view) : null,
+      appBar: hasAppBar && !hideAppBar ? RootAppBar(view: widget.view) : null,
       body: NotificationListener<SizeChangedLayoutNotification>(
         onNotification: (_) {
           if (widget.view.throttleSpammyCalls) {
