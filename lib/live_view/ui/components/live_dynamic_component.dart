@@ -67,7 +67,52 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
       child = children;
     }
 
-    return body(child ?? [LiveText(state: widget.state)]);
+    return body(child ?? _initialContent() ?? [LiveText(state: widget.state)]);
+  }
+
+  /// Renders the initial content of a section or comprehension (a map value
+  /// with statics) before any diff targets it.
+  List<Widget>? _initialContent() {
+    for (var elementKey in extraKeysListened) {
+      var value = widget.state.variables[elementKey.key];
+      if (value is Map && (value.containsKey('s') || value.containsKey('d'))) {
+        return _parseContent(elementKey, Map<String, dynamic>.from(value));
+      }
+    }
+    return null;
+  }
+
+  List<Widget> _parseContent(
+    ElementKey elementKey,
+    Map<String, dynamic> content,
+  ) {
+    var newState = List<String>.from(widget.state.nestedState);
+    newState.add(elementKey.key);
+
+    // Comprehension: render each row with its own variables. Parsing the
+    // whole map at once is not possible: row-level slots don't exist at the
+    // comprehension level and produce invalid markup.
+    if (content['d'] is List) {
+      List<Widget> rows = [];
+      for (var i = 0; i < (content['d'] as List).length; i++) {
+        var rowVariables = content[i.toString()];
+        if (rowVariables is! Map) {
+          continue;
+        }
+        rows.addAll(
+          widget.state.parser.parseHtml(
+            List<String>.from(content['s'] ?? []),
+            Map<String, dynamic>.from(rowVariables),
+            [...newState, i.toString()],
+          ).$1,
+        );
+      }
+      return rows;
+    }
+
+    return widget.state.parser
+        .parseHtml(List<String>.from(content['s'] ?? []), content, newState)
+        .$1;
   }
 
   Widget? _handleElementKey(ElementKey elementKey) {
@@ -89,18 +134,14 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
       return null;
     }
 
-    var newState = List<String>.from(widget.state.nestedState);
+    // Comprehension diffs only carry the new 'd' list; keep the initial
+    // statics and dynamics as a base so the whole section can be re-rendered.
+    var base = widget.state.variables[elementKey.key];
+    var content = <String, dynamic>{
+      if (base is Map) ...Map<String, dynamic>.from(base),
+      ...Map<String, dynamic>.from(diffEntry),
+    };
 
-    newState.add(elementKey.key);
-
-    return body(
-      widget.state.parser
-          .parseHtml(
-            List<String>.from(diffEntry['s'] ?? []),
-            Map<String, dynamic>.from(diffEntry),
-            newState,
-          )
-          .$1,
-    );
+    return body(_parseContent(elementKey, content));
   }
 }

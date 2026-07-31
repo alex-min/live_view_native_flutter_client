@@ -85,38 +85,16 @@ List<Widget> renderDynamicComponent(NodeState state) {
   }
 
   var dynamicKeys = extractDynamicKeys(state.node.toString());
-  for (var elementKey in dynamicKeys) {
-    var currentVariables = state.variables[elementKey.key];
 
-    if (currentVariables is! Map) {
-      continue;
-    }
-
-    if (!currentVariables.containsKey('d')) {
-      continue;
-    }
-
-    for (var i = 0; i < currentVariables['d'].length; i++) {
-      var newState = List<String>.from(state.nestedState);
-      newState.add(elementKey.key);
-      newState.add(i.toString());
-
-      comps.addAll(
-        state.parser
-            .parseHtml(
-              List<String>.from(currentVariables['s']),
-              currentVariables[i.toString()],
-              newState,
-            )
-            .$1,
-      );
-    }
-  }
-
-  // this happens if we have two components being rendered in the same piece of text
-  // something like [[flutterState key="0"]][[flutterState key="1"]]
-  // we need to divide this in two components
-  if (dynamicKeys.length > 1 && comps.isEmpty) {
+  // Sections and comprehensions (map values) render as their own components
+  // so they can be updated independently by diffs. When a text node holds
+  // several dynamic markers, split it to give each dynamic its own
+  // component. Plain text dynamics stay in a single component so the
+  // surrounding text is preserved.
+  var hasMapDynamic = dynamicKeys.any(
+    (elementKey) => state.variables[elementKey.key] is Map,
+  );
+  if (hasMapDynamic && dynamicKeys.length > 1) {
     for (var elementKey in dynamicKeys) {
       comps.addAll(
         state.parser
@@ -128,7 +106,8 @@ List<Widget> renderDynamicComponent(NodeState state) {
             .$1,
       );
     }
+    return comps;
   }
 
-  return (comps.isNotEmpty) ? comps : [LiveDynamicComponent(state: state)];
+  return [LiveDynamicComponent(state: state)];
 }
