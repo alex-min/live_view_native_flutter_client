@@ -41,15 +41,11 @@ void main() {
         // Sign up and complete the onboarding, like the onboarding flow test.
         await _signUpAndOnboard(tester, view);
 
-        // Navigate to the accounts page through the home page link. The
-        // bottom navigation bar is only rendered below the client's 600px
-        // mobile breakpoint, so it is hidden in the default 800px test
-        // window. The environment runs in a French locale, so assertions
-        // use the French translations like the other integration tests.
-        final accountsLink = find.text('Comptes');
-        await _waitFor(tester, accountsLink, seconds: 30);
-        await tester.tap(accountsLink.last);
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        // The accounts page is the home page: once onboarding completes, the
+        // app lands directly on it. The environment runs in a French locale,
+        // so assertions use the French translations like the other
+        // integration tests.
+        await _waitForUrl(tester, view, '/', seconds: 30);
 
         // Empty state: no accounts yet, with a create button.
         await _waitFor(tester, find.text('Aucun compte pour le moment'),
