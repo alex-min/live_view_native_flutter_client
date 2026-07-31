@@ -472,6 +472,15 @@ class LiveView {
       }
       return;
     }
+    if (event.event.value == 'live_redirect') {
+      // Sent by push_navigate/push_patch on the server: navigate within the
+      // live session instead of reloading the dead view.
+      var to = event.payload?['to'];
+      if (to is String) {
+        unawaited(livePatch(to));
+      }
+      return;
+    }
     if (event.event.value == 'redirect') {
       var to = event.payload?['to'];
       if (to is String) {
@@ -493,6 +502,14 @@ class LiveView {
       );
     } else if (event.payload!['response']?.containsKey('diff') ?? false) {
       handleDiffMessage(event.payload!['response']!['diff']);
+    } else if (event.payload!['response']?['live_redirect'] is Map) {
+      // push_navigate/push_patch answers an event with a channel reply
+      // embedding the live redirect in the response.
+      var redirect = event.payload!['response']!['live_redirect'] as Map;
+      var to = redirect['to'];
+      if (to is String) {
+        unawaited(livePatch(to));
+      }
     } else if (event.payload!['response']?['redirect'] is Map) {
       // Some redirects (e.g. after a phx-click event) come back as a channel
       // reply with the redirect embedded in the response.
@@ -608,6 +625,12 @@ class LiveView {
   Future<void> saveCurrentTheme() => themeSettings.save();
 
   Future<void> livePatch(String url) async {
+    // Guard against duplicate taps: stale junk pages stay in the navigator
+    // tree, so a single tap can reach both the current page and an obscured
+    // stale copy of the same link, firing livePatch twice for the same url.
+    if (router.pages.lastOrNull?.page.name == 'loading;$url') {
+      return;
+    }
     changeNotifier.emptyData();
     if (clientType == ClientType.webDocs) {
       web_html.window.parent?.postMessage({
