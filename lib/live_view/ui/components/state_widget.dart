@@ -163,6 +163,14 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   }
 
   bool _handleDiff() {
+    // Diffs from the server always target the page currently joined on the
+    // channel. Widgets from previous pages stay mounted in the navigation
+    // stack and keep listening; their top-level dynamic keys collide with
+    // the current page's keys (both have an empty nestedState), so applying
+    // the diff would merge unrelated statics and dynamics together.
+    if (!widget.state.isOnTheCurrentPage) {
+      return false;
+    }
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
 
     if (lastLiveDiff.keys.any((key) => isKeyListened(ElementKey(key)))) {

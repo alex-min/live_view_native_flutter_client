@@ -95,8 +95,8 @@ void main() {
         );
         await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
 
-        // The category dropdown is the second of the form (type, category,
-        // account).
+        // The type and account dropdowns remain; the category is picked
+        // through a dedicated picker view (mavio's CategoryPage).
         final dropdowns = find.descendant(
           of: find.byType(Form),
           matching: find.byType(DropdownButton<String>),
@@ -104,21 +104,32 @@ void main() {
         await _waitFor(tester, dropdowns, seconds: 30);
         expect(
           dropdowns,
-          findsNWidgets(3),
-          reason: 'The transaction form should have three dropdowns',
+          findsNWidgets(2),
+          reason: 'The transaction form should have two dropdowns',
         );
 
-        // Pick the "Bonus" category (near the top of the income groups, so
-        // it is visible without scrolling the popup). Bonus is an income
-        // kind: the category overrides the type selected in the form (mavio
+        // Open the category picker from the form field.
+        await _waitFor(tester, find.text('Aucune catégorie'), seconds: 30);
+        await tester.tap(find.text('Aucune catégorie').last);
+        await tester.pumpAndSettle();
+        await _waitFor(
+          tester,
+          find.text('Sélectionner une catégorie'),
+          seconds: 30,
+        );
+
+        // The picker opens on the expense tab; Bonus is an income kind, so
+        // switch tabs. Selecting it also overrides the form's type (mavio
         // behavior).
-        await tester.ensureVisible(dropdowns.at(1));
+        await tester.tap(find.text('Revenu').last);
         await tester.pumpAndSettle();
-        await tester.tap(dropdowns.at(1));
-        await tester.pumpAndSettle();
-        expect(find.text('Bonus'), findsWidgets);
+        await _waitFor(tester, find.text('Bonus'), seconds: 30);
         await tester.tap(find.text('Bonus').last);
         await tester.pumpAndSettle();
+
+        // Back on the form, the field shows the picked category.
+        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
+        expect(find.text('Bonus'), findsWidgets);
 
         // Fill the amount and submit (no description: the category name
         // becomes the row label).
@@ -153,7 +164,7 @@ void main() {
         // The row is labeled with the localized category name.
         await _waitFor(tester, find.text('Bonus'), seconds: 30);
 
-        // Open the edit form: the category dropdown is pre-selected.
+        // Open the edit form: the category field shows the picked category.
         await tester.tap(find.text('Bonus').last);
         await _waitForUrl(
           tester,
@@ -164,18 +175,10 @@ void main() {
         await _waitFor(tester, find.text('Modifier la transaction'),
             seconds: 30);
 
-        final editDropdowns = find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(DropdownButton<String>),
-        );
-        await _waitFor(tester, editDropdowns, seconds: 30);
         expect(
-          find.descendant(
-            of: editDropdowns.at(1),
-            matching: find.text('Bonus'),
-          ),
-          findsOneWidget,
-          reason: 'The category dropdown should be pre-selected on edit',
+          find.text('Bonus'),
+          findsWidgets,
+          reason: 'The category field should show the picked category on edit',
         );
       },
       timeout: const Timeout(Duration(minutes: 3)),
