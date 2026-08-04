@@ -56,6 +56,19 @@ class _LiveListTileState extends StateWidget<LiveListTile> {
     var subtitle = StateChild.extractChild<LiveSubtitleAttribute>(children);
     var trailing = StateChild.extractChild<LiveTrailingAttribute>(children);
 
+    // Attributes can be wrapped in a LiveDynamicComponent when produced by a
+    // server-side conditional or comprehension.
+    title ??= StateChild.extractDynamicAttribute<LiveTitleAttribute>(children);
+    leading ??= StateChild.extractDynamicAttribute<LiveLeadingAttribute>(
+      children,
+    );
+    subtitle ??= StateChild.extractDynamicAttribute<LiveSubtitleAttribute>(
+      children,
+    );
+    trailing ??= StateChild.extractDynamicAttribute<LiveTrailingAttribute>(
+      children,
+    );
+
     return ListTile(
       leading: leading,
       title: title,

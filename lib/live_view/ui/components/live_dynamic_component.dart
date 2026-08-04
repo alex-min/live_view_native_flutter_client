@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
+import 'package:liveview_flutter/live_view/ui/node_state.dart';
 
 Map<String, dynamic> _mergeDiff(
   Map<String, dynamic> base,
@@ -28,6 +30,58 @@ class LiveDynamicComponent extends LiveStateWidget<LiveDynamicComponent> {
 
   @override
   State<LiveDynamicComponent> createState() => _LiveDynamicComponentState();
+
+  /// Computes the initial content of a section or comprehension (a map value
+  /// with statics) before any diff targets it, without needing a mounted
+  /// widget. Returns null when the dynamic currently resolves to nothing
+  /// renderable (e.g. an empty conditional: `variables[key] == ''`).
+  static List<Widget>? initialContent(NodeState state) {
+    for (var elementKey in extractDynamicKeys(state.node.toString())) {
+      var value = state.variables[elementKey.key];
+      if (value is Map && (value.containsKey('s') || value.containsKey('d'))) {
+        return parseContent(
+          state,
+          elementKey,
+          Map<String, dynamic>.from(value),
+        );
+      }
+    }
+    return null;
+  }
+
+  static List<Widget> parseContent(
+    NodeState state,
+    ElementKey elementKey,
+    Map<String, dynamic> content,
+  ) {
+    var newState = List<String>.from(state.nestedState);
+    newState.add(elementKey.key);
+
+    // Comprehension: render each row with its own variables. Parsing the
+    // whole map at once is not possible: row-level slots don't exist at the
+    // comprehension level and produce invalid markup.
+    if (content['d'] is List) {
+      List<Widget> rows = [];
+      for (var i = 0; i < (content['d'] as List).length; i++) {
+        var rowVariables = content[i.toString()];
+        if (rowVariables is! Map) {
+          continue;
+        }
+        rows.addAll(
+          state.parser.parseHtml(
+            List<String>.from(content['s'] ?? []),
+            Map<String, dynamic>.from(rowVariables),
+            [...newState, i.toString()],
+          ).$1,
+        );
+      }
+      return rows;
+    }
+
+    return state.parser
+        .parseHtml(List<String>.from(content['s'] ?? []), content, newState)
+        .$1;
+  }
 }
 
 class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
@@ -72,48 +126,13 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
 
   /// Renders the initial content of a section or comprehension (a map value
   /// with statics) before any diff targets it.
-  List<Widget>? _initialContent() {
-    for (var elementKey in extraKeysListened) {
-      var value = widget.state.variables[elementKey.key];
-      if (value is Map && (value.containsKey('s') || value.containsKey('d'))) {
-        return _parseContent(elementKey, Map<String, dynamic>.from(value));
-      }
-    }
-    return null;
-  }
+  List<Widget>? _initialContent() =>
+      LiveDynamicComponent.initialContent(widget.state);
 
   List<Widget> _parseContent(
     ElementKey elementKey,
     Map<String, dynamic> content,
-  ) {
-    var newState = List<String>.from(widget.state.nestedState);
-    newState.add(elementKey.key);
-
-    // Comprehension: render each row with its own variables. Parsing the
-    // whole map at once is not possible: row-level slots don't exist at the
-    // comprehension level and produce invalid markup.
-    if (content['d'] is List) {
-      List<Widget> rows = [];
-      for (var i = 0; i < (content['d'] as List).length; i++) {
-        var rowVariables = content[i.toString()];
-        if (rowVariables is! Map) {
-          continue;
-        }
-        rows.addAll(
-          widget.state.parser.parseHtml(
-            List<String>.from(content['s'] ?? []),
-            Map<String, dynamic>.from(rowVariables),
-            [...newState, i.toString()],
-          ).$1,
-        );
-      }
-      return rows;
-    }
-
-    return widget.state.parser
-        .parseHtml(List<String>.from(content['s'] ?? []), content, newState)
-        .$1;
-  }
+  ) => LiveDynamicComponent.parseContent(widget.state, elementKey, content);
 
   Widget? _handleElementKey(ElementKey elementKey) {
     var diffEntry = lastLiveDiff[elementKey.key];

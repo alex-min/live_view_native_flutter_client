@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:liveview_flutter/live_view/ui/live_view_ui_parser.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
@@ -143,6 +144,45 @@ class StateChild {
     children.removeWhere((e) => e == ret);
 
     return ret;
+  }
+
+  /// Finds an attribute widget (e.g. `<leading>`) produced by a server-side
+  /// conditional or comprehension, in which case it reaches us wrapped in a
+  /// [LiveDynamicComponent] instead of being a direct child.
+  ///
+  /// When found, the [LiveDynamicComponent] itself is returned (and removed
+  /// from [children]) so it stays mounted and keeps receiving diff updates —
+  /// it renders the attribute inside. Dynamics currently resolving to nothing
+  /// renderable (e.g. `variables[key] == ''`) are skipped: the attribute is
+  /// treated as absent.
+  static LiveStateWidget? extractDynamicAttribute<Type extends LiveStateWidget>(
+    List<Widget> children,
+  ) {
+    for (var child in children) {
+      if (child is LiveDynamicComponent && _dynamicContains<Type>(child)) {
+        children.remove(child);
+        return child;
+      }
+    }
+    return null;
+  }
+
+  static bool _dynamicContains<Type extends LiveStateWidget>(
+    LiveDynamicComponent component,
+  ) {
+    var content = LiveDynamicComponent.initialContent(component.state);
+    if (content == null) {
+      return false;
+    }
+    for (var widget in content) {
+      if (widget is Type) {
+        return true;
+      }
+      if (widget is LiveDynamicComponent && _dynamicContains<Type>(widget)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static Type? extractWidgetChild<Type extends Widget>(List<Widget> children) {
