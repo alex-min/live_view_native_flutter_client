@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bar_chart.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -113,9 +114,17 @@ void main() {
 
         // The Home item opens the Mavio-style dashboard. It shows the total
         // statement, the income/expense chart, and the recent-expense state.
+        final floatingButtonState = tester.state(
+          find.byType(LiveFloatingActionButton),
+        );
         await view.livePatch('/dashboard');
         await _waitForUrl(tester, view, '/dashboard', seconds: 30);
         await _waitFor(tester, find.text('Accueil'), seconds: 30);
+        expect(
+          tester.state(find.byType(LiveFloatingActionButton)),
+          same(floatingButtonState),
+          reason: 'the docked action must persist while navigating',
+        );
         expect(find.text('Relevé'), findsWidgets);
         expect(find.text('Revenus et dépenses'), findsOneWidget);
         expect(find.byType(LiveBarChart), findsOneWidget);

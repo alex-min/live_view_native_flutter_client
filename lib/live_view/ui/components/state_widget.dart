@@ -101,6 +101,22 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   }
 
   @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (identical(oldWidget.state, widget.state)) {
+      return;
+    }
+
+    status = Status.visible;
+    computedAttributes = VariableAttributes({}, []);
+    currentVariables = Map<String, dynamic>.from(widget.state.variables);
+    extraKeysListened = [];
+    onStateChange(currentVariables);
+    onFormInitialize();
+    reloadPredefinedAttributes(node);
+  }
+
+  @override
   void dispose() {
     stateNotifier.removeListener(onDiffUpdateEvent);
     widget.state.liveView.connectionNotifier.removeListener(onWipeState);

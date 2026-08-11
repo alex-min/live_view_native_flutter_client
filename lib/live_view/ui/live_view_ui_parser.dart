@@ -406,7 +406,10 @@ class LiveViewUiParser {
       ..add(
         ['FloatingActionButton'],
         (state) => [
-          LiveFloatingActionButton(state: state, key: Key(uuid.v4())),
+          LiveFloatingActionButton(
+            state: state,
+            key: const ValueKey('root-floating-action-button'),
+          ),
         ],
       )
       ..add([
