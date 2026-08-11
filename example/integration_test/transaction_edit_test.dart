@@ -44,8 +44,8 @@ void main() {
         await _waitForUrl(tester, view, '/', seconds: 30);
 
         // Create an account.
-        await _waitFor(tester, find.text('Créer un compte'), seconds: 30);
-        await tester.tap(find.text('Créer un compte').last);
+        await _waitFor(tester, find.byIcon(Icons.add), seconds: 30);
+        await tester.tap(find.byIcon(Icons.add).last);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
         final accountFields = find.descendant(
@@ -66,10 +66,13 @@ void main() {
         await tester.enterText(accountFields.at(1), 'Edit account');
         await tester.pump();
 
-        await tester.tap(find.descendant(
+        final saveButton = find.descendant(
           of: find.byType(Form),
           matching: find.byType(ElevatedButton),
-        ));
+        );
+        await tester.ensureVisible(saveButton);
+        await tester.pumpAndSettle();
+        await tester.tap(saveButton);
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Edit account'), seconds: 30);
 
@@ -192,7 +195,122 @@ void main() {
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
+
+    testWidgets(
+      'creates an account transfer and updates both balances',
+      (tester) async {
+        await _ensureServer();
+        SharedPreferences.setMockInitialValues({});
+
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+        await _signUpAndOnboard(tester, view);
+        await _waitForUrl(tester, view, '/', seconds: 30);
+
+        await _createAccount(tester, view, name: 'Checking', balance: '200');
+        await _createAccount(tester, view, name: 'Savings', balance: '50');
+
+        final transferButton = find.ancestor(
+          of: find.byWidgetPredicate(
+            (widget) =>
+                widget is Text &&
+                (widget.data == 'Transfer' || widget.data == 'Virement'),
+          ),
+          matching: find.byType(TextButton),
+        );
+        await _waitFor(tester, transferButton, seconds: 30);
+        await tester.ensureVisible(transferButton.last);
+        await tester.tap(transferButton.last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/new\?type=transfer$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.byType(Form), seconds: 30);
+
+        final dropdowns = find
+            .descendant(
+              of: find.byType(Form),
+              matching: find.byType(DropdownButton<String>),
+            )
+            .hitTestable();
+        expect(dropdowns, findsNWidgets(3));
+
+        // The newest account (Savings) is selected as the source. Choose
+        // Checking in the destination dropdown.
+        await tester.tap(dropdowns.at(2));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Checking').last);
+        await tester.pumpAndSettle();
+
+        final fields = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(TextField),
+        );
+        expect(fields, findsNWidgets(4));
+        await tester.enterText(fields.at(0), '25');
+        await tester.pump();
+        await tester.enterText(fields.at(3), 'Integration transfer');
+        await tester.pump();
+
+        final transferSaveButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await tester.ensureVisible(transferSaveButton);
+        await tester.pumpAndSettle();
+        await tester.tap(transferSaveButton);
+
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitFor(tester, find.text('Savings'), seconds: 30);
+        expect(find.textContaining('25'), findsWidgets);
+        expect(find.textContaining('225'), findsWidgets);
+        expect(find.textContaining('250'), findsWidgets);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
   });
+}
+
+Future<void> _createAccount(
+  WidgetTester tester,
+  LiveView view, {
+  required String name,
+  required String balance,
+}) async {
+  await _waitFor(tester, find.byIcon(Icons.add), seconds: 30);
+  await tester.tap(find.byIcon(Icons.add).last);
+  await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
+
+  final fields = find.descendant(
+    of: find.byType(Form),
+    matching: find.byType(TextField),
+  );
+  await _waitFor(tester, fields, seconds: 30);
+  await tester.enterText(fields.at(0), balance);
+  await tester.pump();
+  await tester.enterText(fields.at(1), name);
+  await tester.pump();
+
+  await Future.delayed(const Duration(seconds: 1));
+  await tester.pump();
+  await tester.enterText(fields.at(0), balance);
+  await tester.pump();
+  await tester.enterText(fields.at(1), name);
+  await tester.pump();
+
+  await tester.tap(find.descendant(
+    of: find.byType(Form),
+    matching: find.byType(ElevatedButton),
+  ));
+  await _waitForUrl(tester, view, '/accounts', seconds: 30);
+  await _waitFor(tester, find.text(name), seconds: 30);
 }
 
 /// Signs up a brand new user and completes the onboarding (TOS + default
