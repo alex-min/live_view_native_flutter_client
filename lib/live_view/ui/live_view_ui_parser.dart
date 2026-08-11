@@ -40,6 +40,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_tile.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_linear_progress_indicator.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_material_banner.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_modal.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
@@ -360,6 +361,12 @@ class LiveViewUiParser {
       ..add([
         'BarChart',
       ], (state) => [LiveBarChart(state: state, key: Key(uuid.v4()))])
+      ..add(
+        ['LinearProgressIndicator'],
+        (state) => [
+          LiveLinearProgressIndicator(state: state, key: Key(uuid.v4())),
+        ],
+      )
       ..add(['Option'], (state) => [const SizedBox.shrink()])
       ..add([
         'NavigationRail',

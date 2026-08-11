@@ -112,6 +112,40 @@ void main() {
           reason: 'The balance should appear in the row and in the statement',
         );
 
+        // The statistics destination opens the Mavio-style category report.
+        await view.livePatch('/statistics');
+        await _waitForUrl(tester, view, '/statistics', seconds: 30);
+        await _waitFor(tester, find.text('Statistiques'), seconds: 30);
+        expect(find.text('Revenus et dépenses'), findsOneWidget);
+
+        await tester.tap(find.text('Revenus et dépenses'));
+        await _waitForUrl(
+          tester,
+          view,
+          '/statistics/income-expense',
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Ce mois-ci'), seconds: 30);
+        expect(find.text('Revenus'), findsOneWidget);
+        expect(find.text('Dépenses'), findsOneWidget);
+        expect(
+          find.text('Aucune transaction pour cette période'),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byIcon(Icons.calendar_today));
+        await _waitFor(tester, find.text('Choisir un mois'), seconds: 30);
+        expect(find.byType(BottomSheet), findsOneWidget);
+        Navigator.of(
+          tester.element(find.text('Choisir un mois')),
+          rootNavigator: true,
+        ).pop();
+        await tester.pumpAndSettle();
+
+        await view.livePatch('/');
+        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitFor(tester, find.text('Integration account'), seconds: 30);
+
         // The Home item opens the Mavio-style dashboard. It shows the total
         // statement, the income/expense chart, and the recent-expense state.
         final floatingButtonState = tester.state(

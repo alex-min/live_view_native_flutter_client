@@ -14,6 +14,9 @@ class LiveModal extends LiveStateWidget<LiveModal> {
 
 class _LiveModalState extends StateWidget<LiveModal> {
   NavigatorState? rootNavigator;
+  bool isPresented = false;
+  bool closingProgrammatically = false;
+  bool closeEventSent = false;
 
   @override
   void initState() {
@@ -24,7 +27,7 @@ class _LiveModalState extends StateWidget<LiveModal> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['close-event', 'fullscreen']);
+    reloadAttributes(node, ['close-event', 'fullscreen', 'presentation']);
   }
 
   @override
@@ -34,19 +37,25 @@ class _LiveModalState extends StateWidget<LiveModal> {
 
   @override
   void dispose() {
+    closingProgrammatically = true;
     Future.microtask(hideModal);
     super.dispose();
   }
 
   void hideModal() {
-    if (rootNavigator != null && rootNavigator!.canPop()) {
+    if (isPresented && rootNavigator != null && rootNavigator!.canPop()) {
       rootNavigator?.pop();
     }
   }
 
   void showModal() {
+    if (getAttribute('presentation') == 'bottomSheet') {
+      showBottomSheet();
+      return;
+    }
+
     bool fullscreen = booleanAttribute('fullscreen') ?? true;
-    String closeEvent = getAttribute('close-event') ?? 'hide';
+    isPresented = true;
     rootNavigator!.push(
       MaterialPageRoute(
         fullscreenDialog: fullscreen,
@@ -61,9 +70,7 @@ class _LiveModalState extends StateWidget<LiveModal> {
               if (didPop) {
                 return;
               }
-              widget.state.liveView.sendEvent(
-                ExecLiveEvent(type: 'event', name: closeEvent, value: {}),
-              );
+              sendCloseEvent();
             },
             child: Scaffold(
               appBar:
@@ -77,6 +84,55 @@ class _LiveModalState extends StateWidget<LiveModal> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void showBottomSheet() {
+    isPresented = true;
+    showModalBottomSheet<void>(
+      context: rootNavigator!.context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (_) {
+        var children = multipleChildren();
+        var title = StateChild.extractChild<LiveTitleAttribute>(children);
+        var content = StateChild.extractChild<LiveContentAttribute>(children);
+
+        return SafeArea(
+          child: FractionallySizedBox(
+            heightFactor: 0.85,
+            child: Scaffold(
+              appBar:
+                  title != null
+                      ? PreferredSize(
+                        preferredSize: const Size.fromHeight(kToolbarHeight),
+                        child: title,
+                      )
+                      : null,
+              body: content,
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      isPresented = false;
+      if (!closingProgrammatically) {
+        sendCloseEvent();
+      }
+    });
+  }
+
+  void sendCloseEvent() {
+    if (closeEventSent) {
+      return;
+    }
+    closeEventSent = true;
+    widget.state.liveView.sendEvent(
+      ExecLiveEvent(
+        type: 'event',
+        name: getAttribute('close-event') ?? 'hide',
+        value: {},
       ),
     );
   }
