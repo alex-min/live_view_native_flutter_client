@@ -46,9 +46,8 @@ void main() {
 
         // Switch to the login page and back to sign-up, reproducing the real
         // user flow that triggered stale form state.
-        final signInLink = find
-            .widgetWithText(LiveTextButton, 'Connectez vous à votre compte')
-            .last;
+        final signInLink =
+            find.widgetWithText(LiveTextButton, 'Sign-in to your account').last;
         await _waitFor(tester, signInLink, seconds: 30);
         await tester.tap(signInLink);
         await _waitForUrl(tester, view, '/users/log_in', seconds: 30);
@@ -58,7 +57,7 @@ void main() {
         await tester.pumpAndSettle();
 
         final registerLink =
-            find.widgetWithText(LiveTextButton, 'Créez votre compte').last;
+            find.widgetWithText(LiveTextButton, 'Register your account').last;
         await _waitFor(tester, registerLink, seconds: 30);
         await tester.tap(registerLink);
         await _waitForUrl(tester, view, '/users/register', seconds: 30);

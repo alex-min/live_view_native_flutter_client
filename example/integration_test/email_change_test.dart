@@ -121,7 +121,7 @@ void main() {
 
         // Sensitive changes are locked, so unlock sudo mode first.
         final unlockButton =
-            find.widgetWithText(ElevatedButton, 'Déverrouiller').first;
+            find.widgetWithText(ElevatedButton, 'Unlock').first;
         await _waitFor(tester, unlockButton, seconds: 30);
         await tester.tap(unlockButton);
         await tester.pump();
@@ -139,7 +139,7 @@ void main() {
 
         final confirmButton = find.widgetWithText(
           ElevatedButton,
-          'Confirmer votre mot de passe',
+          'Confirm your password',
         );
         expect(
           confirmButton,
@@ -153,20 +153,20 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('Les modifications sensibles sont verrouillées'),
+          find.text('Sensitive changes are locked'),
           findsNothing,
           reason: 'Sudo mode should be unlocked after password confirmation',
         );
 
         // Change the email address.
-        final emailField = find.widgetWithText(TextField, 'Courriel');
+        final emailField = find.widgetWithText(TextField, 'Email');
         await _waitFor(tester, emailField, seconds: 30);
         await tester.enterText(emailField, 'updated+$email');
         await tester.pump();
 
         final changeEmailButton = find.widgetWithText(
           ElevatedButton,
-          'Changez votre courriel',
+          'Change email',
         );
         expect(
           changeEmailButton,
@@ -181,7 +181,7 @@ void main() {
         await _waitFor(
           tester,
           find.text(
-            'Un lien pour confirmer votre courriel à été envoyé à la nouvelle adresse',
+            'A link to confirm your email change has been sent to the new address.',
           ),
           seconds: 30,
         );

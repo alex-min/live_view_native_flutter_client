@@ -96,10 +96,10 @@ void main() {
 
         // Navigate directly to the settings page.
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
-        await _waitFor(tester, find.text('Apparence'), seconds: 30);
+        await _waitFor(tester, find.text('Appearance'), seconds: 30);
 
         // Switch to the dark theme, then back to the light theme.
-        final darkButton = find.text('Thème sombre');
+        final darkButton = find.text('Dark theme');
         await tester.ensureVisible(darkButton);
         await tester.tap(darkButton);
         await tester.pumpAndSettle();
@@ -110,7 +110,7 @@ void main() {
           reason: 'The app should use the dark theme after tapping the tile',
         );
 
-        final lightButton = find.text('Thème clair');
+        final lightButton = find.text('Light theme');
         await tester.ensureVisible(lightButton);
         await tester.tap(lightButton);
         await tester.pumpAndSettle();

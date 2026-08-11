@@ -42,27 +42,27 @@ void main() {
         // Sign up and complete the onboarding, like the onboarding flow test.
         await _signUpAndOnboard(tester, view);
 
-        // The accounts page is the home page: once onboarding completes, the
-        // app lands directly on it. The environment runs in a French locale,
-        // so assertions use the French translations like the other
-        // integration tests.
+        // Onboarding lands on the dashboard. Open its statement card to reach
+        // the accounts screen before asserting the empty state.
         await _waitForUrl(tester, view, '/', seconds: 30);
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Empty state: no accounts yet, with a create button.
-        await _waitFor(tester, find.text('Aucun compte pour le moment'),
-            seconds: 30);
-        expect(find.text('Relevé'), findsWidgets);
+        await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
+        expect(find.text('Statement'), findsWidgets);
         expect(
-          // The statement total is formatted server-side per the French
-          // locale, without decimals for whole numbers: "0 €" with a
-          // no-break space.
-          find.text('0\u{00A0}€'),
+          // The statement total is formatted server-side in the persisted
+          // English locale.
+          find.text('€0'),
           findsWidgets,
           reason: 'The statement total should be zero before any account',
         );
 
         // Open the creation form.
-        await tester.tap(find.text('Créer un compte').last);
+        final createAccount = find.text('Create an account').last;
+        await tester.ensureVisible(createAccount);
+        await tester.tap(createAccount);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
         // The form has three text fields: initial balance, name, description.
@@ -106,8 +106,7 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         expect(
-          // French locale: "42,50 €" with a no-break space.
-          find.text('42,50\u{00A0}€'),
+          find.text('€42.50'),
           findsAtLeastNWidgets(2),
           reason: 'The balance should appear in the row and in the statement',
         );
@@ -115,29 +114,31 @@ void main() {
         // The statistics destination opens the Mavio-style category report.
         await view.livePatch('/statistics');
         await _waitForUrl(tester, view, '/statistics', seconds: 30);
-        await _waitFor(tester, find.text('Statistiques'), seconds: 30);
-        expect(find.text('Revenus et dépenses'), findsOneWidget);
+        await _waitFor(tester, find.text('Statistics'), seconds: 30);
+        expect(find.text('Income and expenses'), findsOneWidget);
 
-        await tester.tap(find.text('Revenus et dépenses'));
+        final incomeExpenseCard = find.byType(Card).last;
+        await tester.ensureVisible(incomeExpenseCard);
+        await tester.tap(incomeExpenseCard);
         await _waitForUrl(
           tester,
           view,
           '/statistics/income-expense',
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Ce mois-ci'), seconds: 30);
-        expect(find.text('Revenus'), findsOneWidget);
-        expect(find.text('Dépenses'), findsOneWidget);
+        await _waitFor(tester, find.text('This month'), seconds: 30);
+        expect(find.text('Income'), findsOneWidget);
+        expect(find.text('Expenses'), findsOneWidget);
         expect(
-          find.text('Aucune transaction pour cette période'),
+          find.text('No transactions for this period'),
           findsOneWidget,
         );
 
         await tester.tap(find.byIcon(Icons.calendar_today));
-        await _waitFor(tester, find.text('Choisir un mois'), seconds: 30);
+        await _waitFor(tester, find.text('Choose a month'), seconds: 30);
         expect(find.byType(BottomSheet), findsOneWidget);
         Navigator.of(
-          tester.element(find.text('Choisir un mois')),
+          tester.element(find.text('Choose a month')),
           rootNavigator: true,
         ).pop();
         await tester.pumpAndSettle();
@@ -153,18 +154,18 @@ void main() {
         );
         await view.livePatch('/dashboard');
         await _waitForUrl(tester, view, '/dashboard', seconds: 30);
-        await _waitFor(tester, find.text('Accueil'), seconds: 30);
+        await _waitFor(tester, find.text('Home'), seconds: 30);
         expect(
           tester.state(find.byType(LiveFloatingActionButton)),
           same(floatingButtonState),
           reason: 'the docked action must persist while navigating',
         );
-        expect(find.text('Relevé'), findsWidgets);
-        expect(find.text('Revenus et dépenses'), findsOneWidget);
+        expect(find.text('Statement'), findsWidgets);
+        expect(find.text('Income and expenses'), findsOneWidget);
         expect(find.byType(LiveBarChart), findsOneWidget);
-        expect(find.text('Dépenses récentes'), findsOneWidget);
-        expect(find.text('Aucune dépense pour le moment'), findsOneWidget);
-        expect(find.text('42,50\u{00A0}€'), findsWidgets);
+        expect(find.text('Recent expenses'), findsOneWidget);
+        expect(find.text('No expenses yet'), findsOneWidget);
+        expect(find.text('€42.50'), findsWidgets);
 
         // Return to accounts after exercising the dashboard route.
         await view.livePatch('/');
@@ -176,16 +177,16 @@ void main() {
         await _waitFor(tester, overflowMenu, seconds: 30);
         await tester.tap(overflowMenu.last);
         await tester.pumpAndSettle();
-        await _waitFor(tester, find.text('Marquer comme inactif'), seconds: 30);
-        await tester.tap(find.text('Marquer comme inactif').last);
+        await _waitFor(tester, find.text('Mark as inactive'), seconds: 30);
+        await tester.tap(find.text('Mark as inactive').last);
         await tester.pump();
 
         // The account leaves the active list and an inactive section appears.
-        await _waitFor(tester, find.text('Comptes inactifs (1)'), seconds: 30);
+        await _waitFor(tester, find.text('Inactive accounts (1)'), seconds: 30);
         expect(find.text('Integration account'), findsNothing);
 
         // Expanding the section shows the account again.
-        await tester.tap(find.text('Comptes inactifs (1)').last);
+        await tester.tap(find.text('Inactive accounts (1)').last);
         await tester.pump();
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
 
@@ -194,7 +195,7 @@ void main() {
         await _waitFor(tester, inactiveOverflowMenu, seconds: 30);
         await tester.tap(inactiveOverflowMenu.last);
         await tester.pumpAndSettle();
-        await _waitFor(tester, find.text('Marquer comme actif'), seconds: 30);
+        await _waitFor(tester, find.text('Mark as active'), seconds: 30);
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

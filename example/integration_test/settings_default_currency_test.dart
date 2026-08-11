@@ -102,7 +102,7 @@ void main() {
 
         // Navigate directly to the settings page.
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
-        await _waitFor(tester, find.text('Devise par défaut'), seconds: 30);
+        await _waitFor(tester, find.text('Default currency'), seconds: 30);
 
         // A fresh user defaults to EUR, shown in the currency input.
         final currentCurrency = find.textContaining('EUR (€)');
@@ -119,7 +119,10 @@ void main() {
         final searchField = find.byWidgetPredicate(
           (widget) =>
               widget is TextField &&
-              (widget.decoration?.hintText?.contains('devise') ?? false),
+              (widget.decoration?.hintText
+                      ?.toLowerCase()
+                      .contains('currency') ??
+                  false),
         );
         await _waitFor(tester, searchField, seconds: 30);
 
@@ -141,7 +144,7 @@ void main() {
         );
 
         // Saving persists the new default currency.
-        final saveButton = find.widgetWithText(ElevatedButton, 'Enregistrer');
+        final saveButton = find.widgetWithText(ElevatedButton, 'Save');
         await tester.ensureVisible(saveButton);
         await tester.pumpAndSettle();
         await tester.tap(saveButton);

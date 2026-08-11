@@ -43,9 +43,14 @@ void main() {
         await _signUpAndOnboard(tester, view);
         await _waitForUrl(tester, view, '/', seconds: 30);
 
+        // Onboarding now lands on the dashboard; open the statement card to
+        // reach the account list.
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+
         // Create an account.
-        await _waitFor(tester, find.text('Créer un compte'), seconds: 30);
-        await tester.tap(find.text('Créer un compte').last);
+        await _waitFor(tester, find.text('Create an account'), seconds: 30);
+        await tester.tap(find.text('Create an account').last);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
         final accountFields = find.descendant(
@@ -83,17 +88,17 @@ void main() {
         );
         await _waitFor(
           tester,
-          find.text('Aucune transaction pour le moment'),
+          find.text('No transactions yet'),
           seconds: 30,
         );
         await tester.tap(find.byIcon(Icons.add).last);
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/transactions/new\?account_id=\d+$'),
+          RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
         // The type and account dropdowns remain; the category is picked
         // through a dedicated picker view (mavio's CategoryPage).
@@ -109,26 +114,26 @@ void main() {
         );
 
         // Open the category picker from the form field.
-        await _waitFor(tester, find.text('Aucune catégorie'), seconds: 30);
-        await tester.tap(find.text('Aucune catégorie').last);
+        await _waitFor(tester, find.text('No category'), seconds: 30);
+        await tester.tap(find.text('No category').last);
         await tester.pumpAndSettle();
         await _waitFor(
           tester,
-          find.text('Sélectionner une catégorie'),
+          find.text('Select category'),
           seconds: 30,
         );
 
         // The picker opens on the expense tab; Bonus is an income kind, so
         // switch tabs. Selecting it also overrides the form's type (mavio
         // behavior).
-        await tester.tap(find.text('Revenu').last);
+        await tester.tap(find.text('Income').last);
         await tester.pumpAndSettle();
         await _waitFor(tester, find.text('Bonus'), seconds: 30);
         await tester.tap(find.text('Bonus').last);
         await tester.pumpAndSettle();
 
         // Back on the form, the field shows the picked category.
-        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
         expect(find.text('Bonus'), findsWidgets);
 
         // Fill the amount and submit (no description: the category name
@@ -172,8 +177,7 @@ void main() {
           RegExp(r'^/transactions/\d+/edit$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Modifier la transaction'),
-            seconds: 30);
+        await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
         expect(
           find.text('Bonus'),

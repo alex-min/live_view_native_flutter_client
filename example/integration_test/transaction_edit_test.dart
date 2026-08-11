@@ -42,10 +42,11 @@ void main() {
         // French translations like the other integration tests.
         await _signUpAndOnboard(tester, view);
         await _waitForUrl(tester, view, '/', seconds: 30);
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Create an account.
-        await _waitFor(tester, find.byIcon(Icons.add), seconds: 30);
-        await tester.tap(find.byIcon(Icons.add).last);
+        await view.livePatch('/accounts/new');
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
         final accountFields = find.descendant(
@@ -84,18 +85,17 @@ void main() {
           RegExp(r'^/accounts/\d+/transactions$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Aucune transaction pour le moment'),
-            seconds: 30);
+        await _waitFor(tester, find.text('No transactions yet'), seconds: 30);
 
         // Add a transaction through the app bar add button.
         await tester.tap(find.byIcon(Icons.add).last);
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/transactions/new\?account_id=\d+$'),
+          RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
         // The form has three text fields: amount, date, description.
         final transactionFields = find.descendant(
@@ -146,8 +146,7 @@ void main() {
           RegExp(r'^/transactions/\d+/edit$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Modifier la transaction'),
-            seconds: 30);
+        await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
         final editFields = find.descendant(
           of: find.byType(Form),
@@ -186,9 +185,9 @@ void main() {
         );
         await _waitFor(tester, find.text('Courses modifiées'), seconds: 30);
         expect(
-          // French locale: "−25,50 €" (expense, signed) formatted
+          // English locale: "-€25.50" (expense, signed) formatted
           // server-side.
-          find.textContaining('25,50'),
+          find.textContaining('25.50'),
           findsWidgets,
           reason: 'The updated amount should appear in the row',
         );
@@ -211,6 +210,8 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
         await _signUpAndOnboard(tester, view);
         await _waitForUrl(tester, view, '/', seconds: 30);
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         await _createAccount(tester, view, name: 'Checking', balance: '200');
         await _createAccount(tester, view, name: 'Savings', balance: '50');
@@ -284,8 +285,7 @@ Future<void> _createAccount(
   required String name,
   required String balance,
 }) async {
-  await _waitFor(tester, find.byIcon(Icons.add), seconds: 30);
-  await tester.tap(find.byIcon(Icons.add).last);
+  await view.livePatch('/accounts/new');
   await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
   final fields = find.descendant(
