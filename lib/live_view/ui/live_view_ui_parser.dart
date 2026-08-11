@@ -5,6 +5,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_autocomplete.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_avatar_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_badge.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bar_chart.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bottom_sheet.dart';
@@ -356,6 +357,9 @@ class LiveViewUiParser {
       ..add([
         'CurrencyAmount',
       ], (state) => [LiveCurrencyAmount(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'BarChart',
+      ], (state) => [LiveBarChart(state: state, key: Key(uuid.v4()))])
       ..add(['Option'], (state) => [const SizedBox.shrink()])
       ..add([
         'NavigationRail',

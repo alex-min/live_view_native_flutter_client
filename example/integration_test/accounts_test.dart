@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bar_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -29,7 +30,6 @@ void main() {
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
-
         final view = LiveView();
         view.catchExceptions = false;
         view.disableAnimations = true;
@@ -110,6 +110,23 @@ void main() {
           findsAtLeastNWidgets(2),
           reason: 'The balance should appear in the row and in the statement',
         );
+
+        // The Home item opens the Mavio-style dashboard. It shows the total
+        // statement, the income/expense chart, and the recent-expense state.
+        await view.livePatch('/dashboard');
+        await _waitForUrl(tester, view, '/dashboard', seconds: 30);
+        await _waitFor(tester, find.text('Accueil'), seconds: 30);
+        expect(find.text('Relevé'), findsWidgets);
+        expect(find.text('Revenus et dépenses'), findsOneWidget);
+        expect(find.byType(LiveBarChart), findsOneWidget);
+        expect(find.text('Dépenses récentes'), findsOneWidget);
+        expect(find.text('Aucune dépense pour le moment'), findsOneWidget);
+        expect(find.text('42,50\u{00A0}€'), findsWidgets);
+
+        // Return to accounts after exercising the dashboard route.
+        await view.livePatch('/');
+        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitFor(tester, find.text('Integration account'), seconds: 30);
 
         // Mark the account inactive through the row overflow menu.
         final overflowMenu = find.byIcon(Icons.more_vert);
