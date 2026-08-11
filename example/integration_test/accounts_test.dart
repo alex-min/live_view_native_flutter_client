@@ -175,6 +175,27 @@ void main() {
         expect(find.text('No expenses yet'), findsOneWidget);
         expect(find.text('€42.50'), findsWidgets);
 
+        // Contacts use the same server-backed CRUD flow on Flutter.
+        await view.livePatch('/contacts');
+        await _waitForUrl(tester, view, '/contacts', seconds: 30);
+        await _waitFor(tester, find.text('Contacts'), seconds: 30);
+        expect(find.text('No contacts'), findsOneWidget);
+
+        await view.livePatch('/contacts/new');
+        await _waitForUrl(tester, view, '/contacts/new', seconds: 30);
+        await _waitFor(tester, find.text('Add contact'), seconds: 30);
+        final contactName = find.byType(TextField);
+        expect(contactName, findsOneWidget);
+        await tester.enterText(contactName, 'Alex Morgan');
+        await tester.pump();
+        final saveContact = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await tester.tap(saveContact.last);
+        await _waitForUrl(tester, view, '/contacts', seconds: 30);
+        await _waitFor(tester, find.text('Alex Morgan'), seconds: 30);
+
         // Return to accounts after exercising the dashboard route.
         await view.livePatch('/');
         await _waitForUrl(tester, view, '/', seconds: 30);
