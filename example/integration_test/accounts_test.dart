@@ -196,6 +196,21 @@ void main() {
         await _waitForUrl(tester, view, '/contacts', seconds: 30);
         await _waitFor(tester, find.text('Alex Morgan'), seconds: 30);
 
+        // The edit page is part of the native contact flow as well.
+        await tester.tap(find.text('Alex Morgan'));
+        await _waitFor(tester, find.text('Edit contact'), seconds: 30);
+        expect(view.currentUrl, matches(RegExp(r'^/contacts/\d+/edit$')));
+        final editedContactName = find.byType(TextField);
+        expect(editedContactName, findsOneWidget);
+        await tester.enterText(editedContactName, 'Alex Martin');
+        await tester.pump();
+        await tester.tap(find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        ));
+        await _waitForUrl(tester, view, '/contacts', seconds: 30);
+        await _waitFor(tester, find.text('Alex Martin'), seconds: 30);
+
         // Lending uses the shared transaction form, requires a contact, and
         // updates that contact's running balance.
         await view.livePatch('/transactions/new?type=lent');
@@ -216,7 +231,7 @@ void main() {
 
         await tester.tap(loanDropdowns.at(1));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Alex Morgan').last);
+        await tester.tap(find.text('Alex Martin').last);
         await tester.pumpAndSettle();
 
         final loanFields = find.descendant(
@@ -237,6 +252,47 @@ void main() {
         await _waitForUrl(tester, view, '/contacts', seconds: 30);
         await _waitFor(tester, find.text('Owes you'), seconds: 30);
         expect(find.text('€12.50'), findsOneWidget);
+
+        // Borrowing is the opposite ledger direction. Borrowing €20 after
+        // lending €12.50 leaves a net €7.50 owed to the contact.
+        await view.livePatch('/transactions/new?type=borrowed');
+        await _waitForUrl(
+          tester,
+          view,
+          '/transactions/new?type=borrowed',
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
+
+        final borrowingDropdowns = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(DropdownButton<String>),
+        );
+        expect(borrowingDropdowns, findsNWidgets(3));
+        expect(find.text('Category'), findsNothing);
+        await tester.tap(borrowingDropdowns.at(1));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Alex Martin').last);
+        await tester.pumpAndSettle();
+
+        final borrowingFields = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(borrowingFields.at(0), '20');
+        await tester.pump();
+        await tester.tap(find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        ));
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitFor(tester, find.text('Integration account'), seconds: 30);
+        await tester.pump();
+
+        await view.livePatch('/contacts');
+        await _waitForUrl(tester, view, '/contacts', seconds: 30);
+        await _waitFor(tester, find.text('You owe'), seconds: 30);
+        expect(find.text('€7.50'), findsOneWidget);
 
         // Return to accounts after exercising the dashboard route.
         await view.livePatch('/');
