@@ -42,6 +42,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_list_tile.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_list_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_linear_progress_indicator.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_material_banner.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_month_picker_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_modal.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
@@ -361,6 +362,12 @@ class LiveViewUiParser {
       ..add([
         'BarChart',
       ], (state) => [LiveBarChart(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'MonthPickerDrawer',
+      ], (state) => [LiveMonthPickerDrawer(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'MonthPickerYear',
+      ], (state) => [LiveMonthPickerYear(state: state, key: Key(uuid.v4()))])
       ..add(
         ['LinearProgressIndicator'],
         (state) => [

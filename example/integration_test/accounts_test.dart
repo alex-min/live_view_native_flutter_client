@@ -7,6 +7,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bar_chart.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_month_picker_drawer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -135,13 +136,20 @@ void main() {
         );
 
         await tester.tap(find.byIcon(Icons.calendar_today));
-        await _waitFor(tester, find.text('Choose a month'), seconds: 30);
+        await _waitFor(
+          tester,
+          find.byType(LiveMonthPickerDrawer),
+          seconds: 30,
+        );
         expect(find.byType(BottomSheet), findsOneWidget);
-        Navigator.of(
-          tester.element(find.text('Choose a month')),
-          rootNavigator: true,
-        ).pop();
-        await tester.pumpAndSettle();
+        expect(find.text(DateTime.now().year.toString()), findsOneWidget);
+        expect(find.byIcon(Icons.close), findsOneWidget);
+        await tester.tap(find.byIcon(Icons.close));
+        await _waitForAbsent(
+          tester,
+          find.byType(LiveMonthPickerDrawer),
+          seconds: 30,
+        );
 
         await view.livePatch('/');
         await _waitForUrl(tester, view, '/', seconds: 30);
@@ -282,6 +290,18 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
     await Future.delayed(const Duration(seconds: 1));
   }
   throw Exception('Timed out waiting for $finder');
+}
+
+Future<void> _waitForAbsent(WidgetTester tester, Finder finder,
+    {int seconds = 30}) async {
+  for (var i = 0; i < seconds; i++) {
+    await tester.pump();
+    if (finder.evaluate().isEmpty) {
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+  throw Exception('Timed out waiting for $finder to disappear');
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
