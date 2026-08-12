@@ -164,6 +164,13 @@ void main() {
         await tester.enterText(emailField, 'updated+$email');
         await tester.pump();
 
+        // phx-change can replace the field controller. Refill after that
+        // diff, then bring the action into the Linux test viewport.
+        await Future.delayed(const Duration(seconds: 1));
+        await tester.pump();
+        await tester.enterText(emailField, 'updated+$email');
+        await tester.pump();
+
         final changeEmailButton = find.widgetWithText(
           ElevatedButton,
           'Change email',
@@ -173,8 +180,10 @@ void main() {
           findsOneWidget,
           reason: 'The email form should have a change button',
         );
+        await tester.ensureVisible(changeEmailButton);
+        await tester.pump();
         await tester.tap(changeEmailButton);
-        await tester.pumpAndSettle();
+        await tester.pump();
 
         // Wait for the success flash from the server (the dev server default
         // locale is French).

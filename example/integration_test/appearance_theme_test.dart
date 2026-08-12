@@ -101,6 +101,7 @@ void main() {
         // Switch to the dark theme, then back to the light theme.
         final darkButton = find.text('Dark theme');
         await tester.ensureVisible(darkButton);
+        await tester.pump();
         await tester.tap(darkButton);
         await tester.pumpAndSettle();
 
@@ -112,6 +113,7 @@ void main() {
 
         final lightButton = find.text('Light theme');
         await tester.ensureVisible(lightButton);
+        await tester.pump();
         await tester.tap(lightButton);
         await tester.pumpAndSettle();
 

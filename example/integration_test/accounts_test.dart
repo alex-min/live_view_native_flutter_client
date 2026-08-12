@@ -197,7 +197,7 @@ void main() {
         await _waitFor(tester, find.text('Alex Morgan'), seconds: 30);
 
         // The edit page is part of the native contact flow as well.
-        await tester.tap(find.text('Alex Morgan'));
+        await tester.tap(find.text('Alex Morgan').last);
         await _waitFor(tester, find.text('Edit contact'), seconds: 30);
         expect(view.currentUrl, matches(RegExp(r'^/contacts/\d+/edit$')));
         final editedContactName = find.byType(TextField);
