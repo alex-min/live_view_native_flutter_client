@@ -48,6 +48,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.da
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_overlay_portal.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_outlined_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_currency_amount.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_currency_amount_input.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_currency_input.dart';
@@ -269,6 +270,9 @@ class LiveViewUiParser {
       ..add([
         'ElevatedButton',
       ], (state) => [LiveElevatedButton(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'OutlinedButton',
+      ], (state) => [LiveOutlinedButton(state: state, key: Key(uuid.v4()))])
       ..add([
         'Center',
       ], (state) => [LiveCenter(state: state, key: Key(uuid.v4()))])

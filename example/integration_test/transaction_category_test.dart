@@ -50,8 +50,18 @@ void main() {
 
         // Create an account.
         await _waitFor(tester, find.text('Create an account'), seconds: 30);
-        await tester.tap(find.text('Create an account').last);
+        final createAccount = find.text('Create an account').last;
+        await tester.ensureVisible(createAccount);
+        await tester.tap(createAccount);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
+        await _waitFor(tester, find.text('Manual'), seconds: 30);
+        await tester.tap(find.text('Manual'));
+        await _waitForUrl(
+          tester,
+          view,
+          '/accounts/new/manual',
+          seconds: 30,
+        );
 
         final accountFields = find.descendant(
           of: find.byType(Form),
@@ -71,10 +81,12 @@ void main() {
         await tester.enterText(accountFields.at(1), 'Category account');
         await tester.pump();
 
-        await tester.tap(find.descendant(
+        final accountSave = find.descendant(
           of: find.byType(Form),
           matching: find.byType(ElevatedButton),
-        ));
+        );
+        await tester.ensureVisible(accountSave);
+        await tester.tap(accountSave);
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Category account'), seconds: 30);
 
@@ -150,10 +162,12 @@ void main() {
         await tester.enterText(amountField.at(0), '12.34');
         await tester.pump();
 
-        await tester.tap(find.descendant(
+        final transactionSave = find.descendant(
           of: find.byType(Form),
           matching: find.byType(ElevatedButton),
-        ));
+        );
+        await tester.ensureVisible(transactionSave);
+        await tester.tap(transactionSave);
 
         // Back on the accounts page; reopen the transaction list.
         await _waitForUrl(tester, view, '/accounts', seconds: 30);

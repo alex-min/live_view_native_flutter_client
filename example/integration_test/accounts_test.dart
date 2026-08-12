@@ -66,6 +66,28 @@ void main() {
         await tester.tap(createAccount);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
+        // Account creation starts by choosing who manages the account.
+        await _waitFor(tester, find.text('Automated'), seconds: 30);
+        expect(find.text('Manual'), findsOneWidget);
+
+        await tester.tap(find.text('Automated'));
+        await _waitForUrl(
+          tester,
+          view,
+          '/accounts/new/automated',
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Automated account'), seconds: 30);
+        expect(find.byType(Form), findsNothing);
+
+        await view.livePatch('/accounts/new/manual');
+        await _waitForUrl(
+          tester,
+          view,
+          '/accounts/new/manual',
+          seconds: 30,
+        );
+
         // The form has three text fields: initial balance, name, description.
         final fields = find.descendant(
           of: find.byType(Form),
@@ -200,7 +222,7 @@ void main() {
         await tester.tap(find.text('Alex Morgan').last);
         await _waitFor(tester, find.text('Edit contact'), seconds: 30);
         expect(view.currentUrl, matches(RegExp(r'^/contacts/\d+/edit$')));
-        final editedContactName = find.byType(TextField);
+        final editedContactName = find.byType(TextField).hitTestable();
         expect(editedContactName, findsOneWidget);
         await tester.enterText(editedContactName, 'Alex Martin');
         await tester.pump();

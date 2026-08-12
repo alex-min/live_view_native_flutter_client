@@ -46,8 +46,8 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Create an account.
-        await view.livePatch('/accounts/new');
-        await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
+        await view.livePatch('/accounts/new/manual');
+        await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
 
         final accountFields = find.descendant(
           of: find.byType(Form),
@@ -285,8 +285,8 @@ Future<void> _createAccount(
   required String name,
   required String balance,
 }) async {
-  await view.livePatch('/accounts/new');
-  await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
+  await view.livePatch('/accounts/new/manual');
+  await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
 
   final fields = find.descendant(
     of: find.byType(Form),
