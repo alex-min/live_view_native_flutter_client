@@ -78,7 +78,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   }
 
   void _requestNextPageIfNeeded() {
-    if (!widget.state.isOnTheCurrentPage) {
+    if (!isOnCurrentRoute) {
       return;
     }
 

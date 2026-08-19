@@ -166,6 +166,62 @@ void main() {
     expect(server.lastChannelActions, actionsBeforeLeaving);
   });
 
+  testWidgets('does not request from an offstage route with the same URL', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 400));
+    final (view, server) = await connect(
+      LiveView(),
+      url: 'http://localhost:9999/transactions',
+      rendered: {
+        's': [
+          '<InfiniteList phx-load-page="load_page" totalCount="1000" '
+              'pageSize="10" loadedStart="0" loadedCount="10" '
+              'itemExtent="50" loadKey="old">'
+              '<SizedBox height="50"><Text>Old row</Text></SizedBox>'
+              '</InfiniteList>',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    view.currentUrl = '/edit';
+    view.handleRenderedMessage({
+      's': ['<viewBody><Text>Edit</Text></viewBody>'],
+    });
+    await tester.pumpAndSettle();
+
+    view.currentUrl = '/transactions';
+    view.handleRenderedMessage({
+      's': [
+        '<InfiniteList phx-load-page="load_page" totalCount="999" '
+            'pageSize="10" loadedStart="0" loadedCount="10" '
+            'itemExtent="50" loadKey="new">'
+            '<SizedBox height="50"><Text>New row</Text></SizedBox>'
+            '</InfiniteList>',
+      ],
+    });
+    await tester.pumpAndSettle();
+
+    final lists = find.byType(LiveInfiniteList, skipOffstage: false);
+    expect(lists, findsNWidgets(2));
+    final oldScrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: lists.first,
+        matching: find.byType(Scrollable, skipOffstage: false),
+        skipOffstage: false,
+      ),
+    );
+    final actionsBeforeOldScroll = List.of(server.lastChannelActions!);
+
+    oldScrollable.position.jumpTo(oldScrollable.position.maxScrollExtent);
+    await tester.pumpAndSettle();
+
+    expect(server.lastChannelActions, actionsBeforeOldScroll);
+  });
+
   testWidgets('does not request a page when hasMore is false', (tester) async {
     final (view, server) = await connect(
       LiveView(),

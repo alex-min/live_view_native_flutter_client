@@ -201,6 +201,18 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   // a shorthand to get the current xml node & state associated
   XmlNode get node => widget.state.node;
 
+  /// Whether this widget belongs to the visible navigation instance.
+  ///
+  /// URL equality alone is insufficient after navigating away and back to the
+  /// same URL because Flutter keeps the previous route mounted offstage.
+  bool get isOnCurrentRoute {
+    if (!mounted || !widget.state.isOnTheCurrentPage) {
+      return false;
+    }
+    final route = ModalRoute.of(context);
+    return route == null || route.isCurrent;
+  }
+
   Widget singleChild({NodeState? state}) =>
       StateChild.singleChild(state ?? widget.state);
 
