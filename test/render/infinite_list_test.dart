@@ -7,6 +7,62 @@ import '../test_helpers.dart';
 
 void main() {
   testWidgets(
+    'virtualizes the full extent and loads arbitrary pages in either direction',
+    (tester) async {
+      tester.setScreenSize(const Size(400, 400));
+      final children =
+          List.generate(
+            30,
+            (index) =>
+                '<SizedBox height="50"><Text>Row $index</Text></SizedBox>',
+          ).join();
+      final (view, server) = await connect(
+        LiveView(),
+        rendered: {
+          's': [
+            '<InfiniteList phx-load-page="load_page" totalCount="1000" '
+                'pageSize="10" loadedStart="',
+            '" loadedCount="30" itemExtent="50" loadKey="',
+            '">$children</InfiniteList>',
+          ],
+          '0': '0',
+          '1': '0',
+        },
+      );
+
+      await tester.runLiveView(view);
+      await tester.pumpAndSettle();
+
+      final scrollable = tester.state<ScrollableState>(
+        find.descendant(
+          of: find.byType(LiveInfiniteList),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(scrollable.position.maxScrollExtent, closeTo(49600, 1));
+
+      scrollable.position.jumpTo(25000);
+      await tester.pumpAndSettle();
+      expect(
+        server.lastChannelAction,
+        liveEvents.phxClick({'offset': 50}, eventName: 'load_page'),
+      );
+
+      view.handleDiffMessage({'0': '490', '1': '490'});
+      await tester.pumpAndSettle();
+      expect(scrollable.position.pixels, 25000);
+      expect(scrollable.position.maxScrollExtent, closeTo(49600, 1));
+
+      scrollable.position.jumpTo(20000);
+      await tester.pumpAndSettle();
+      expect(
+        server.lastChannelAction,
+        liveEvents.phxClick({'offset': 40}, eventName: 'load_page'),
+      );
+    },
+  );
+
+  testWidgets(
     'requests one page near the end and rearms after loadKey changes',
     (tester) async {
       tester.setScreenSize(const Size(400, 400));

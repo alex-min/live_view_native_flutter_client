@@ -4,10 +4,16 @@ import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-/// A server-driven list that requests another page when scrolling near its end.
+/// A server-driven list that can either append pages or virtualize a large,
+/// fixed-height data set.
 ///
 /// Set `phx-load-more` to the LiveView event, `hasMore` to whether another page
 /// exists, and change `loadKey` whenever the server finishes loading a page.
+///
+/// For a virtual list, set `phx-load-page`, `totalCount`, `pageSize`,
+/// `loadedStart`, `loadedCount`, and `itemExtent`. Only the loaded range is
+/// rendered inside a fixed full-data-set extent, so the scrollbar is accurate
+/// and jumping to any position requests that page directly.
 class LiveInfiniteList extends LiveStateWidget<LiveInfiniteList> {
   const LiveInfiniteList({super.key, required super.state});
 
@@ -24,9 +30,15 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
   final attributes = [
     'phx-load-more',
+    'phx-load-page',
     'hasMore',
     'loadKey',
     'loadMoreThreshold',
+    'totalCount',
+    'pageSize',
+    'loadedStart',
+    'loadedCount',
+    'loadPageThreshold',
     'scrollDirection',
     'reverse',
     'padding',
@@ -65,6 +77,11 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   }
 
   void _requestNextPageIfNeeded() {
+    if (_isVirtual && (intAttribute('totalCount') ?? 0) > 0) {
+      _requestVisiblePageIfNeeded();
+      return;
+    }
+
     if (!mounted ||
         _requestInFlight ||
         getAttribute('phx-load-more') == null ||
@@ -91,6 +108,67 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     );
   }
 
+  bool get _isVirtual =>
+      getAttribute('phx-load-page') != null &&
+      intAttribute('totalCount') != null &&
+      intAttribute('pageSize') != null &&
+      doubleAttribute('itemExtent') != null;
+
+  void _requestVisiblePageIfNeeded() {
+    if (!mounted || _requestInFlight || !_scrollController.hasClients) {
+      return;
+    }
+
+    final event = getAttribute('phx-load-page');
+    final totalCount = intAttribute('totalCount') ?? 0;
+    final pageSize = intAttribute('pageSize') ?? 0;
+    final itemExtent = doubleAttribute('itemExtent') ?? 0;
+    if (event == null || totalCount <= 0 || pageSize <= 0 || itemExtent <= 0) {
+      return;
+    }
+
+    final position = _scrollController.position;
+    final firstVisible = (position.pixels / itemExtent).floor().clamp(
+      0,
+      totalCount - 1,
+    );
+    final lastVisible =
+        ((position.pixels + position.viewportDimension) / itemExtent)
+            .ceil()
+            .clamp(1, totalCount) -
+        1;
+    final loadedStart = intAttribute('loadedStart') ?? 0;
+    final loadedCount = intAttribute('loadedCount') ?? 0;
+    final loadedEnd = loadedStart + loadedCount;
+    final threshold = intAttribute('loadPageThreshold') ?? 4;
+
+    int? targetPage;
+    if (lastVisible < loadedStart || firstVisible >= loadedEnd) {
+      final middleVisible = (firstVisible + lastVisible) ~/ 2;
+      targetPage = middleVisible ~/ pageSize;
+    } else if (loadedEnd < totalCount && lastVisible + threshold >= loadedEnd) {
+      targetPage = loadedEnd ~/ pageSize;
+    } else if (loadedStart > 0 && firstVisible - threshold < loadedStart) {
+      targetPage = (loadedStart - 1) ~/ pageSize;
+    }
+
+    if (targetPage == null) {
+      return;
+    }
+
+    _requestInFlight = true;
+    liveView.sendEvent(
+      ExecLiveEvent(
+        type: 'phx-click',
+        name: event,
+        value: {
+          ...getPhxValues(computedAttributes.attributes),
+          'offset': targetPage,
+        },
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _scrollController
@@ -101,6 +179,57 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
   @override
   Widget render(BuildContext context) {
+    final children = multipleChildren(
+      state: widget.state.copyWith(variables: currentVariables),
+    );
+
+    if (_isVirtual) {
+      final totalCount = intAttribute('totalCount') ?? 0;
+      if (totalCount <= 0) {
+        return ListView(
+          controller: _scrollController,
+          primary: false,
+          padding: marginOrPaddingAttribute('padding'),
+          children: children,
+        );
+      }
+
+      final loadedStart = intAttribute('loadedStart') ?? 0;
+      final loadedCount = intAttribute('loadedCount') ?? children.length;
+      final itemExtent = doubleAttribute('itemExtent')!;
+      final beforeExtent = loadedStart * itemExtent;
+      final loadedExtent = loadedCount * itemExtent;
+
+      return ListView(
+        controller: _scrollController,
+        primary: false,
+        padding: marginOrPaddingAttribute('padding'),
+        cacheExtent: doubleAttribute('cacheExtent'),
+        restorationId: getAttribute('restorationId'),
+        clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
+        children: [
+          SizedBox(
+            height: totalCount * itemExtent,
+            child: Stack(
+              children: [
+                if (loadedCount > 0)
+                  Positioned(
+                    top: beforeExtent,
+                    left: 0,
+                    right: 0,
+                    height: loadedExtent,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: children,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     return ListView(
       controller: _scrollController,
       scrollDirection: axisAttribute('scrollDirection') ?? Axis.vertical,
@@ -124,9 +253,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
           ScrollViewKeyboardDismissBehavior.manual,
       restorationId: getAttribute('restorationId'),
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
-      children: multipleChildren(
-        state: widget.state.copyWith(variables: currentVariables),
-      ),
+      children: children,
     );
   }
 }

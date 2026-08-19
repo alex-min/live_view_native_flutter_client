@@ -351,7 +351,7 @@ void main() {
     );
 
     testWidgets(
-      'loads the next transaction page when scrolling near the end',
+      'loads the transaction chunk at an arbitrary scroll position',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -407,15 +407,23 @@ void main() {
             )
             .hitTestable()
             .last;
-        await tester.scrollUntilVisible(
-          transactionRows.last,
-          500,
-          scrollable: innerList,
-        );
-        await tester.pumpAndSettle();
+        final scrollable = tester.state<ScrollableState>(innerList);
+        final fullExtent = scrollable.position.maxScrollExtent;
+        expect(fullExtent, greaterThan(40 * 64 * 5));
 
+        final middle = fullExtent / 2;
+        scrollable.position.jumpTo(middle);
+        await tester.pump();
         await _waitForCountGreaterThan(tester, transactionRows, 40);
+        await _waitFor(
+          tester,
+          transactionRows.hitTestable(),
+          seconds: 30,
+        );
+
         expect(transactionRows.evaluate().length, greaterThanOrEqualTo(80));
+        expect(scrollable.position.maxScrollExtent, closeTo(fullExtent, 1));
+        expect(scrollable.position.pixels, closeTo(middle, 1));
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
