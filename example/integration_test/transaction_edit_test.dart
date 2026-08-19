@@ -203,6 +203,31 @@ void main() {
         );
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
+        // Returning must keep working after the list and edit routes have
+        // already been rebuilt once.
+        final secondCloseButton = find.byIcon(Icons.close).hitTestable();
+        expect(secondCloseButton, findsOneWidget);
+        await tester.tap(secondCloseButton);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Courses'), seconds: 30);
+        expect(find.text('Edit transaction'), findsNothing);
+        expect(view.router.pages.last.page.name, view.currentUrl);
+        expect(find.text('Courses').hitTestable(), findsOneWidget);
+
+        await tester.tap(find.text('Courses').hitTestable().last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/\d+/edit$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
+
         final editFields = find.descendant(
           of: find.byType(Form),
           matching: find.byType(TextField),

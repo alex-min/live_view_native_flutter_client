@@ -110,7 +110,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       pages.removeLast();
       var pageName = pages.last.page.name;
       if (pageName != null) {
-        await view.execHrefClick(pageName);
+        await view.execHrefClick(pageName, waitForConnection: false);
       }
       view.goBackNotifier.notify();
       notifyListeners();

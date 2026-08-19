@@ -787,7 +787,11 @@ class LiveView {
     return r;
   }
 
-  Future<void> execHrefClick(String url, {String method = 'GET'}) async {
+  Future<void> execHrefClick(
+    String url, {
+    String method = 'GET',
+    bool waitForConnection = true,
+  }) async {
     router.pushPage(
       url: 'loading;$url',
       widget: loadingWidget(url),
@@ -814,10 +818,14 @@ class LiveView {
       's': [response.body],
     }, viewType: ViewType.deadView);
 
-    if (_socket?.isConnected == true) {
-      await _channel?.leave().future;
+    final connectionTransition =
+        _socket?.isConnected == true
+            ? (_channel?.leave().future ?? Future<void>.value())
+            : reconnect();
+    if (waitForConnection) {
+      await connectionTransition;
     } else {
-      await reconnect();
+      unawaited(connectionTransition);
     }
   }
 
