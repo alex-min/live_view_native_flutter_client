@@ -151,7 +151,11 @@ void main() {
         // Mavio's edit screen replaces the normal navigation with one centered
         // close button. Closing returns to the same transaction-list route.
         expect(find.byType(BottomNavigationBar), findsNothing);
-        expect(find.byType(BottomAppBar), findsNothing);
+        final invisibleBar = tester.widget<BottomAppBar>(
+          find.byType(BottomAppBar),
+        );
+        expect(invisibleBar.color, Colors.transparent);
+        expect(invisibleBar.elevation, 0);
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
         await tester.tap(closeButton);
