@@ -148,6 +148,30 @@ void main() {
         );
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
+        // Mavio's edit screen replaces the normal navigation with one centered
+        // close button. Closing returns to the same transaction-list route.
+        expect(find.byType(BottomNavigationBar), findsNothing);
+        expect(find.byType(BottomAppBar), findsOneWidget);
+        final closeButton = find.byIcon(Icons.close).hitTestable();
+        expect(closeButton, findsOneWidget);
+        await tester.tap(closeButton);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Courses'), seconds: 30);
+
+        await tester.tap(find.text('Courses').hitTestable().last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/\d+/edit$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
+
         final editFields = find.descendant(
           of: find.byType(Form),
           matching: find.byType(TextField),
