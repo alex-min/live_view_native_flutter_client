@@ -130,6 +130,25 @@ class LiveView {
   // action attribute is still "true" on a previous route.
   final Map<String, String> _lastFormTriggerActions = {};
 
+  // Scroll offsets for server-rendered lists that opt into restoration. Keep
+  // this on the LiveView instance so navigating away can replace a route
+  // without losing the list's position.
+  final Map<String, double> _scrollOffsets = {};
+
+  String _scrollOffsetKey(String urlPath, String restorationId) =>
+      '$urlPath|$restorationId';
+
+  double? restoredScrollOffset(String urlPath, String restorationId) =>
+      _scrollOffsets[_scrollOffsetKey(urlPath, restorationId)];
+
+  void rememberScrollOffset(
+    String urlPath,
+    String restorationId,
+    double offset,
+  ) {
+    _scrollOffsets[_scrollOffsetKey(urlPath, restorationId)] = offset;
+  }
+
   /// Holds all fallback widgets that will be used in the live view lifecycle
   LiveViewFallbackPages fallbackPages;
 

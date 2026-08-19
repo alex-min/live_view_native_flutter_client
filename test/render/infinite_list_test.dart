@@ -222,6 +222,69 @@ void main() {
     expect(server.lastChannelActions, actionsBeforeOldScroll);
   });
 
+  testWidgets(
+    'restores an opted-in virtual list after returning to its route',
+    (tester) async {
+      tester.setScreenSize(const Size(400, 400));
+      final (view, server) = await connect(
+        LiveView(),
+        url: 'http://localhost:9999/transactions',
+        rendered: {
+          's': [
+            '<InfiniteList phx-load-page="load_page" totalCount="1000" '
+                'pageSize="10" loadedStart="0" loadedCount="10" '
+                'itemExtent="50" restorationId="transactions" loadKey="old">'
+                '<SizedBox height="50"><Text>Old row</Text></SizedBox>'
+                '</InfiniteList>',
+          ],
+        },
+      );
+
+      await tester.runLiveView(view);
+      await tester.pumpAndSettle();
+      final originalScrollable = tester.state<ScrollableState>(
+        find.descendant(
+          of: find.byType(LiveInfiniteList),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      originalScrollable.position.jumpTo(25000);
+      await tester.pumpAndSettle();
+
+      view.currentUrl = '/edit';
+      view.handleRenderedMessage({
+        's': ['<viewBody><Text>Edit</Text></viewBody>'],
+      });
+      await tester.pumpAndSettle();
+
+      view.currentUrl = '/transactions';
+      view.handleRenderedMessage({
+        's': [
+          '<InfiniteList phx-load-page="load_page" totalCount="999" '
+              'pageSize="10" loadedStart="0" loadedCount="10" '
+              'itemExtent="50" restorationId="transactions" loadKey="new">'
+              '<SizedBox height="50"><Text>Updated row</Text></SizedBox>'
+              '</InfiniteList>',
+        ],
+      });
+      await tester.pumpAndSettle();
+
+      final returnedScrollable = tester.state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byType(LiveInfiniteList),
+              matching: find.byType(Scrollable),
+            )
+            .hitTestable(),
+      );
+      expect(returnedScrollable.position.pixels, 25000);
+      expect(
+        server.lastChannelAction,
+        liveEvents.phxClick({'offset': 50}, eventName: 'load_page'),
+      );
+    },
+  );
+
   testWidgets('does not request a page when hasMore is false', (tester) async {
     final (view, server) = await connect(
       LiveView(),

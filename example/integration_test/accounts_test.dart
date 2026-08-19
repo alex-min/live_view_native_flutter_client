@@ -437,6 +437,7 @@ void main() {
           expect(scrollable.position.pixels, closeTo(target, 1));
         }
 
+        var positionBeforeEdit = scrollable.position.pixels;
         await tester.tap(transactionRows.hitTestable().first);
         await _waitForUrl(
           tester,
@@ -457,6 +458,22 @@ void main() {
             seconds: 30,
           );
           await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
+
+          final restoredList = find
+              .descendant(
+                of: find.byType(LiveInfiniteList),
+                matching: find.byType(Scrollable),
+              )
+              .hitTestable()
+              .last;
+          final restoredScrollable = tester.state<ScrollableState>(
+            restoredList,
+          );
+          expect(
+            restoredScrollable.position.pixels,
+            closeTo(positionBeforeEdit, 1),
+            reason: 'Deleting a transaction should preserve the list position',
+          );
 
           if (deletion == 0) {
             final returnedRows = find.descendant(
@@ -487,6 +504,7 @@ void main() {
               );
             }
 
+            positionBeforeEdit = returnedScrollable.position.pixels;
             await tester.tap(returnedRows.hitTestable().first);
             await _waitForUrl(
               tester,

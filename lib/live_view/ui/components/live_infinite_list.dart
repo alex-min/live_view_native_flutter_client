@@ -56,11 +56,45 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
   @override
   void initState() {
-    _scrollController.addListener(_requestNextPageIfNeeded);
+    _scrollController.addListener(_handleScroll);
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restoreScrollOffset();
       _requestNextPageIfNeeded();
     });
+  }
+
+  void _handleScroll() {
+    final restorationId = getAttribute('restorationId');
+    if (restorationId != null && _scrollController.hasClients) {
+      liveView.rememberScrollOffset(
+        widget.state.urlPath,
+        restorationId,
+        _scrollController.offset,
+      );
+    }
+    _requestNextPageIfNeeded();
+  }
+
+  void _restoreScrollOffset() {
+    final restorationId = getAttribute('restorationId');
+    if (!mounted || restorationId == null || !_scrollController.hasClients) {
+      return;
+    }
+
+    final offset = liveView.restoredScrollOffset(
+      widget.state.urlPath,
+      restorationId,
+    );
+    if (offset == null) {
+      return;
+    }
+
+    final restoredOffset = offset.clamp(
+      _scrollController.position.minScrollExtent,
+      _scrollController.position.maxScrollExtent,
+    );
+    _scrollController.jumpTo(restoredOffset.toDouble());
   }
 
   @override
@@ -175,7 +209,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   @override
   void dispose() {
     _scrollController
-      ..removeListener(_requestNextPageIfNeeded)
+      ..removeListener(_handleScroll)
       ..dispose();
     super.dispose();
   }
