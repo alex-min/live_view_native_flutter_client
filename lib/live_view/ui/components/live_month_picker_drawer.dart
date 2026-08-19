@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 /// Mavio-style month picker content for use inside a modal bottom sheet.
@@ -23,7 +24,7 @@ class _LiveMonthPickerDrawerState extends StateWidget<LiveMonthPickerDrawer> {
   Widget render(BuildContext context) {
     return Stack(
       children: [
-        CustomScrollView(slivers: multipleChildren()),
+        CustomScrollView(slivers: _sliverChildren(multipleChildren())),
         Positioned(
           right: 15,
           top: 15,
@@ -43,6 +44,18 @@ class _LiveMonthPickerDrawerState extends StateWidget<LiveMonthPickerDrawer> {
         ),
       ],
     );
+  }
+
+  List<Widget> _sliverChildren(List<Widget> children) {
+    return children.expand((child) {
+      if (child is LiveDynamicComponent) {
+        final content = LiveDynamicComponent.initialContent(child.state);
+        if (content != null) {
+          return _sliverChildren(content);
+        }
+      }
+      return [child];
+    }).toList();
   }
 }
 
