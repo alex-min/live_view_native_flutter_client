@@ -95,6 +95,8 @@ void main() {
           RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
           seconds: 30,
         );
+        await _waitFor(tester, find.byIcon(Icons.arrow_back), seconds: 30);
+        await _waitFor(tester, find.byIcon(Icons.close), seconds: 30);
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
         // The form has three text fields: amount, date, description.

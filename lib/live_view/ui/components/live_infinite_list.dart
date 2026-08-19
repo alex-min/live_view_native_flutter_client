@@ -28,15 +28,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   final ScrollController _scrollController = ScrollController();
   bool _requestInFlight = false;
   String? _loadKey;
-  double? _lastTracedPixels;
-  DateTime? _lastScrollTraceAt;
-
-  void _trace(String message) {
-    liveView.trace(
-      'infinite=${identityHashCode(this)} route=${widget.state.urlPath} '
-      '$message',
-    );
-  }
 
   final attributes = [
     'phx-load-more',
@@ -67,7 +58,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   void initState() {
     _scrollController.addListener(_handleScroll);
     super.initState();
-    _trace('init');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _restoreScrollOffset();
       _requestNextPageIfNeeded();
@@ -83,21 +73,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
         _scrollController.offset,
       );
     }
-    final now = DateTime.now();
-    if (_scrollController.hasClients &&
-        (_lastScrollTraceAt == null ||
-            now.difference(_lastScrollTraceAt!).inMilliseconds >= 250)) {
-      final pixels = _scrollController.position.pixels;
-      if (_lastTracedPixels == null ||
-          (pixels - _lastTracedPixels!).abs() >= 64) {
-        _lastScrollTraceAt = now;
-        _lastTracedPixels = pixels;
-        _trace(
-          'scroll pixels=$pixels max=${_scrollController.position.maxScrollExtent} '
-          'activity=${_scrollController.position.activity.runtimeType}',
-        );
-      }
-    }
     _requestNextPageIfNeeded();
   }
 
@@ -112,7 +87,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
     final position = _scrollController.position;
     if (!position.hasContentDimensions) {
-      _trace('restore deferred');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _restoreScrollOffset();
       });
@@ -124,7 +98,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       restorationId,
     );
     if (offset == null) {
-      _trace('restore none');
       return;
     }
 
@@ -133,7 +106,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       position.maxScrollExtent,
     );
     _scrollController.jumpTo(restoredOffset.toDouble());
-    _trace('restore requested=$offset applied=$restoredOffset');
   }
 
   @override
@@ -144,11 +116,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
     if (previousLoadKey != null && previousLoadKey != _loadKey) {
       _requestInFlight = false;
-      _trace(
-        'window_changed loadKey=$previousLoadKey->$_loadKey '
-        'loaded=${getAttribute('loadedStart')}+${getAttribute('loadedCount')} '
-        'total=${getAttribute('totalCount')}',
-      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _requestNextPageIfNeeded();
       });
@@ -189,7 +156,6 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       ),
     );
     _requestInFlight = sent;
-    _trace('load_more sent=$sent');
   }
 
   bool get _isVirtual =>
@@ -251,18 +217,10 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       ),
     );
     _requestInFlight = sent;
-    _trace(
-      'page_request target=$targetPage sent=$sent visible=$firstVisible..$lastVisible '
-      'loaded=$loadedStart..${loadedEnd - 1} total=$totalCount '
-      'pixels=${position.pixels} max=${position.maxScrollExtent}',
-    );
   }
 
   @override
   void dispose() {
-    _trace(
-      'dispose pixels=${_scrollController.hasClients ? _scrollController.offset : 'detached'}',
-    );
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();

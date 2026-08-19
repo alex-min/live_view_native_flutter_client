@@ -631,19 +631,6 @@ class LiveView {
     return false;
   }
 
-  void trace(String message) {
-    final channel = _channel;
-    final channelDescription =
-        channel == null
-            ? 'none'
-            : '${identityHashCode(channel)}:${channel.state}';
-    final pageNames = router.pages.map((page) => page.page.name).join(',');
-    debugPrint(
-      'LVN_TRACE view=$hashCode url=$currentUrl channel=$channelDescription '
-      'channelUrl=$_channelUrl pages=[$pageNames] $message',
-    );
-  }
-
   List<Widget> connectingWidget() {
     return [InternalView(child: fallbackPages.buildConnecting(this))];
   }
@@ -833,8 +820,6 @@ class LiveView {
     handleRenderedMessage({
       's': [response.body],
     }, viewType: ViewType.deadView);
-    trace('href_rendered target=$url waitForConnection=$waitForConnection');
-
     final connectionTransition =
         _socket?.isConnected == true
             ? (_channel?.leave().future ?? Future<void>.value())
@@ -842,14 +827,7 @@ class LiveView {
     if (waitForConnection) {
       await connectionTransition;
     } else {
-      unawaited(
-        connectionTransition.then<void>(
-          (_) => trace('href_connection_complete target=$url'),
-          onError: (Object error, StackTrace stackTrace) {
-            trace('href_connection_error target=$url error=$error');
-          },
-        ),
-      );
+      unawaited(connectionTransition);
     }
   }
 
@@ -866,11 +844,7 @@ class LiveView {
       web_html.window.parent?.postMessage({'type': 'go-back'}, "*");
       return;
     }
-    trace('back_start busy=$_isGoingBack activePop=${router.hasActivePop}');
-    if (_isGoingBack) {
-      trace('back_ignored');
-      return;
-    }
+    if (_isGoingBack) return;
 
     _isGoingBack = true;
     try {
@@ -879,7 +853,6 @@ class LiveView {
       router.notify();
     } finally {
       _isGoingBack = false;
-      trace('back_complete activePop=${router.hasActivePop}');
     }
   }
 
