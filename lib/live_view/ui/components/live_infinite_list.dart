@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 /// A server-driven list that can either append pages or virtualize a large,
@@ -77,6 +78,10 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   }
 
   void _requestNextPageIfNeeded() {
+    if (!widget.state.isOnTheCurrentPage) {
+      return;
+    }
+
     if (_isVirtual && (intAttribute('totalCount') ?? 0) > 0) {
       _requestVisiblePageIfNeeded();
       return;
@@ -98,8 +103,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       return;
     }
 
-    _requestInFlight = true;
-    liveView.sendEvent(
+    _requestInFlight = liveView.sendEvent(
       ExecLiveEvent(
         type: 'phx-click',
         name: getAttribute('phx-load-more')!,
@@ -156,8 +160,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       return;
     }
 
-    _requestInFlight = true;
-    liveView.sendEvent(
+    _requestInFlight = liveView.sendEvent(
       ExecLiveEvent(
         type: 'phx-click',
         name: event,
@@ -179,56 +182,16 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
   @override
   Widget render(BuildContext context) {
-    final children = multipleChildren(
-      state: widget.state.copyWith(variables: currentVariables),
-    );
+    final childState = widget.state.copyWith(variables: currentVariables);
 
     if (_isVirtual) {
-      final totalCount = intAttribute('totalCount') ?? 0;
-      if (totalCount <= 0) {
-        return ListView(
-          controller: _scrollController,
-          primary: false,
-          padding: marginOrPaddingAttribute('padding'),
-          children: children,
-        );
-      }
-
-      final loadedStart = intAttribute('loadedStart') ?? 0;
-      final loadedCount = intAttribute('loadedCount') ?? children.length;
-      final itemExtent = doubleAttribute('itemExtent')!;
-      final beforeExtent = loadedStart * itemExtent;
-      final loadedExtent = loadedCount * itemExtent;
-
-      return ListView(
-        controller: _scrollController,
-        primary: false,
-        padding: marginOrPaddingAttribute('padding'),
-        cacheExtent: doubleAttribute('cacheExtent'),
-        restorationId: getAttribute('restorationId'),
-        clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
-        children: [
-          SizedBox(
-            height: totalCount * itemExtent,
-            child: Stack(
-              children: [
-                if (loadedCount > 0)
-                  Positioned(
-                    top: beforeExtent,
-                    left: 0,
-                    right: 0,
-                    height: loadedExtent,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: children,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+      final children = _flattenDynamicChildren(
+        multipleChildren(state: childState),
       );
+      return _renderVirtualList(children);
     }
+
+    final children = multipleChildren(state: childState);
 
     return ListView(
       controller: _scrollController,
@@ -255,5 +218,70 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
       children: children,
     );
+  }
+
+  Widget _renderVirtualList(List<Widget> children) {
+    final totalCount = intAttribute('totalCount') ?? 0;
+    if (totalCount <= 0) {
+      return ListView(
+        controller: _scrollController,
+        primary: false,
+        padding: marginOrPaddingAttribute('padding'),
+        children: children,
+      );
+    }
+
+    final loadedStart = intAttribute('loadedStart') ?? 0;
+    final loadedCount = intAttribute('loadedCount') ?? children.length;
+
+    return ListView.builder(
+      controller: _scrollController,
+      primary: false,
+      padding: marginOrPaddingAttribute('padding'),
+      itemCount: totalCount,
+      itemExtent: doubleAttribute('itemExtent'),
+      addAutomaticKeepAlives:
+          booleanAttribute('addAutomaticKeepAlives') ?? false,
+      addRepaintBoundaries: booleanAttribute('addRepaintBoundaries') ?? true,
+      addSemanticIndexes: booleanAttribute('addSemanticIndexes') ?? true,
+      cacheExtent: doubleAttribute('cacheExtent'),
+      semanticChildCount: intAttribute('semanticChildCount') ?? totalCount,
+      dragStartBehavior:
+          dragStartBehaviorAttribute('dragStartBehavior') ??
+          DragStartBehavior.start,
+      keyboardDismissBehavior:
+          scrollViewKeyboardDismissBehaviorAttribute(
+            'keyboardDismissBehavior',
+          ) ??
+          ScrollViewKeyboardDismissBehavior.manual,
+      restorationId: getAttribute('restorationId'),
+      clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
+      itemBuilder: (context, index) {
+        final loadedIndex = index - loadedStart;
+        if (loadedIndex < 0 ||
+            loadedIndex >= loadedCount ||
+            loadedIndex >= children.length) {
+          return const SizedBox.shrink();
+        }
+        return children[loadedIndex];
+      },
+    );
+  }
+
+  List<Widget> _flattenDynamicChildren(List<Widget> children) {
+    final flattened = <Widget>[];
+    for (final child in children) {
+      if (child is LiveDynamicComponent) {
+        final dynamicChildren = LiveDynamicComponent.initialContent(
+          child.state,
+        );
+        if (dynamicChildren != null) {
+          flattened.addAll(_flattenDynamicChildren(dynamicChildren));
+        }
+      } else {
+        flattened.add(child);
+      }
+    }
+    return flattened;
   }
 }

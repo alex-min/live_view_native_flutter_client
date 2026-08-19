@@ -110,6 +110,7 @@ class LiveView {
   late PhoenixSocket _liveReloadSocket;
 
   PhoenixChannel? _channel;
+  String? _channelUrl;
   Push? _pendingLeavePush;
   bool _isJoiningChannel = false;
 
@@ -260,6 +261,7 @@ class LiveView {
   Future<void> disconnect() async {
     _pendingLeavePush?.cancelTimeout();
     _pendingLeavePush = null;
+    _channelUrl = null;
     _channel?.close();
     _socket?.dispose();
   }
@@ -392,6 +394,7 @@ class LiveView {
         topic: "lv:$_liveViewId",
         parameters: _fullsocketParams(redirect: redirect),
       );
+      _channelUrl = currentUrl;
 
       _channel?.messages.listen(handleMessage);
 
@@ -426,8 +429,9 @@ class LiveView {
 
   Future<void> redirectTo(String path) async {
     redirectToUrl = path;
+    _channelUrl = null;
 
-    if (_channel == null || _channel?.state == PhoenixChannelState.closed) {
+    if (_channel?.state != PhoenixChannelState.joined) {
       await disconnect();
       await execHrefClick(path);
       return;
@@ -564,7 +568,7 @@ class LiveView {
     }
   }
 
-  sendEvent(ExecLiveEvent event) {
+  bool sendEvent(ExecLiveEvent event) {
     var eventData = {
       'type': event.type,
       'event': event.name,
@@ -576,9 +580,20 @@ class LiveView {
         'type': 'event',
         'data': eventData,
       }, "*");
-    } else if (_channel?.state != PhoenixChannelState.closed) {
-      _channel?.push('event', eventData);
+      return true;
     }
+
+    // Match LiveView JS's `view.isConnected()` guard. A channel is owned by
+    // the URL it joined for and is invalidated as soon as navigation starts,
+    // so an old-but-still-joined channel cannot receive the next page's event.
+    // Errored, joining and leaving channels also reject pushes.
+    if (_channel?.state == PhoenixChannelState.joined &&
+        _channelUrl == currentUrl) {
+      _channel?.push('event', eventData);
+      return true;
+    }
+
+    return false;
   }
 
   List<Widget> connectingWidget() {
@@ -643,7 +658,7 @@ class LiveView {
       widget: loadingWidget(url),
       rootState: router.pages.lastOrNull?.rootState,
     );
-    redirectTo(url);
+    unawaited(redirectTo(url));
   }
 
   Future<void> postForm(Map<String, dynamic> formValues, {String? url}) {

@@ -40,6 +40,7 @@ void main() {
         ),
       );
       expect(scrollable.position.maxScrollExtent, closeTo(49600, 1));
+      expect(find.textContaining('Row ').evaluate().length, lessThan(30));
 
       scrollable.position.jumpTo(25000);
       await tester.pumpAndSettle();
@@ -52,6 +53,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(scrollable.position.pixels, 25000);
       expect(scrollable.position.maxScrollExtent, closeTo(49600, 1));
+      expect(find.textContaining('Row ').evaluate().length, lessThan(30));
 
       scrollable.position.jumpTo(20000);
       await tester.pumpAndSettle();
@@ -59,6 +61,21 @@ void main() {
         server.lastChannelAction,
         liveEvents.phxClick({'offset': 40}, eventName: 'load_page'),
       );
+
+      view.handleDiffMessage({'0': '390', '1': '390'});
+      await tester.pumpAndSettle();
+
+      for (var cycle = 0; cycle < 20; cycle++) {
+        final firstLoaded = cycle.isEven ? 90 : 690;
+        scrollable.position.jumpTo((firstLoaded + 10) * 50);
+        await tester.pumpAndSettle();
+        view.handleDiffMessage({'0': '$firstLoaded', '1': 'cycle-$cycle'});
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Row ').evaluate().length, lessThan(30));
+      }
+
+      expect(server.lastChannelActions, hasLength(23));
     },
   );
 
@@ -114,6 +131,40 @@ void main() {
       ]);
     },
   );
+
+  testWidgets('does not request pages after its route becomes offstage', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 400));
+    final (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '<InfiniteList phx-load-page="load_page" totalCount="1000" '
+              'pageSize="10" loadedStart="0" loadedCount="10" '
+              'itemExtent="50" loadKey="0">'
+              '<SizedBox height="50"><Text>Row</Text></SizedBox>'
+              '</InfiniteList>',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    final actionsBeforeLeaving = List.of(server.lastChannelActions!);
+    view.currentUrl = '/another-route';
+
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(LiveInfiniteList),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    scrollable.position.jumpTo(25000);
+    await tester.pumpAndSettle();
+
+    expect(server.lastChannelActions, actionsBeforeLeaving);
+  });
 
   testWidgets('does not request a page when hasMore is false', (tester) async {
     final (view, server) = await connect(

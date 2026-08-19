@@ -397,7 +397,7 @@ void main() {
           of: find.byType(LiveInfiniteList),
           matching: find.byType(ListTile),
         );
-        expect(transactionRows, findsNWidgets(40));
+        expect(transactionRows.evaluate().length, inInclusiveRange(1, 20));
         expect(find.text('Load more'), findsNothing);
 
         final innerList = find
@@ -411,19 +411,28 @@ void main() {
         final fullExtent = scrollable.position.maxScrollExtent;
         expect(fullExtent, greaterThan(40 * 64 * 5));
 
-        final middle = fullExtent / 2;
-        scrollable.position.jumpTo(middle);
-        await tester.pump();
-        await _waitForCountGreaterThan(tester, transactionRows, 40);
-        await _waitFor(
+        for (var jump = 0; jump < 12; jump++) {
+          final target = fullExtent * (jump.isEven ? 0.3 : 0.7);
+          scrollable.position.jumpTo(target);
+          await tester.pump();
+          await _waitFor(
+            tester,
+            transactionRows.hitTestable(),
+            seconds: 30,
+          );
+
+          expect(transactionRows.evaluate().length, inInclusiveRange(1, 20));
+          expect(scrollable.position.maxScrollExtent, closeTo(fullExtent, 1));
+          expect(scrollable.position.pixels, closeTo(target, 1));
+        }
+
+        await tester.tap(transactionRows.hitTestable().first);
+        await _waitForUrl(
           tester,
-          transactionRows.hitTestable(),
+          view,
+          RegExp(r'^/transactions/\d+/edit$'),
           seconds: 30,
         );
-
-        expect(transactionRows.evaluate().length, greaterThanOrEqualTo(80));
-        expect(scrollable.position.maxScrollExtent, closeTo(fullExtent, 1));
-        expect(scrollable.position.pixels, closeTo(middle, 1));
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
@@ -522,22 +531,6 @@ Future<void> _waitForAbsent(WidgetTester tester, Finder finder,
     await Future.delayed(const Duration(seconds: 1));
   }
   throw Exception('Timed out waiting for $finder to disappear');
-}
-
-Future<void> _waitForCountGreaterThan(
-  WidgetTester tester,
-  Finder finder,
-  int count, {
-  int seconds = 30,
-}) async {
-  for (var i = 0; i < seconds; i++) {
-    await tester.pump();
-    if (finder.evaluate().length > count) {
-      return;
-    }
-    await Future.delayed(const Duration(seconds: 1));
-  }
-  throw Exception('Timed out waiting for more than $count matches of $finder');
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
