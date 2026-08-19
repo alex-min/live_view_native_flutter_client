@@ -6,6 +6,34 @@ import 'package:phoenix_socket/phoenix_socket.dart';
 import '../test_helpers.dart';
 
 void main() {
+  testWidgets('root view can extend behind the bottom navigation bar', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 800));
+
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
+        <flutter extendBody="true">
+          <viewBody><Text>Home page</Text></viewBody>
+          <BottomNavigationBar>
+            <BottomNavigationBarItem icon="home" label="Home" />
+            <BottomNavigationBarItem icon="settings" label="Settings" />
+          </BottomNavigationBar>
+        </flutter>
+        """,
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Scaffold>(find.byType(Scaffold)).extendBody, isTrue);
+  });
+
   testWidgets('bottom navigation bar item live-patch navigates', (
     tester,
   ) async {

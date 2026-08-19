@@ -178,6 +178,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
 
     var extendBodyBehindAppBar =
         getBoolean(getRootAttribute('extendBodyBehindAppBar')) ?? false;
+    var extendBody = getBoolean(getRootAttribute('extendBody')) ?? false;
 
     // The bottom navigation bar only appears under the mobile breakpoint;
     // the top bar is hidden with the same condition, like a native app.
@@ -206,6 +207,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       drawer: drawer,
       endDrawer: endDrawer,
       primary: getBoolean(getRootAttribute('primary')) ?? true,
+      extendBody: extendBody,
       extendBodyBehindAppBar: extendBodyBehindAppBar,
       appBar: hasAppBar && !hideAppBar ? RootAppBar(view: widget.view) : null,
       body: NotificationListener<SizeChangedLayoutNotification>(

@@ -177,6 +177,8 @@ void main() {
         );
         expect(invisibleBar.color, Colors.transparent);
         expect(invisibleBar.elevation, 0);
+        expect(
+            tester.widget<Scaffold>(find.byType(Scaffold)).extendBody, isTrue);
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
         await tester.tap(closeButton);
