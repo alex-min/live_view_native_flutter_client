@@ -34,6 +34,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_html_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon_selected_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_label_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
@@ -279,6 +280,9 @@ class LiveViewUiParser {
       ..add([
         'ListView',
       ], (state) => [LiveListView(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'InfiniteList',
+      ], (state) => [LiveInfiniteList(state: state, key: Key(uuid.v4()))])
       ..add(['Form'], (state) => [LiveForm(state: state, key: Key(uuid.v4()))])
       ..add([
         'TextField',

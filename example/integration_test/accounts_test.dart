@@ -7,6 +7,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bar_chart.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_month_picker_drawer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -348,6 +349,76 @@ void main() {
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
+
+    testWidgets(
+      'loads the next transaction page when scrolling near the end',
+      (tester) async {
+        await _ensureServer();
+        SharedPreferences.setMockInitialValues({});
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+        await _signUpAndOnboard(tester, view);
+
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        final tryDemo = find.widgetWithText(ElevatedButton, 'Try demo').last;
+        await _waitFor(tester, tryDemo, seconds: 30);
+        await tester.ensureVisible(tryDemo);
+        await tester.tap(tryDemo);
+        await _waitForUrl(tester, view, '/', seconds: 30);
+
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        final cashAccount = find.widgetWithText(ListTile, 'Cash').last;
+        await _waitFor(tester, cashAccount, seconds: 30);
+        await tester.ensureVisible(cashAccount);
+        await tester.drag(
+          find.byType(ListView).hitTestable().last,
+          const Offset(0, -200),
+        );
+        final visibleCashAccount =
+            find.widgetWithText(ListTile, 'Cash').hitTestable();
+        await _waitFor(tester, visibleCashAccount, seconds: 30);
+        await tester.tap(visibleCashAccount);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
+
+        final transactionRows = find.descendant(
+          of: find.byType(LiveInfiniteList),
+          matching: find.byType(ListTile),
+        );
+        expect(transactionRows, findsNWidgets(40));
+        expect(find.text('Load more'), findsNothing);
+
+        final innerList = find
+            .descendant(
+              of: find.byType(LiveInfiniteList),
+              matching: find.byType(Scrollable),
+            )
+            .hitTestable()
+            .last;
+        await tester.scrollUntilVisible(
+          transactionRows.last,
+          500,
+          scrollable: innerList,
+        );
+        await tester.pumpAndSettle();
+
+        await _waitForCountGreaterThan(tester, transactionRows, 40);
+        expect(transactionRows.evaluate().length, greaterThanOrEqualTo(80));
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
   });
 }
 
@@ -445,12 +516,29 @@ Future<void> _waitForAbsent(WidgetTester tester, Finder finder,
   throw Exception('Timed out waiting for $finder to disappear');
 }
 
+Future<void> _waitForCountGreaterThan(
+  WidgetTester tester,
+  Finder finder,
+  int count, {
+  int seconds = 30,
+}) async {
+  for (var i = 0; i < seconds; i++) {
+    await tester.pump();
+    if (finder.evaluate().length > count) {
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+  throw Exception('Timed out waiting for more than $count matches of $finder');
+}
+
 /// Waits up to [seconds] for the live view to navigate to [url].
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
+Future<void> _waitForUrl(WidgetTester tester, LiveView view, Object url,
     {int seconds = 30}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
-    if (view.currentUrl == url) {
+    if ((url is String && view.currentUrl == url) ||
+        (url is RegExp && url.hasMatch(view.currentUrl))) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));
