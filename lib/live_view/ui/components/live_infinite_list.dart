@@ -103,7 +103,19 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
   void _restoreScrollOffset() {
     final restorationId = getAttribute('restorationId');
-    if (!mounted || restorationId == null || !_scrollController.hasClients) {
+    if (!mounted ||
+        !isOnCurrentRoute ||
+        restorationId == null ||
+        !_scrollController.hasClients) {
+      return;
+    }
+
+    final position = _scrollController.position;
+    if (!position.hasContentDimensions) {
+      _trace('restore deferred');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _restoreScrollOffset();
+      });
       return;
     }
 
@@ -117,8 +129,8 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     }
 
     final restoredOffset = offset.clamp(
-      _scrollController.position.minScrollExtent,
-      _scrollController.position.maxScrollExtent,
+      position.minScrollExtent,
+      position.maxScrollExtent,
     );
     _scrollController.jumpTo(restoredOffset.toDouble());
     _trace('restore requested=$offset applied=$restoredOffset');
