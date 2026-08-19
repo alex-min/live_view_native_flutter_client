@@ -47,6 +47,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_month_picker_drawe
 import 'package:liveview_flutter/live_view/ui/components/live_modal.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_persistent_top_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_positioned.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_overlay_portal.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_outlined_button.dart';
@@ -324,6 +325,9 @@ class LiveViewUiParser {
           LivePersistentFooterButton(state: state, key: Key(uuid.v4())),
         ],
       )
+      ..add([
+        'PersistentTopBar',
+      ], (state) => [LivePersistentTopBar(state: state, key: Key(uuid.v4()))])
       ..add([
         'BottomSheet',
       ], (state) => [LiveBottomSheet(state: state, key: Key(uuid.v4()))])

@@ -20,6 +20,7 @@ import 'package:liveview_flutter/live_view/ui/loading/reload_widget.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/root_view/root_persistent_top_bar.dart';
 import 'package:throttled/throttled.dart';
 import 'package:xml/xml.dart';
 
@@ -186,6 +187,13 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       backButtonDispatcher: RootBackButtonDispatcher(),
     );
     var child = extendBodyBehindAppBar ? router : SafeArea(child: router);
+
+    child = Column(
+      children: [
+        RootPersistentTopBar(view: widget.view),
+        Expanded(child: child),
+      ],
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
