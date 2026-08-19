@@ -393,6 +393,17 @@ void main() {
         );
         await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
 
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('main_app_bar')), findsNothing);
+        expect(find.byType(BottomNavigationBar), findsOneWidget);
+
         final transactionRows = find.descendant(
           of: find.byType(LiveInfiniteList),
           matching: find.byType(ListTile),

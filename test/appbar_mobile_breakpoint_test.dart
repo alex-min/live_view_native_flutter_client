@@ -23,10 +23,12 @@ void main() {
     <Text>StartupKit</Text>
   </title>
 </AppBar>
-<BottomNavigationBar initialValue="0">
-  <BottomNavigationBarItem live-patch="/" icon="home" label="Home" />
-  <BottomNavigationBarItem live-patch="/users/settings" icon="settings" label="Settings" />
-</BottomNavigationBar>
+<BottomAppBar padding="0">
+  <BottomNavigationBar initialValue="0">
+    <BottomNavigationBarItem live-patch="/" icon="home" label="Home" />
+    <BottomNavigationBarItem live-patch="/users/settings" icon="settings" label="Settings" />
+  </BottomNavigationBar>
+</BottomAppBar>
 <div id="phx-id" data-phx-session="session" data-phx-static="static" data-phx-main>
   <viewBody>
     <Center>

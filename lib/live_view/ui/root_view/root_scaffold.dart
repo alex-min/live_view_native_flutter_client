@@ -159,7 +159,12 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
             widget is LiveBottomNavigationBar || widget is LiveBottomAppBar,
       );
       hasMobileBottomNavigationBar = widgets.any(
-        (widget) => widget is LiveBottomNavigationBar,
+        (widget) =>
+            widget is LiveBottomNavigationBar ||
+            (widget is LiveBottomAppBar &&
+                widget.state.node
+                    .findAllElements('BottomNavigationBar')
+                    .isNotEmpty),
       );
     } else {
       railBar = null;
