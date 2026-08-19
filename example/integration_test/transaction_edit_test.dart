@@ -32,7 +32,7 @@ void main() {
 
         final view = LiveView();
         view.catchExceptions = false;
-        view.disableAnimations = true;
+        view.disableAnimations = false;
         view.throttleSpammyCalls = false;
 
         await tester.pumpWidget(_TestApp(view: view));
@@ -182,6 +182,7 @@ void main() {
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
         await tester.tap(closeButton);
+        await tester.tap(closeButton, warnIfMissed: false);
         await _waitForUrl(
           tester,
           view,

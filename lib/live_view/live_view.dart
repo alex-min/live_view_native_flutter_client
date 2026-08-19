@@ -122,6 +122,7 @@ class LiveView {
   late LiveConnectionNotifier connectionNotifier;
   late ThemeSettings themeSettings;
   LiveGoBackNotifier goBackNotifier = LiveGoBackNotifier();
+  bool _isGoingBack = false;
   late LiveRouterDelegate router;
   bool throttleSpammyCalls = true;
 
@@ -831,9 +832,18 @@ class LiveView {
   Future<void> goBack() async {
     if (clientType == ClientType.webDocs) {
       web_html.window.parent?.postMessage({'type': 'go-back'}, "*");
+      return;
     }
-    await router.navigatorKey?.currentState?.maybePop();
-    router.notify();
+    if (_isGoingBack) return;
+
+    _isGoingBack = true;
+    try {
+      await router.navigatorKey?.currentState?.maybePop();
+      await router.waitForActivePop();
+      router.notify();
+    } finally {
+      _isGoingBack = false;
+    }
   }
 
   Future<void> installPlugins(List<Plugin> plugins) async {

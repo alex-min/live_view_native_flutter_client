@@ -44,6 +44,7 @@ main() async {
 
     await tester.pumpAndSettle();
     await tester.tap(find.byType(LiveText));
+    await tester.tap(find.byType(LiveText), warnIfMissed: false);
 
     await tester.runAsync(() => Future.delayed(const Duration(seconds: 2)));
     expect(server.lastChannelActions, [

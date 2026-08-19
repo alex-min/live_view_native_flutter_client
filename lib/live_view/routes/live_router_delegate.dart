@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
@@ -37,6 +39,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
   Map<String, List<Widget>> history = {};
   List<LivePage> pages = [];
   LiveView view;
+  Future<bool>? _activePop;
 
   LiveRouterDelegate(this.view);
 
@@ -48,8 +51,15 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
 
   bool _onPopPage(Route route, dynamic result) {
     popJunkRoutes();
+    if (_activePop != null) return false;
     if (!route.didPop(result)) return false;
-    popRoute();
+    final pop = _performPopRoute();
+    _activePop = pop;
+    unawaited(
+      pop.whenComplete(() {
+        if (identical(_activePop, pop)) _activePop = null;
+      }),
+    );
     return true;
   }
 
@@ -76,6 +86,22 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
 
   @override
   Future<bool> popRoute() async {
+    if (_activePop != null) return _activePop!;
+
+    final pop = _performPopRoute();
+    _activePop = pop;
+    try {
+      return await pop;
+    } finally {
+      if (identical(_activePop, pop)) _activePop = null;
+    }
+  }
+
+  Future<void> waitForActivePop() async {
+    await _activePop;
+  }
+
+  Future<bool> _performPopRoute() async {
     popJunkRoutes();
     // we can't pop the last route because the app will crash
     // there's no way to programatically exit the app on some platforms (iOS)
