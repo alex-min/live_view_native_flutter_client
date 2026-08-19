@@ -40,6 +40,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
   List<LivePage> pages = [];
   LiveView view;
   Future<bool>? _activePop;
+  bool get hasActivePop => _activePop != null;
 
   LiveRouterDelegate(this.view);
 
@@ -50,6 +51,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       pages.where((page) => page.page.name?.startsWith('/') == true).lastOrNull;
 
   bool _onPopPage(Route route, dynamic result) {
+    view.trace('router_pop_requested activePop=${_activePop != null}');
     popJunkRoutes();
     if (_activePop != null) return false;
     if (!route.didPop(result)) return false;
@@ -103,6 +105,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
 
   Future<bool> _performPopRoute() async {
     popJunkRoutes();
+    view.trace('router_pop_begin pageCount=${pages.length}');
     // we can't pop the last route because the app will crash
     // there's no way to programatically exit the app on some platforms (iOS)
     // so we just do nothing in this case
@@ -112,10 +115,12 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       if (pageName != null) {
         await view.execHrefClick(pageName, waitForConnection: false);
       }
+      view.trace('router_pop_rendered target=$pageName');
       view.goBackNotifier.notify();
       notifyListeners();
       return true;
     }
+    view.trace('router_pop_noop pageCount=${pages.length}');
     return true;
   }
 

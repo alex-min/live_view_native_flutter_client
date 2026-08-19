@@ -357,7 +357,7 @@ void main() {
         SharedPreferences.setMockInitialValues({});
         final view = LiveView();
         view.catchExceptions = false;
-        view.disableAnimations = true;
+        view.disableAnimations = false;
         view.throttleSpammyCalls = false;
 
         await tester.pumpWidget(_TestApp(view: view));
@@ -438,6 +438,61 @@ void main() {
         }
 
         var positionBeforeEdit = scrollable.position.pixels;
+        await tester.tap(transactionRows.hitTestable().first);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/\d+/edit$'),
+          seconds: 30,
+        );
+
+        final closeButton = find.byIcon(Icons.close).hitTestable();
+        await _waitFor(tester, closeButton, seconds: 30);
+        await tester.tap(closeButton);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
+        expect(find.byType(LiveInfiniteList), findsOneWidget);
+
+        final listAfterClose = find
+            .descendant(
+              of: find.byType(LiveInfiniteList),
+              matching: find.byType(Scrollable),
+            )
+            .hitTestable();
+        expect(listAfterClose, findsOneWidget);
+        final scrollableAfterClose = tester.state<ScrollableState>(
+          listAfterClose,
+        );
+        final extentAfterClose = scrollableAfterClose.position.maxScrollExtent;
+        expect(extentAfterClose, closeTo(fullExtent, 1));
+
+        final offsetBeforeDrag = scrollableAfterClose.position.pixels;
+        await tester.drag(listAfterClose, const Offset(0, -300));
+        await tester.pumpAndSettle();
+        expect(
+          scrollableAfterClose.position.pixels,
+          greaterThan(offsetBeforeDrag),
+          reason: 'The restored transaction list must remain draggable',
+        );
+
+        for (final fraction in [0.2, 0.8, 0.35, 0.65]) {
+          final target = extentAfterClose * fraction;
+          scrollableAfterClose.position.jumpTo(target);
+          await tester.pump();
+          await _waitFor(
+            tester,
+            transactionRows.hitTestable(),
+            seconds: 30,
+          );
+          expect(scrollableAfterClose.position.pixels, closeTo(target, 1));
+        }
+
+        positionBeforeEdit = scrollableAfterClose.position.pixels;
         await tester.tap(transactionRows.hitTestable().first);
         await _waitForUrl(
           tester,
