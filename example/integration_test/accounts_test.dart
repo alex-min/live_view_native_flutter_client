@@ -351,7 +351,7 @@ void main() {
     );
 
     testWidgets(
-      'loads the transaction chunk at an arbitrary scroll position',
+      'loads arbitrary transaction chunks and survives repeated deletes',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -433,6 +433,58 @@ void main() {
           RegExp(r'^/transactions/\d+/edit$'),
           seconds: 30,
         );
+
+        for (var deletion = 0; deletion < 2; deletion++) {
+          final deleteButton = find.widgetWithText(OutlinedButton, 'Delete');
+          await _waitFor(tester, deleteButton, seconds: 30);
+          await tester.ensureVisible(deleteButton);
+          await tester.tap(deleteButton);
+          await _waitForUrl(
+            tester,
+            view,
+            RegExp(r'^/accounts/\d+/transactions$'),
+            seconds: 30,
+          );
+          await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
+
+          if (deletion == 0) {
+            final returnedRows = find.descendant(
+              of: find.byType(LiveInfiniteList),
+              matching: find.byType(ListTile),
+            );
+            final returnedList = find
+                .descendant(
+                  of: find.byType(LiveInfiniteList),
+                  matching: find.byType(Scrollable),
+                )
+                .hitTestable()
+                .last;
+            final returnedScrollable = tester.state<ScrollableState>(
+              returnedList,
+            );
+            final returnedExtent = returnedScrollable.position.maxScrollExtent;
+
+            for (var jump = 0; jump < 4; jump++) {
+              returnedScrollable.position.jumpTo(
+                returnedExtent * (jump.isEven ? 0.35 : 0.65),
+              );
+              await tester.pump();
+              await _waitFor(
+                tester,
+                returnedRows.hitTestable(),
+                seconds: 30,
+              );
+            }
+
+            await tester.tap(returnedRows.hitTestable().first);
+            await _waitForUrl(
+              tester,
+              view,
+              RegExp(r'^/transactions/\d+/edit$'),
+              seconds: 30,
+            );
+          }
+        }
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

@@ -110,6 +110,7 @@ class LiveView {
   late PhoenixSocket _liveReloadSocket;
 
   PhoenixChannel? _channel;
+  StreamSubscription<Message>? _channelMessageSubscription;
   String? _channelUrl;
   Push? _pendingLeavePush;
   bool _isJoiningChannel = false;
@@ -261,6 +262,8 @@ class LiveView {
   Future<void> disconnect() async {
     _pendingLeavePush?.cancelTimeout();
     _pendingLeavePush = null;
+    unawaited(_channelMessageSubscription?.cancel() ?? Future.value());
+    _channelMessageSubscription = null;
     _channelUrl = null;
     _channel?.close();
     _socket?.dispose();
@@ -390,13 +393,19 @@ class LiveView {
     _isJoiningChannel = true;
 
     try {
-      _channel = _socket!.addChannel(
+      // This may run from the subscription's own phx_close callback. Awaiting
+      // cancellation there would deadlock until that callback returns.
+      unawaited(_channelMessageSubscription?.cancel() ?? Future.value());
+      final channel = _socket!.addChannel(
         topic: "lv:$_liveViewId",
         parameters: _fullsocketParams(redirect: redirect),
       );
+      _channel = channel;
       _channelUrl = currentUrl;
 
-      _channel?.messages.listen(handleMessage);
+      _channelMessageSubscription = channel.messages.listen(
+        (event) => handleMessage(event, sourceChannel: channel),
+      );
 
       if (_channel?.state != PhoenixChannelState.joined &&
           _channel?.state != PhoenixChannelState.joining) {
@@ -468,7 +477,13 @@ class LiveView {
     }
   }
 
-  handleMessage(Message event) {
+  handleMessage(Message event, {PhoenixChannel? sourceChannel}) {
+    // Channels can still deliver buffered diffs and redirect replies after a
+    // live navigation. Never let the previous page mutate or navigate the
+    // newly joined page.
+    if (sourceChannel != null && !identical(sourceChannel, _channel)) {
+      return;
+    }
     if (event.event.value == 'phx_close') {
       if (redirectToUrl != null) {
         currentUrl = redirectToUrl!;
