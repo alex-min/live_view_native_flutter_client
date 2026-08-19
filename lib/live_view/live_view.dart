@@ -838,7 +838,7 @@ class LiveView {
 
     _isGoingBack = true;
     try {
-      await router.navigatorKey?.currentState?.maybePop();
+      router.navigatorKey?.currentState?.pop();
       await router.waitForActivePop();
       router.notify();
     } finally {

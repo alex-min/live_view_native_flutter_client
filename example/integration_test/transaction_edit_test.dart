@@ -190,6 +190,9 @@ void main() {
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
+        expect(find.text('Edit transaction'), findsNothing);
+        expect(view.router.pages.last.page.name, view.currentUrl);
+        expect(find.text('Courses').hitTestable(), findsOneWidget);
 
         await tester.tap(find.text('Courses').hitTestable().last);
         await _waitForUrl(
