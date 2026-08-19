@@ -13,7 +13,10 @@ Map<String, dynamic> _mergeDiff(
   for (var entry in overlay.entries) {
     var existing = result[entry.key];
     var value = entry.value;
-    if (existing is Map && value is Map) {
+    // A section carrying new statics is a complete replacement. Recursively
+    // merging it with the previously rendered section retains stale dynamic
+    // slots and can expose template markup when an if/else switches back.
+    if (existing is Map && value is Map && !value.containsKey('s')) {
       result[entry.key] = _mergeDiff(
         Map<String, dynamic>.from(existing),
         Map<String, dynamic>.from(value),

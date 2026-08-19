@@ -135,6 +135,22 @@ void main() {
           seconds: 30,
         );
 
+        // Closing the picker without choosing a category must restore the
+        // transaction form rather than exposing raw Flutter template markup.
+        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable().last);
+        await tester.pumpAndSettle();
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
+        expect(find.text('Select category'), findsNothing);
+        expect(find.textContaining('<Form'), findsNothing);
+
+        await tester.tap(find.text('No category').hitTestable().last);
+        await tester.pumpAndSettle();
+        await _waitFor(
+          tester,
+          find.text('Select category'),
+          seconds: 30,
+        );
+
         // The picker opens on the expense tab; Bonus is an income kind, so
         // switch tabs. Selecting it also overrides the form's type (mavio
         // behavior).

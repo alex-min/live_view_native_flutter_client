@@ -5,6 +5,47 @@ import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.
 import '../test_helpers.dart';
 
 main() async {
+  testWidgets('replaces section statics when an if/else switches back', (
+    tester,
+  ) async {
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': ['<Column>', '</Column>'],
+          '0': {
+            's': ['<Text>form ', '</Text>'],
+            '0': 'ready',
+          },
+        });
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    expect(find.text('form ready'), findsOneWidget);
+
+    view.handleDiffMessage({
+      '0': {
+        's': ['<Column><Text>picker ', '</Text>', '</Column>'],
+        '0': 'open',
+        '1': {
+          's': ['<Text>stale picker child</Text>'],
+        },
+      },
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('picker open'), findsOneWidget);
+
+    view.handleDiffMessage({
+      '0': {
+        's': ['<Text>form ', '</Text>'],
+        '0': 'restored',
+      },
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('form restored'), findsOneWidget);
+    expect(find.text('stale picker child'), findsNothing);
+    expect(find.textContaining('<Text>'), findsNothing);
+  });
+
   testWidgets('diff emptying a comprehension and revealing a section', (
     tester,
   ) async {
