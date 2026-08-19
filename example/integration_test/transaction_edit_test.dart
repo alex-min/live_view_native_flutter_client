@@ -139,6 +139,13 @@ void main() {
         await _waitFor(tester, find.text('Courses'), seconds: 30);
 
         // Tap the transaction: the edit form opens, pre-filled.
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Courses').last);
         await _waitForUrl(
           tester,
@@ -150,7 +157,12 @@ void main() {
 
         // Mavio's edit screen replaces the normal navigation with one centered
         // close button. Closing returns to the same transaction-list route.
-        expect(find.byType(BottomNavigationBar), findsNothing);
+        await _waitFor(tester, find.byType(BottomNavigationBar));
+        final invisibleNavigation = tester.widget<BottomNavigationBar>(
+          find.byType(BottomNavigationBar),
+        );
+        expect(invisibleNavigation.selectedItemColor, Colors.transparent);
+        expect(invisibleNavigation.unselectedItemColor, Colors.transparent);
         final invisibleBar = tester.widget<BottomAppBar>(
           find.byType(BottomAppBar),
         );
