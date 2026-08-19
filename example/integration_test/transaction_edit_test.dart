@@ -163,6 +163,15 @@ void main() {
         );
         expect(invisibleNavigation.selectedItemColor, Colors.transparent);
         expect(invisibleNavigation.unselectedItemColor, Colors.transparent);
+        expect(
+          find.ancestor(
+            of: find.byType(BottomNavigationBar),
+            matching: find.byWidgetPredicate(
+              (widget) => widget is IgnorePointer && widget.ignoring,
+            ),
+          ),
+          findsOneWidget,
+        );
         final invisibleBar = tester.widget<BottomAppBar>(
           find.byType(BottomAppBar),
         );

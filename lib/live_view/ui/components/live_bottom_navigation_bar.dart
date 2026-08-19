@@ -39,6 +39,7 @@ class _LiveBottomNavigationBarState
     'iconSize',
     'enableFeedback',
     'landscapeLayout',
+    'ignorePointer',
   ];
   List<String> childAttributes = [
     'label',
@@ -129,7 +130,7 @@ class _LiveBottomNavigationBarState
       type = BottomNavigationBarType.fixed;
     }
 
-    return BottomNavigationBar(
+    final navigationBar = BottomNavigationBar(
       type: type,
       elevation: doubleAttribute('elevation'),
       currentIndex: _currentIndex,
@@ -159,5 +160,10 @@ class _LiveBottomNavigationBarState
       ),
       items: children.map((c) => c.$2).toList(),
     );
+
+    if (booleanAttribute('ignorePointer') ?? false) {
+      return IgnorePointer(child: navigationBar);
+    }
+    return navigationBar;
   }
 }

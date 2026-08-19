@@ -222,4 +222,44 @@ void main() {
       liveEvents.phxClick({}, eventName: 'settings_event'),
     ]);
   });
+
+  testWidgets('bottom navigation bar can ignore pointer interaction', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 800));
+
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          """
+        <flutter>
+          <viewBody>
+            <Text>Home page</Text>
+          </viewBody>
+          <BottomNavigationBar ignorePointer="true">
+            <BottomNavigationBarItem phx-click="home_event" icon="home" label="Home" />
+            <BottomNavigationBarItem phx-click="settings_event" icon="settings" label="Settings" />
+          </BottomNavigationBar>
+        </flutter>
+        """,
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    final ignoredNavigation = find.ancestor(
+      of: find.byType(BottomNavigationBar),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is IgnorePointer && widget.ignoring,
+      ),
+    );
+    expect(ignoredNavigation, findsOneWidget);
+    await tester.tap(find.text('Settings'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(server.lastChannelActions, [liveEvents.join]);
+  });
 }
