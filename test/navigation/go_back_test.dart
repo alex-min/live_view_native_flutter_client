@@ -67,6 +67,7 @@ main() async {
     });
 
     await tester.pumpAndSettle();
+    expect(view.router.pages.map((page) => page.page.name), ['/']);
     expect(
       find.firstText(),
       'variable: 1',

@@ -43,7 +43,6 @@ main() async {
       view.router.pages.map((p) => {'name': p.page.name, 'junk': p.junk}),
       [
         {'name': 'loading', 'junk': false},
-        {'name': '/', 'junk': true},
         {'name': '/', 'junk': false},
       ],
     );

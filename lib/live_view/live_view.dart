@@ -804,12 +804,15 @@ class LiveView {
     String url, {
     String method = 'GET',
     bool waitForConnection = true,
+    bool showLoadingPage = true,
   }) async {
-    router.pushPage(
-      url: 'loading;$url',
-      widget: loadingWidget(url),
-      rootState: router.pages.lastOrNull?.rootState,
-    );
+    if (showLoadingPage) {
+      router.pushPage(
+        url: 'loading;$url',
+        widget: loadingWidget(url),
+        rootState: router.pages.lastOrNull?.rootState,
+      );
+    }
 
     http.Response response;
     if (method.toUpperCase() == 'DELETE') {

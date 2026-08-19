@@ -113,7 +113,11 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       pages.removeLast();
       var pageName = pages.last.page.name;
       if (pageName != null) {
-        await view.execHrefClick(pageName, waitForConnection: false);
+        await view.execHrefClick(
+          pageName,
+          waitForConnection: false,
+          showLoadingPage: false,
+        );
       }
       view.trace('router_pop_rendered target=$pageName');
       view.goBackNotifier.notify();
@@ -148,6 +152,16 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     required NodeState? rootState,
   }) {
     history[url] = widget;
+    if (pages.lastOrNull?.page.name == url ||
+        pages.lastOrNull?.page.name == 'loading;$url') {
+      pages[pages.length - 1] = _createPage(
+        RouteSettings(name: url),
+        widget,
+        rootState,
+      );
+      notifyListeners();
+      return;
+    }
     var pageIndex = pages.length - 1;
     while (pageIndex >= 0 &&
         (pages.elementAtOrNull(pageIndex)?.page.name == url ||
@@ -224,11 +238,13 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
           routeSettings.name?.startsWith('/') == true
               ? LiveCustomPage(
                 child: content,
+                key: UniqueKey(),
                 name: routeSettings.name,
                 arguments: routeSettings.arguments,
               )
               : NoTransitionPage(
                 child: content,
+                key: UniqueKey(),
                 name: routeSettings.name,
                 arguments: routeSettings.arguments,
               ),
