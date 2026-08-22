@@ -99,11 +99,11 @@ main() async {
     expect(server.httpRequestsMade.map(((t) => t.toString())), [
       // connect
       'GET http://localhost:9999/?_format=flutter',
-      'GET http://localhost:9999/flutter/themes/default/light.json',
+      'GET http://localhost:9999/flutter/themes/cosmic/light.json',
 
       // reconnect after live reload
       'GET http://localhost:9999/second-page?_format=flutter',
-      'GET http://localhost:9999/flutter/themes/default/light.json',
+      'GET http://localhost:9999/flutter/themes/cosmic/light.json',
     ]);
 
     expect(

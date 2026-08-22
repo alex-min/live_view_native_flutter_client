@@ -10,8 +10,8 @@ class ThemeSettings extends ChangeNotifier {
   http.Client httpClient = http.Client();
   late String host;
 
-  String _themeName = 'default';
-  ThemeMode _themeMode = ThemeMode.system;
+  String _themeName = 'cosmic';
+  ThemeMode _themeMode = ThemeMode.light;
   ThemeData? _lightTheme;
   ThemeData? _darkTheme;
 
@@ -38,9 +38,9 @@ class ThemeSettings extends ChangeNotifier {
 
   Future<void> loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    _themeName = prefs.getString('themeName') ?? 'default';
+    _themeName = prefs.getString('themeName') ?? 'cosmic';
     _themeMode = ThemeModeStringify.parse(
-      prefs.getString('themeMode') ?? 'system',
+      prefs.getString('themeMode') ?? 'light',
     );
     notifyListeners();
   }

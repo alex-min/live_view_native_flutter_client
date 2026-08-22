@@ -31,7 +31,8 @@ main() async {
 
     expect(view.themeSettings.lightTheme, null);
     expect(view.themeSettings.darkTheme, null);
-    expect(view.themeSettings.themeMode, ThemeMode.system);
+    expect(view.themeSettings.themeMode, ThemeMode.light);
+    expect(view.themeSettings.themeName, 'cosmic');
   });
 
   testGoldens('switching themes', (tester) async {
@@ -74,7 +75,7 @@ main() async {
     var (view, _) = await connect(
       LiveView(),
       onRequest: (request) {
-        if (request.url.path == '/flutter/themes/default/light.json' &&
+        if (request.url.path == '/flutter/themes/cosmic/light.json' &&
             once == false) {
           once = true;
           return redButtonTheme;
@@ -104,6 +105,7 @@ main() async {
               FlutterExecAction(name: 'switchTheme', value: {'theme': 'default', 'mode': 'light'}),
             ])}"',
       },
+      sharedPreferences: {'themeName': 'default', 'themeMode': 'system'},
       onRequest: (request) {
         if (request.url.path == '/flutter/themes/default/light.json') {
           count++;
@@ -145,7 +147,7 @@ main() async {
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
-    expect(view.themeSettings.themeMode, ThemeMode.system);
+    expect(view.themeSettings.themeMode, ThemeMode.light);
 
     await tester.tap(find.byType(LiveIconButton));
     await tester.pumpAndSettle();
@@ -181,7 +183,7 @@ main() async {
     expect(view.themeSettings.themeMode, ThemeMode.dark);
 
     var prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('themeName'), 'default');
+    expect(prefs.getString('themeName'), 'cosmic');
     expect(prefs.getString('themeMode'), 'dark');
 
     var freshThemeSettings =

@@ -7,6 +7,9 @@ class ExecToggleTheme extends Exec {
   void handler(BuildContext context, StateWidget widget) {
     var currentMode = widget.liveView.themeSettings.getDisplayedThemeMode();
     var nextMode = currentMode == ThemeMode.dark ? 'light' : 'dark';
-    widget.liveView.switchTheme('default', nextMode);
+    widget.liveView.switchTheme(
+      widget.liveView.themeSettings.themeName,
+      nextMode,
+    );
   }
 }

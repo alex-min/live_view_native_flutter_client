@@ -593,7 +593,30 @@ class LiveView {
   }
 
   handleDiffMessage(Map<String, dynamic> diff) {
+    _handleDiffEvents(diff);
     changeNotifier.setDiff(diff);
+  }
+
+  void _handleDiffEvents(Map<String, dynamic> diff) {
+    var events = diff['e'];
+    if (events is! List) {
+      return;
+    }
+
+    for (var event in events) {
+      if (event is! List || event.isEmpty) {
+        continue;
+      }
+      var name = event[0];
+      var payload = event.length > 1 ? event[1] : null;
+      if (name == 'set_theme' && payload is Map) {
+        var theme = payload['theme'];
+        var mode = payload['mode'];
+        if (theme is String && mode is String) {
+          unawaited(switchTheme(theme, mode));
+        }
+      }
+    }
   }
 
   Future<void> handleLiveReloadMessage(Message event) async {

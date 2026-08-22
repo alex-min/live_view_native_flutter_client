@@ -25,7 +25,7 @@ void main() {
 
   group('Appearance settings', () {
     testWidgets(
-      'sign up and switch between the light and dark theme from the settings',
+      'sign up and switch between themes from the settings',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -34,6 +34,10 @@ void main() {
         view.catchExceptions = false;
         view.disableAnimations = true;
         view.throttleSpammyCalls = false;
+
+        // Use a tall viewport so the whole settings page fits without scrolling.
+        tester.view.physicalSize = const Size(1280, 1600);
+        tester.view.devicePixelRatio = 1.0;
 
         final email =
             'integration+${DateTime.now().millisecondsSinceEpoch}@example.com';
@@ -98,29 +102,38 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
         await _waitFor(tester, find.text('Appearance'), seconds: 30);
 
-        // Switch to the dark theme, then back to the light theme.
-        final darkButton = find.text('Dark theme');
-        await tester.ensureVisible(darkButton);
-        await tester.pump();
-        await tester.tap(darkButton);
+        final oceanButton = find.widgetWithText(ElevatedButton, 'Ocean');
+        await tester.ensureVisible(oceanButton);
+        await tester.pumpAndSettle();
+        await tester.tap(oceanButton);
         await tester.pumpAndSettle();
 
         expect(
-          view.themeSettings.getDisplayedThemeMode(),
-          ThemeMode.dark,
-          reason: 'The app should use the dark theme after tapping the tile',
+          view.themeSettings.themeName,
+          'ocean',
+          reason: 'The app should use the Ocean theme after tapping the tile',
         );
-
-        final lightButton = find.text('Light theme');
-        await tester.ensureVisible(lightButton);
-        await tester.pump();
-        await tester.tap(lightButton);
-        await tester.pumpAndSettle();
-
         expect(
           view.themeSettings.getDisplayedThemeMode(),
           ThemeMode.light,
-          reason: 'The app should use the light theme after tapping the tile',
+          reason: 'Ocean is a light theme',
+        );
+
+        // Toggle to the paired dark variant from the app bar.
+        final darkModeButton = find.byIcon(Icons.dark_mode).hitTestable().last;
+        await tester.ensureVisible(darkModeButton);
+        await tester.tap(darkModeButton);
+        await tester.pumpAndSettle();
+
+        expect(
+          view.themeSettings.themeName,
+          'ocean-dark',
+          reason: 'Toggling should switch to the paired dark theme',
+        );
+        expect(
+          view.themeSettings.getDisplayedThemeMode(),
+          ThemeMode.dark,
+          reason: 'The app should be in dark mode after toggling',
         );
       },
       timeout: const Timeout(Duration(minutes: 3)),
