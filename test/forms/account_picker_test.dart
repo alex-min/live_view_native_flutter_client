@@ -54,6 +54,43 @@ void main() {
   );
 
   testWidgets(
+    'tapping a ListTile sends its phx-click event with phx-value data',
+    (tester) async {
+      tester.setScreenSize(const Size(400, 800));
+
+      var (view, server) = await connect(
+        LiveView(),
+        rendered: {
+          's': [
+            """
+          <flutter>
+            <viewBody>
+              <Column>
+                <ListTile phx-click="select_account" phx-value-id="1">
+                  <title><Text>Checking</Text></title>
+                </ListTile>
+              </Column>
+            </viewBody>
+          </flutter>
+          """,
+          ],
+        },
+      );
+
+      await tester.runLiveView(view);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Checking'));
+      await tester.pumpAndSettle();
+
+      expect(
+        server.lastChannelActions?.last,
+        liveEvents.phxClick({'id': '1'}, eventName: 'select_account'),
+      );
+    },
+  );
+
+  testWidgets(
     'the account field is a dropdown on large screens and a trigger on small screens',
     (tester) async {
       tester.setScreenSize(const Size(900, 800));
