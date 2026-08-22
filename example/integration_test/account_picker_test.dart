@@ -67,20 +67,22 @@ void main() {
           RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
         // The mobile account field is a tappable ListTile.
-        await _waitFor(tester, find.text('Account B'), seconds: 30);
-        await tester.tap(find.text('Account B').last);
+        final initialAccount = find.text('Account B').evaluate().isNotEmpty
+            ? find.text('Account B')
+            : find.text('Account A');
+        await _waitFor(tester, initialAccount, seconds: 30);
+        await tester.tap(initialAccount.last);
         await tester.pumpAndSettle();
-        await _waitFor(tester, find.text('Sélectionner un compte'),
-            seconds: 30);
+        await _waitFor(tester, find.text('Select account'), seconds: 30);
 
         // Tapping the back arrow closes the picker without changing the account.
         await tester.tap(find.byIcon(Icons.arrow_back).hitTestable().last);
         await tester.pumpAndSettle();
-        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
-        expect(find.text('Sélectionner un compte'), findsNothing);
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
+        expect(find.text('Select account'), findsNothing);
         expect(find.textContaining('<Form'), findsNothing);
         expect(find.text('Account B'), findsWidgets);
       },
@@ -123,7 +125,7 @@ void main() {
           RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
         // Open the account picker by tapping whichever account is currently
         // selected in the form.
@@ -133,13 +135,12 @@ void main() {
         await _waitFor(tester, initialAccount, seconds: 30);
         await tester.tap(initialAccount.last);
         await tester.pumpAndSettle();
-        await _waitFor(tester, find.text('Sélectionner un compte'),
-            seconds: 30);
+        await _waitFor(tester, find.text('Select account'), seconds: 30);
 
         await tester.tap(find.text('Account A').last);
         await tester.pumpAndSettle();
 
-        await _waitFor(tester, find.text('Nouvelle transaction'), seconds: 30);
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
         expect(find.text('Account A'), findsWidgets);
 
         final amountField = find.descendant(
@@ -173,7 +174,7 @@ void main() {
           RegExp(r'^/accounts/\d+/transactions$'),
           seconds: 30,
         );
-        await _waitFor(tester, find.textContaining('12,34'), seconds: 30);
+        await _waitFor(tester, find.textContaining('12.34'), seconds: 30);
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
