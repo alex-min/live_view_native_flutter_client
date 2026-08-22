@@ -347,6 +347,14 @@ class LiveView {
 
       _liveViewId =
           (content.querySelector('[data-phx-main]')?.attributes['id'])!;
+
+      var themeName =
+          content.querySelector('html')?.attributes['data-theme-name'];
+      var themeMode =
+          content.querySelector('html')?.attributes['data-theme-mode'];
+      if (themeName != null && themeMode != null) {
+        unawaited(switchTheme(themeName, themeMode));
+      }
     } catch (e, stack) {
       router.pushPage(
         url: 'error',

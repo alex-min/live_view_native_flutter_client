@@ -15,6 +15,7 @@ class ThemeSettings extends ChangeNotifier {
   ThemeData? _lightTheme;
   ThemeData? _darkTheme;
 
+  String get themeName => _themeName;
   ThemeMode get themeMode => _themeMode;
 
   ThemeData? get lightTheme => _lightTheme;
