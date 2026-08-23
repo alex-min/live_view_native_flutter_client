@@ -84,11 +84,15 @@ void main() {
         );
         await _waitFor(
           tester,
-          find.text('Connect with Nordigen'),
+          find.text('Connect with Plaid'),
           seconds: 30,
         );
         expect(
-          find.widgetWithText(ElevatedButton, 'Connect with Nordigen'),
+          find.widgetWithText(ElevatedButton, 'Connect with Plaid'),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(ElevatedButton, 'Connect with Enable Banking'),
           findsOneWidget,
         );
       },
