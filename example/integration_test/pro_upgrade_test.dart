@@ -21,11 +21,11 @@ class _TestApp extends StatelessWidget {
 }
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Appearance settings', () {
+  group('Pro upgrade', () {
     testWidgets(
-      'sign up and switch between themes from the settings',
+      'sign up and activate Pro from the pro page',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -35,83 +35,18 @@ void main() {
         view.disableAnimations = true;
         view.throttleSpammyCalls = false;
 
-        // Use a tall viewport so the whole settings page fits without scrolling.
         tester.view.physicalSize = const Size(1280, 1600);
         tester.view.devicePixelRatio = 1.0;
-
-        final email =
-            'integration+${DateTime.now().millisecondsSinceEpoch}@example.com';
-        const password = 'SuperSecret123!';
 
         await tester.pumpWidget(_TestApp(view: view));
         await view.connect('http://$_serverHost:$_serverPort/');
 
-        // Navigate to the registration form.
-        final signUpButton = find.byType(ElevatedButton).last;
-        await _waitFor(tester, signUpButton, seconds: 30);
-        await tester.tap(signUpButton);
-        await _waitForUrl(tester, view, '/users/register', seconds: 30);
+        await _signUpAndOnboard(tester, view);
+        await _waitForUrl(tester, view, '/', seconds: 30);
 
-        await tester.pumpAndSettle();
-        await Future.delayed(const Duration(seconds: 1));
-        await tester.pumpAndSettle();
-
-        await _waitFor(tester, find.byType(TextField));
-
-        final fields = find.byType(TextField);
-        await tester.enterText(fields.at(0), email);
-        await tester.pump();
-        await tester.enterText(fields.at(1), password);
-        await tester.pump();
-        await tester.enterText(fields.at(2), password);
-        await tester.pump();
-
-        await Future.delayed(const Duration(seconds: 1));
-        await tester.pump();
-
-        await tester.enterText(fields.at(0), email);
-        await tester.pump();
-
-        final submitButton = find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        );
-        await tester.tap(submitButton);
-
-        // Accept the terms of service.
-        await _waitForUrl(tester, view, '/users/accept-tos', seconds: 30);
-        final acceptButton = find.byType(ElevatedButton).last;
-        await tester.ensureVisible(acceptButton);
-        await tester.tap(acceptButton);
-
-        // Complete the currency onboarding step (EUR is pre-selected).
-        await _waitForUrl(tester, view, '/users/onboarding/currency',
-            seconds: 30);
-        final nextButton = find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        );
-        await _waitFor(tester, nextButton, seconds: 30);
-        await tester.tap(nextButton.last);
-
-        // Wait for the app bar to show the signed-in user's email.
-        await _waitFor(tester, find.text(email), seconds: 30);
-        await tester.pumpAndSettle();
-
-        // Navigate directly to the settings page.
-        await view.connect('http://$_serverHost:$_serverPort/users/settings');
-        await _waitFor(tester, find.text('Appearance'), seconds: 30);
-
-        // Ocean is a premium theme; non-Pro users are redirected to /pro.
-        final oceanButton = find.widgetWithText(ElevatedButton, 'Ocean');
-        await tester.ensureVisible(oceanButton);
-        await tester.pumpAndSettle();
-        await tester.tap(oceanButton);
-        await tester.pumpAndSettle();
-
+        await view.livePatch('/pro');
         await _waitForUrl(tester, view, '/pro', seconds: 30);
 
-        // Upgrade to Pro using the test harness button.
         const activateProText = 'Activate Pro (test)';
         final activateButton =
             find.widgetWithText(ElevatedButton, activateProText);
@@ -123,44 +58,74 @@ void main() {
 
         await _waitForUrl(tester, view, '/users/settings', seconds: 30);
         await _waitFor(tester, find.text('Appearance'), seconds: 30);
-
-        // Now that the user is Pro, the Ocean theme can be selected.
-        await tester.ensureVisible(oceanButton);
-        await tester.pumpAndSettle();
-        await tester.tap(oceanButton);
-        await tester.pumpAndSettle();
-
-        expect(
-          view.themeSettings.themeName,
-          'ocean',
-          reason: 'The app should use the Ocean theme after tapping the tile',
-        );
-        expect(
-          view.themeSettings.getDisplayedThemeMode(),
-          ThemeMode.light,
-          reason: 'Ocean is a light theme',
-        );
-
-        // Toggle to the paired dark variant from the app bar.
-        final darkModeButton = find.byIcon(Icons.dark_mode).hitTestable().last;
-        await tester.ensureVisible(darkModeButton);
-        await tester.tap(darkModeButton);
-        await tester.pumpAndSettle();
-
-        expect(
-          view.themeSettings.themeName,
-          'ocean-dark',
-          reason: 'Toggling should switch to the paired dark theme',
-        );
-        expect(
-          view.themeSettings.getDisplayedThemeMode(),
-          ThemeMode.dark,
-          reason: 'The app should be in dark mode after toggling',
-        );
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
   });
+}
+
+/// Signs up a brand new user and completes the onboarding (TOS + default
+/// currency). Mirrors the theme settings integration test.
+Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
+  final signUpButton = find.byType(ElevatedButton).last;
+  await _waitFor(tester, signUpButton, seconds: 30);
+  await tester.tap(signUpButton);
+  await _waitForUrl(tester, view, '/users/register', seconds: 30);
+
+  await tester.pumpAndSettle();
+  await Future.delayed(const Duration(seconds: 1));
+  await tester.pumpAndSettle();
+
+  await _waitFor(tester, find.byType(TextField));
+
+  final email =
+      'integration+${DateTime.now().millisecondsSinceEpoch}@example.com';
+  const password = 'SuperSecret123!';
+
+  final fields = find.byType(TextField);
+  expect(
+    fields,
+    findsNWidgets(3),
+    reason: 'The registration form should contain three text fields',
+  );
+
+  await tester.enterText(fields.at(0), email);
+  await tester.pump();
+  await tester.enterText(fields.at(1), password);
+  await tester.pump();
+  await tester.enterText(fields.at(2), password);
+  await tester.pump();
+
+  await Future.delayed(const Duration(seconds: 1));
+  await tester.pump();
+
+  await tester.enterText(fields.at(0), email);
+  await tester.pump();
+
+  final submitButton = find.descendant(
+    of: find.byType(Form),
+    matching: find.byType(ElevatedButton),
+  );
+  await tester.tap(submitButton);
+
+  await _waitForUrl(tester, view, '/users/accept-tos', seconds: 30);
+
+  final acceptButton = find.byType(ElevatedButton).last;
+  await tester.ensureVisible(acceptButton);
+  await tester.tap(acceptButton);
+
+  await _waitForUrl(tester, view, '/users/onboarding/currency', seconds: 30);
+  await _waitFor(tester, find.textContaining('EUR (€)'), seconds: 30);
+
+  final nextButton = find.descendant(
+    of: find.byType(Form),
+    matching: find.byType(ElevatedButton),
+  );
+  await _waitFor(tester, nextButton, seconds: 30);
+  await tester.tap(nextButton.last);
+
+  await _waitFor(tester, find.text(email), seconds: 30);
+  await tester.pumpAndSettle();
 }
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
