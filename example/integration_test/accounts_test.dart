@@ -68,18 +68,10 @@ void main() {
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
         // Account creation starts by choosing who manages the account.
+        // Automated accounts are gated behind Pro, so this test exercises
+        // the manual flow directly.
         await _waitFor(tester, find.text('Automated'), seconds: 30);
         expect(find.text('Manual'), findsOneWidget);
-
-        await tester.tap(find.text('Automated'));
-        await _waitForUrl(
-          tester,
-          view,
-          '/accounts/new/automated',
-          seconds: 30,
-        );
-        await _waitFor(tester, find.text('Automated account'), seconds: 30);
-        expect(find.byType(Form), findsNothing);
 
         await view.livePatch('/accounts/new/manual');
         await _waitForUrl(
