@@ -185,6 +185,11 @@ void main() {
         );
         expect(find.text('Statement'), findsWidgets);
         expect(find.text('Income and expenses'), findsOneWidget);
+        expect(find.text('Statistics'), findsOneWidget);
+        expect(
+          find.text('Explore your income and spending trends'),
+          findsOneWidget,
+        );
         expect(find.byType(LiveBarChart), findsOneWidget);
         expect(find.text('Recent expenses'), findsOneWidget);
         expect(find.text('No expenses yet'), findsOneWidget);
@@ -262,6 +267,14 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         await tester.pump();
+
+        // The combined transaction screen is the second navigation
+        // destination and includes the source account on every row.
+        await view.livePatch('/transactions');
+        await _waitForUrl(tester, view, '/transactions', seconds: 30);
+        await _waitFor(tester, find.text('Transactions'), seconds: 30);
+        expect(find.text('Lent to Alex Martin'), findsOneWidget);
+        expect(find.textContaining('Integration account'), findsWidgets);
 
         await view.livePatch('/contacts');
         await _waitForUrl(tester, view, '/contacts', seconds: 30);

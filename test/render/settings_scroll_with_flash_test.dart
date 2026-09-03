@@ -38,7 +38,14 @@ main() async {
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
-    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SingleChildScrollView &&
+            widget.scrollDirection == Axis.vertical,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Scrollable content'), findsOneWidget);
     expect(
       find.text(

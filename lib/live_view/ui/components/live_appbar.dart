@@ -45,7 +45,15 @@ class _LiveAppBarState extends StateWidget<LiveAppBar> {
     return AppBar(
       title: title,
       leading: leading,
-      actions: children,
+      actions: [
+        Flexible(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            reverse: true,
+            child: Row(mainAxisSize: MainAxisSize.min, children: children),
+          ),
+        ),
+      ],
       elevation: doubleAttribute('elevation'),
       scrolledUnderElevation: doubleAttribute('scrolledUnderElevation'),
       shadowColor: colorAttribute(context, 'shadowColor'),
