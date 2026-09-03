@@ -272,7 +272,9 @@ void main() {
         // destination and includes the source account on every row.
         await view.livePatch('/transactions');
         await _waitForUrl(tester, view, '/transactions', seconds: 30);
-        await _waitFor(tester, find.text('Transactions'), seconds: 30);
+        await _waitFor(tester, find.text('Money activity'), seconds: 30);
+        expect(find.text('Net activity this month'), findsOneWidget);
+        expect(find.text('Income minus expenses'), findsOneWidget);
         expect(find.text('Lent to Alex Martin'), findsOneWidget);
         expect(find.textContaining('Integration account'), findsWidgets);
 
