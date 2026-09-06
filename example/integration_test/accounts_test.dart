@@ -579,6 +579,86 @@ void main() {
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
+
+    testWidgets(
+      'creates an investment account with an investment kind',
+      (tester) async {
+        await _ensureServer();
+        SharedPreferences.setMockInitialValues({});
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+
+        await _signUpAndOnboard(tester, view);
+
+        await view.livePatch('/accounts/new/manual');
+        await _waitForUrl(
+          tester,
+          view,
+          '/accounts/new/manual',
+          seconds: 30,
+        );
+
+        // Until "Investment" is picked, the only dropdown is the account
+        // type one; the currency field is a CurrencyInput, not a dropdown.
+        final formDropdowns = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(DropdownButton<String>),
+        );
+        await _waitFor(tester, formDropdowns, seconds: 30);
+        expect(formDropdowns, findsOneWidget);
+
+        await tester.tap(formDropdowns);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Investment').last);
+        await tester.pumpAndSettle();
+
+        // Picking "Investment" reveals the investment kind dropdown.
+        await _waitFor(tester, formDropdowns, seconds: 30);
+        expect(formDropdowns, findsNWidgets(2));
+
+        final fields = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(fields.at(0), '1.25');
+        await tester.pump();
+        await tester.enterText(fields.at(1), 'Bitcoin vault');
+        await tester.pump();
+
+        await tester.tap(formDropdowns.at(1));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Crypto').last);
+        await tester.pumpAndSettle();
+
+        // The server sends validate diffs that can reset field controllers,
+        // so refill right before submitting (same workaround as the manual
+        // account creation test above).
+        await Future.delayed(const Duration(seconds: 1));
+        await tester.pump();
+        await tester.enterText(fields.at(0), '1.25');
+        await tester.pump();
+        await tester.enterText(fields.at(1), 'Bitcoin vault');
+        await tester.pump();
+
+        final submitButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await tester.tap(submitButton);
+
+        // Back on the list, the account appears with its investment kind
+        // shown in the row subtitle.
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitFor(tester, find.text('Bitcoin vault'), seconds: 30);
+        expect(find.text('Crypto'), findsWidgets);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
   });
 }
 
