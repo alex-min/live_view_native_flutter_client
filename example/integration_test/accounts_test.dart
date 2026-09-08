@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_bar_chart.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_month_picker_drawer.dart';
@@ -121,6 +122,8 @@ void main() {
         // statement total is updated.
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
+        expect(find.byType(LiveCosmicBackground), findsWidgets);
+        expect(find.byIcon(Icons.payments), findsOneWidget);
         expect(
           find.text('€42.50'),
           findsAtLeastNWidgets(2),
@@ -191,6 +194,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.byType(LiveBarChart), findsOneWidget);
+        expect(find.byType(LiveCosmicBackground), findsWidgets);
         expect(find.text('Recent expenses'), findsOneWidget);
         expect(find.text('No expenses yet'), findsOneWidget);
         expect(find.text('€42.50'), findsWidgets);
@@ -275,8 +279,16 @@ void main() {
         await _waitFor(tester, find.text('Money activity'), seconds: 30);
         expect(find.text('Net activity this month'), findsOneWidget);
         expect(find.text('Income minus expenses'), findsOneWidget);
+        expect(find.text('Search transactions'), findsOneWidget);
         expect(find.text('Lent to Alex Martin'), findsOneWidget);
         expect(find.textContaining('Integration account'), findsWidgets);
+
+        final transactionSearch = find.byType(TextField);
+        expect(transactionSearch, findsOneWidget);
+        await tester.enterText(transactionSearch, 'no matching transaction');
+        await _waitForAbsent(tester, find.text('Lent to Alex Martin'));
+        await tester.enterText(transactionSearch, 'Alex Martin');
+        await _waitFor(tester, find.text('Lent to Alex Martin'));
 
         await view.livePatch('/contacts');
         await _waitForUrl(tester, view, '/contacts', seconds: 30);

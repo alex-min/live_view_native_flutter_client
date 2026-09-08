@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class LiveViewBody extends LiveStateWidget<LiveViewBody> {
@@ -9,11 +10,25 @@ class LiveViewBody extends LiveStateWidget<LiveViewBody> {
 }
 
 class _LiveMainViewState extends StateWidget<LiveViewBody> {
+  final attributes = ['cosmicBackground'];
+
   @override
-  void onStateChange(Map<String, dynamic> diff) {}
+  void onStateChange(Map<String, dynamic> diff) {
+    reloadAttributes(node, attributes);
+  }
 
   @override
   Widget render(BuildContext context) {
-    return singleChild();
+    final child = singleChild();
+    if (getAttribute('cosmicBackground') != 'true') return child;
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: LiveCosmicBackground(state: widget.state, key: widget.key),
+        ),
+        Positioned.fill(child: child),
+      ],
+    );
   }
 }

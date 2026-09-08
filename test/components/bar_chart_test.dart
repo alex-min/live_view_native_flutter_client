@@ -50,4 +50,13 @@ void main() {
     expect(find.byType(charts.BarChart), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('renders a minimum-height bar for zero amounts', (tester) async {
+    await renderChart(tester, '<BarChart income="0" expense="100" />');
+
+    final chart = tester.widget<charts.BarChart>(find.byType(charts.BarChart));
+    final series = chart.seriesList.single as charts.Series<dynamic, String>;
+    expect(series.measureFn(0), 4.0);
+    expect(series.measureFn(1), 100.0);
+  });
 }

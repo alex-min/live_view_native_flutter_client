@@ -42,15 +42,19 @@ class _LiveBarChartState extends StateWidget<LiveBarChart> {
 
   @override
   Widget render(BuildContext context) {
+    final income = _amount('income');
+    final expense = _amount('expense');
+    final largest = income.abs() > expense.abs() ? income.abs() : expense.abs();
+    final visibleMinimum = largest > 0 ? largest * 0.04 : 1.0;
     var values = [
       _ChartValue(
         getAttribute('incomeLabel') ?? 'Income',
-        _amount('income'),
+        income == 0 ? visibleMinimum : income,
         charts.MaterialPalette.green.shadeDefault,
       ),
       _ChartValue(
         getAttribute('expenseLabel') ?? 'Expenses',
-        _amount('expense'),
+        expense == 0 ? visibleMinimum : expense,
         charts.MaterialPalette.red.shadeDefault,
       ),
     ];
