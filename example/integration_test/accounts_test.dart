@@ -292,6 +292,18 @@ void main() {
         expect(find.text('Net activity this month'), findsOneWidget);
         expect(find.text('Income minus expenses'), findsOneWidget);
         expect(find.text('Search transactions'), findsOneWidget);
+        expect(find.byType(LiveBalanceChart), findsOneWidget);
+        final activityScroll = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        activityScroll.position.jumpTo(600);
+        await tester.pump();
+        await _waitFor(tester, find.text('Lent to Alex Martin'), seconds: 30);
         expect(find.text('Lent to Alex Martin'), findsOneWidget);
         expect(find.textContaining('Integration account'), findsWidgets);
 
@@ -453,6 +465,7 @@ void main() {
             .painter! as BalanceHistoryPainter;
         expect(balancePainter.points.length, greaterThan(1));
         expect(balancePainter.directions.last, 'current');
+        final initialSelectedPoint = balancePainter.selectedIndex;
 
         final transactionRows = find.descendant(
           of: find.byType(LiveInfiniteList),
@@ -469,8 +482,8 @@ void main() {
         final headerDelegate =
             pinnedHeader.delegate as CollapsibleInfiniteListHeaderDelegate;
         expect(pinnedHeader.pinned, isTrue);
-        expect(headerDelegate.maxExtent, 340);
-        expect(headerDelegate.minExtent, 76);
+        expect(headerDelegate.maxExtent, 390);
+        expect(headerDelegate.minExtent, 120);
 
         final collapsibleScroll = tester.state<ScrollableState>(
           find
@@ -480,9 +493,30 @@ void main() {
               )
               .first,
         );
-        collapsibleScroll.position.jumpTo(28);
+        collapsibleScroll.position.jumpTo(334);
         await tester.pumpAndSettle();
-        expect(collapsibleScroll.position.pixels, 28);
+        expect(collapsibleScroll.position.pixels, 334);
+        final scrolledBalancePainter = tester
+            .widget<CustomPaint>(
+              find.byWidgetPredicate(
+                (widget) =>
+                    widget is CustomPaint &&
+                    widget.painter is BalanceHistoryPainter,
+              ),
+            )
+            .painter! as BalanceHistoryPainter;
+        expect(scrolledBalancePainter.selectedIndex, initialSelectedPoint - 1);
+        expect(
+          tester.getSize(
+            find
+                .descendant(
+                  of: find.byType(SliverPersistentHeader),
+                  matching: find.byType(ClipRect),
+                )
+                .first,
+          ),
+          const Size(400, 120),
+        );
         expect(find.text('Load more'), findsNothing);
 
         final innerList = find

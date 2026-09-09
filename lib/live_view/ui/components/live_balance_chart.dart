@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/number.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 /// A lightweight account-balance history chart driven by server attributes.
@@ -14,7 +15,13 @@ class LiveBalanceChart extends LiveStateWidget<LiveBalanceChart> {
 }
 
 class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
-  final attributes = ['points', 'directions', 'height', 'lineColor'];
+  final attributes = [
+    'points',
+    'directions',
+    'height',
+    'collapsedHeight',
+    'lineColor',
+  ];
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
@@ -32,16 +39,40 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
     final directions = (getAttribute('directions') ?? '').split(',');
     final lineColor =
         getColor(context, getAttribute('lineColor')) ?? const Color(0xFF8D63FF);
+    final scope = InfiniteListScrollScope.maybeOf(context);
+    final scrollOffset =
+        scope?.notifier?.hasClients == true ? scope!.notifier!.offset : 0.0;
+    final collapseProgress =
+        scope == null || scope.collapseExtent <= 0
+            ? 0.0
+            : (scrollOffset / scope.collapseExtent).clamp(0.0, 1.0);
+    final expandedHeight = getDouble(getAttribute('height')) ?? 160;
+    final collapsedHeight =
+        getDouble(getAttribute('collapsedHeight')) ?? expandedHeight;
+    final height =
+        expandedHeight + (collapsedHeight - expandedHeight) * collapseProgress;
+    final visibleTransaction =
+        scope == null
+            ? 0
+            : ((scrollOffset - scope.collapseExtent).clamp(0, double.infinity) /
+                    scope.itemExtent)
+                .floor();
+    final selectedIndex =
+        (points.length - 1 - visibleTransaction)
+            .clamp(0, math.max(points.length - 1, 0))
+            .toInt();
 
     return SizedBox(
-      height: getDouble(getAttribute('height')) ?? 160,
+      height: height,
       width: double.infinity,
       child: CustomPaint(
         painter: BalanceHistoryPainter(
           points: points,
           directions: directions,
+          selectedIndex: selectedIndex,
           lineColor: lineColor,
           gridColor: Theme.of(context).colorScheme.outlineVariant,
+          backgroundColor: Theme.of(context).colorScheme.surface,
         ),
       ),
     );
@@ -52,19 +83,25 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
 class BalanceHistoryPainter extends CustomPainter {
   final List<double> points;
   final List<String> directions;
+  final int selectedIndex;
   final Color lineColor;
   final Color gridColor;
+  final Color backgroundColor;
 
   const BalanceHistoryPainter({
     required this.points,
     required this.directions,
+    this.selectedIndex = -1,
     required this.lineColor,
     required this.gridColor,
+    this.backgroundColor = Colors.transparent,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty || size.isEmpty) return;
+
+    canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
     const horizontalPadding = 8.0;
     const verticalPadding = 12.0;
@@ -149,8 +186,13 @@ class BalanceHistoryPainter extends CustomPainter {
         _ => lineColor,
       };
       final point = offsetFor(index);
-      canvas.drawCircle(point, 4.5, Paint()..color = Colors.white);
-      canvas.drawCircle(point, 3, Paint()..color = color);
+      final selected = index == selectedIndex;
+      canvas.drawCircle(
+        point,
+        selected ? 7.5 : 4.5,
+        Paint()..color = Colors.white,
+      );
+      canvas.drawCircle(point, selected ? 5 : 3, Paint()..color = color);
     }
   }
 
@@ -158,6 +200,8 @@ class BalanceHistoryPainter extends CustomPainter {
   bool shouldRepaint(BalanceHistoryPainter oldDelegate) =>
       oldDelegate.points != points ||
       oldDelegate.directions != directions ||
+      oldDelegate.selectedIndex != selectedIndex ||
       oldDelegate.lineColor != lineColor ||
-      oldDelegate.gridColor != gridColor;
+      oldDelegate.gridColor != gridColor ||
+      oldDelegate.backgroundColor != backgroundColor;
 }

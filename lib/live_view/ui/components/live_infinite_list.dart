@@ -22,6 +22,29 @@ class LiveInfiniteList extends LiveStateWidget<LiveInfiniteList> {
   State<LiveInfiniteList> createState() => _LiveInfiniteListState();
 }
 
+/// Shares a collapsible list's live scroll position with its pinned header.
+class InfiniteListScrollScope extends InheritedNotifier<ScrollController> {
+  final double collapseExtent;
+  final double itemExtent;
+
+  const InfiniteListScrollScope({
+    super.key,
+    required ScrollController controller,
+    required this.collapseExtent,
+    required this.itemExtent,
+    required super.child,
+  }) : super(notifier: controller);
+
+  static InfiniteListScrollScope? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<InfiniteListScrollScope>();
+
+  @override
+  bool updateShouldNotify(InfiniteListScrollScope oldWidget) =>
+      collapseExtent != oldWidget.collapseExtent ||
+      itemExtent != oldWidget.itemExtent ||
+      notifier != oldWidget.notifier;
+}
+
 class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   static const _defaultLoadMoreThreshold = 200.0;
 
@@ -345,42 +368,48 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     final loadedStart = intAttribute('loadedStart') ?? 0;
     final loadedCount = intAttribute('loadedCount') ?? children.length;
 
-    return CustomScrollView(
+    return InfiniteListScrollScope(
       controller: _scrollController,
-      primary: false,
-      restorationId: getAttribute('restorationId'),
-      keyboardDismissBehavior:
-          scrollViewKeyboardDismissBehaviorAttribute(
-            'keyboardDismissBehavior',
-          ) ??
-          ScrollViewKeyboardDismissBehavior.manual,
-      slivers: [
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: CollapsibleInfiniteListHeaderDelegate(
-            minExtent: collapsedHeight.clamp(0, headerHeight),
-            maxExtent: headerHeight,
-            child: header,
+      collapseExtent: headerHeight - collapsedHeight,
+      itemExtent: doubleAttribute('itemExtent')!,
+      child: CustomScrollView(
+        controller: _scrollController,
+        primary: false,
+        restorationId: getAttribute('restorationId'),
+        keyboardDismissBehavior:
+            scrollViewKeyboardDismissBehaviorAttribute(
+              'keyboardDismissBehavior',
+            ) ??
+            ScrollViewKeyboardDismissBehavior.manual,
+        slivers: [
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: CollapsibleInfiniteListHeaderDelegate(
+              minExtent: collapsedHeight.clamp(0, headerHeight),
+              maxExtent: headerHeight,
+              child: header,
+            ),
           ),
-        ),
-        if (totalCount == 0)
-          SliverToBoxAdapter(
-            child: children.isEmpty ? const SizedBox.shrink() : children.first,
-          )
-        else
-          SliverFixedExtentList(
-            itemExtent: doubleAttribute('itemExtent')!,
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final loadedIndex = index - loadedStart;
-              if (loadedIndex < 0 ||
-                  loadedIndex >= loadedCount ||
-                  loadedIndex >= children.length) {
-                return const SizedBox.shrink();
-              }
-              return children[loadedIndex];
-            }, childCount: totalCount),
-          ),
-      ],
+          if (totalCount == 0)
+            SliverToBoxAdapter(
+              child:
+                  children.isEmpty ? const SizedBox.shrink() : children.first,
+            )
+          else
+            SliverFixedExtentList(
+              itemExtent: doubleAttribute('itemExtent')!,
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final loadedIndex = index - loadedStart;
+                if (loadedIndex < 0 ||
+                    loadedIndex >= loadedCount ||
+                    loadedIndex >= children.length) {
+                  return const SizedBox.shrink();
+                }
+                return children[loadedIndex];
+              }, childCount: totalCount),
+            ),
+        ],
+      ),
     );
   }
 
