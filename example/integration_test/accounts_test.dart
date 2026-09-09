@@ -459,6 +459,7 @@ void main() {
             .painter! as BalanceHistoryPainter;
         expect(balancePainter.points.length, greaterThan(1));
         expect(balancePainter.directions.last, 'current');
+        expect(balancePainter.labels.last, contains('\n'));
         final initialSelectedPoint = balancePainter.selectedIndex;
 
         final transactionRows = find.descendant(

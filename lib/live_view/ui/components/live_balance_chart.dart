@@ -18,6 +18,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
   final attributes = [
     'points',
     'directions',
+    'labels',
     'pointOffset',
     'windowSize',
     'edgeMargin',
@@ -40,6 +41,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
             .whereType<double>()
             .toList();
     final directions = (getAttribute('directions') ?? '').split(',');
+    final labels = (getAttribute('labels') ?? '').split('|');
     final lineColor =
         getColor(context, getAttribute('lineColor')) ?? const Color(0xFF8D63FF);
     final scope = InfiniteListScrollScope.maybeOf(context);
@@ -81,23 +83,107 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
       final sourceIndex = windowStart + index;
       return sourceIndex < directions.length ? directions[sourceIndex] : '';
     });
+    final visibleLabels = List.generate(visiblePoints.length, (index) {
+      final sourceIndex = windowStart + index;
+      return sourceIndex < labels.length ? labels[sourceIndex] : '';
+    });
     final selectedIndex = selectedIndexForWindow - windowStart;
+    final frame = BalanceChartFrame(
+      points: visiblePoints,
+      directions: visibleDirections,
+      labels: visibleLabels,
+      selectedIndex: selectedIndex,
+      windowStart: windowStart,
+    );
 
     return SizedBox(
       height: height,
       width: double.infinity,
-      child: CustomPaint(
-        painter: BalanceHistoryPainter(
-          points: visiblePoints,
-          directions: visibleDirections,
-          selectedIndex: selectedIndex,
-          windowStart: windowStart,
-          lineColor: lineColor,
-          gridColor: Theme.of(context).colorScheme.outlineVariant,
-          backgroundColor: Theme.of(context).colorScheme.surface,
-        ),
+      child: TweenAnimationBuilder<BalanceChartFrame>(
+        tween: BalanceChartFrameTween(end: frame),
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeOutCubic,
+        builder:
+            (context, animatedFrame, _) => CustomPaint(
+              painter: BalanceHistoryPainter(
+                points: animatedFrame.points,
+                directions: animatedFrame.directions,
+                labels: animatedFrame.labels,
+                selectedIndex: animatedFrame.selectedIndex,
+                windowStart: animatedFrame.windowStart,
+                scaleMinimum: animatedFrame.minimum,
+                scaleMaximum: animatedFrame.maximum,
+                lineColor: lineColor,
+                gridColor: Theme.of(context).colorScheme.outlineVariant,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                tooltipColor: Theme.of(context).colorScheme.inverseSurface,
+                tooltipTextColor:
+                    Theme.of(context).colorScheme.onInverseSurface,
+              ),
+            ),
       ),
     );
+  }
+}
+
+@visibleForTesting
+class BalanceChartFrame {
+  final List<double> points;
+  final List<String> directions;
+  final List<String> labels;
+  final int selectedIndex;
+  final int windowStart;
+  final double minimum;
+  final double maximum;
+
+  BalanceChartFrame({
+    required this.points,
+    required this.directions,
+    this.labels = const [],
+    required this.selectedIndex,
+    required this.windowStart,
+    double? minimum,
+    double? maximum,
+  }) : minimum = minimum ?? (points.isEmpty ? 0 : points.reduce(math.min)),
+       maximum = maximum ?? (points.isEmpty ? 1 : points.reduce(math.max));
+}
+
+@visibleForTesting
+class BalanceChartFrameTween extends Tween<BalanceChartFrame> {
+  BalanceChartFrameTween({super.begin, required super.end});
+
+  @override
+  BalanceChartFrame lerp(double t) {
+    final target = end!;
+    final source = begin ?? target;
+    final count = math.max(source.points.length, target.points.length);
+    final points = List.generate(count, (index) {
+      final position = count <= 1 ? 0.0 : index / (count - 1);
+      return _sample(source.points, position) +
+          (_sample(target.points, position) -
+                  _sample(source.points, position)) *
+              t;
+    });
+
+    return BalanceChartFrame(
+      points: points,
+      directions: target.directions,
+      labels: target.labels,
+      selectedIndex: target.selectedIndex,
+      windowStart: target.windowStart,
+      minimum: source.minimum + (target.minimum - source.minimum) * t,
+      maximum: source.maximum + (target.maximum - source.maximum) * t,
+    );
+  }
+
+  double _sample(List<double> values, double position) {
+    if (values.isEmpty) return 0;
+    if (values.length == 1) return values.first;
+    final scaled = position * (values.length - 1);
+    final lower = scaled.floor();
+    final upper = math.min(lower + 1, values.length - 1);
+    final fraction = scaled - lower;
+    return values[lower] + (values[upper] - values[lower]) * fraction;
   }
 }
 
@@ -105,20 +191,30 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
 class BalanceHistoryPainter extends CustomPainter {
   final List<double> points;
   final List<String> directions;
+  final List<String> labels;
   final int selectedIndex;
   final int windowStart;
+  final double? scaleMinimum;
+  final double? scaleMaximum;
   final Color lineColor;
   final Color gridColor;
   final Color backgroundColor;
+  final Color tooltipColor;
+  final Color tooltipTextColor;
 
   const BalanceHistoryPainter({
     required this.points,
     required this.directions,
+    this.labels = const [],
     this.selectedIndex = -1,
     this.windowStart = 0,
+    this.scaleMinimum,
+    this.scaleMaximum,
     required this.lineColor,
     required this.gridColor,
     this.backgroundColor = Colors.transparent,
+    this.tooltipColor = const Color(0xFF24212F),
+    this.tooltipTextColor = Colors.white,
   });
 
   @override
@@ -131,8 +227,8 @@ class BalanceHistoryPainter extends CustomPainter {
     const verticalPadding = 12.0;
     final width = math.max(0, size.width - horizontalPadding * 2);
     final height = math.max(0, size.height - verticalPadding * 2);
-    final minimum = points.reduce(math.min);
-    final maximum = points.reduce(math.max);
+    final minimum = scaleMinimum ?? points.reduce(math.min);
+    final maximum = scaleMaximum ?? points.reduce(math.max);
     final range = math.max(maximum - minimum, 1.0);
 
     final gridPaint =
@@ -202,21 +298,70 @@ class BalanceHistoryPainter extends CustomPainter {
         ..style = PaintingStyle.stroke,
     );
 
-    for (var index = 0; index < points.length; index++) {
-      final direction = index < directions.length ? directions[index] : '';
+    if (selectedIndex >= 0 && selectedIndex < points.length) {
+      final direction =
+          selectedIndex < directions.length ? directions[selectedIndex] : '';
       final color = switch (direction) {
         'income' => const Color(0xFF25A36B),
         'expense' => const Color(0xFFE55276),
         _ => lineColor,
       };
-      final point = offsetFor(index);
-      final selected = index == selectedIndex;
-      canvas.drawCircle(
-        point,
-        selected ? 7.5 : 4.5,
-        Paint()..color = Colors.white,
-      );
-      canvas.drawCircle(point, selected ? 5 : 3, Paint()..color = color);
+      final point = offsetFor(selectedIndex);
+      canvas.drawCircle(point, 7.5, Paint()..color = Colors.white);
+      canvas.drawCircle(point, 5, Paint()..color = color);
+
+      final label = selectedIndex < labels.length ? labels[selectedIndex] : '';
+      if (label.isNotEmpty) {
+        _paintTooltip(canvas, size, point, label);
+      }
+    }
+  }
+
+  void _paintTooltip(Canvas canvas, Size size, Offset point, String label) {
+    final lines = label.split('\n');
+    final amount = TextPainter(
+      text: TextSpan(
+        text: lines.first,
+        style: TextStyle(
+          color: tooltipTextColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: math.max(0, size.width - 28));
+    final date = TextPainter(
+      text: TextSpan(
+        text: lines.skip(1).join(' '),
+        style: TextStyle(
+          color: tooltipTextColor.withValues(alpha: 0.78),
+          fontSize: 9,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: math.max(0, size.width - 28));
+    final width = math.min(
+      size.width - 8,
+      math.max(amount.width, date.width) + 16,
+    );
+    final height = date.text!.toPlainText().isEmpty ? 28.0 : 40.0;
+    final left = (point.dx - width / 2).clamp(4.0, size.width - width - 4);
+    final preferredTop = point.dy - height - 12;
+    final top =
+        preferredTop >= 4
+            ? preferredTop
+            : (point.dy + 12).clamp(4.0, size.height - height - 4);
+    final rect = Rect.fromLTWH(left, top, width, height);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(10)),
+      Paint()..color = tooltipColor.withValues(alpha: 0.94),
+    );
+    amount.paint(canvas, Offset(left + (width - amount.width) / 2, top + 5));
+    if (date.text!.toPlainText().isNotEmpty) {
+      date.paint(canvas, Offset(left + (width - date.width) / 2, top + 22));
     }
   }
 
@@ -224,9 +369,14 @@ class BalanceHistoryPainter extends CustomPainter {
   bool shouldRepaint(BalanceHistoryPainter oldDelegate) =>
       oldDelegate.points != points ||
       oldDelegate.directions != directions ||
+      oldDelegate.labels != labels ||
       oldDelegate.selectedIndex != selectedIndex ||
       oldDelegate.windowStart != windowStart ||
+      oldDelegate.scaleMinimum != scaleMinimum ||
+      oldDelegate.scaleMaximum != scaleMaximum ||
       oldDelegate.lineColor != lineColor ||
       oldDelegate.gridColor != gridColor ||
-      oldDelegate.backgroundColor != backgroundColor;
+      oldDelegate.backgroundColor != backgroundColor ||
+      oldDelegate.tooltipColor != tooltipColor ||
+      oldDelegate.tooltipTextColor != tooltipTextColor;
 }

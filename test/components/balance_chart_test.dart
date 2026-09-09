@@ -7,6 +7,30 @@ import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart
 import '../test_helpers.dart';
 
 void main() {
+  test('interpolates chart values and scale when an outlier leaves view', () {
+    final tween = BalanceChartFrameTween(
+      begin: BalanceChartFrame(
+        points: const [0, 1000, 20],
+        directions: const ['expense', 'income', 'current'],
+        selectedIndex: 2,
+        windowStart: 0,
+      ),
+      end: BalanceChartFrame(
+        points: const [10, 20, 30],
+        directions: const ['income', 'income', 'current'],
+        selectedIndex: 1,
+        windowStart: 1,
+      ),
+    );
+
+    final halfway = tween.lerp(0.5);
+    expect(halfway.points, [5, 510, 25]);
+    expect(halfway.minimum, 5);
+    expect(halfway.maximum, 515);
+    expect(tween.lerp(1).points, [10, 20, 30]);
+    expect(tween.lerp(1).maximum, 30);
+  });
+
   testWidgets('renders server balance points as a native painted chart', (
     tester,
   ) async {
@@ -16,6 +40,7 @@ void main() {
         's': [
           '<BalanceChart points="80,120,105" '
               'directions="expense,income,current" height="142" '
+              'labels="|€120\nJan 1, 2026|€105\nJan 2, 2026" '
               'lineColor="#8D63FF" />',
         ],
       },
@@ -47,6 +72,7 @@ void main() {
             as BalanceHistoryPainter;
     expect(painter.points, [80, 120, 105]);
     expect(painter.directions, ['expense', 'income', 'current']);
+    expect(painter.labels.last, '€105\nJan 2, 2026');
     expect(painter.selectedIndex, 2);
     expect(painter.lineColor, const Color(0xFF8D63FF));
   });
@@ -117,6 +143,7 @@ void main() {
 
     scrollable.position.jumpTo(130);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(painter().selectedIndex, 1);
   });
 
@@ -174,11 +201,13 @@ void main() {
 
       scrollable.position.jumpTo(80 + 68 * 50);
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
       expect(painter().selectedIndex, 12);
       expect(painter().windowStart, 40);
 
       scrollable.position.jumpTo(80 + 69 * 50);
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
       expect(painter().windowStart, 39);
       expect(painter().selectedIndex, 12);
       expect(painter().points.first, 39);
@@ -220,6 +249,7 @@ void main() {
     );
     scrollable.position.jumpTo(80 + 140 * 50);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
 
     final painter =
         tester
