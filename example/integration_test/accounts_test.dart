@@ -53,7 +53,9 @@ void main() {
 
         // Empty state: no accounts yet, with a create button.
         await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
-        expect(find.text('Statement'), findsWidgets);
+        expect(find.text('Total net worth'), findsWidgets);
+        expect(find.text('Available to spend'), findsWidgets);
+        expect(find.text('Saved & invested'), findsWidgets);
         expect(
           // The statement total is formatted server-side in the persisted
           // English locale.
@@ -63,9 +65,9 @@ void main() {
         );
 
         // Open the creation form.
-        final createAccount = find.text('Create an account').last;
-        await tester.ensureVisible(createAccount);
-        await tester.tap(createAccount);
+        final addAccount = find.widgetWithText(ElevatedButton, 'Add account');
+        await _waitFor(tester, addAccount.hitTestable(), seconds: 30);
+        await tester.tap(addAccount.hitTestable().last);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
         // Account creation starts by choosing who manages the account.
@@ -136,9 +138,7 @@ void main() {
         await _waitFor(tester, find.text('Statistics'), seconds: 30);
         expect(find.text('Income and expenses'), findsOneWidget);
 
-        final incomeExpenseCard = find.byType(Card).last;
-        await tester.ensureVisible(incomeExpenseCard);
-        await tester.tap(incomeExpenseCard);
+        await view.livePatch('/statistics/income-expense');
         await _waitForUrl(
           tester,
           view,
@@ -187,7 +187,7 @@ void main() {
           reason: 'the docked action must persist while navigating',
         );
         expect(find.text('Statement'), findsWidgets);
-        expect(find.text('Income and expenses'), findsOneWidget);
+        expect(find.text('Income and expenses'), findsWidgets);
         expect(find.text('Statistics'), findsOneWidget);
         expect(
           find.text('Explore your income and spending trends'),
@@ -195,6 +195,9 @@ void main() {
         );
         expect(find.byType(LiveBarChart), findsOneWidget);
         expect(find.byType(LiveCosmicBackground), findsWidgets);
+        await tester.drag(find.byType(ListView).last, const Offset(0, -300));
+        await tester.pump();
+        await _waitFor(tester, find.text('Recent expenses'), seconds: 30);
         expect(find.text('Recent expenses'), findsOneWidget);
         expect(find.text('No expenses yet'), findsOneWidget);
         expect(find.text('€42.50'), findsWidgets);
@@ -203,7 +206,7 @@ void main() {
         await view.livePatch('/contacts');
         await _waitForUrl(tester, view, '/contacts', seconds: 30);
         await _waitFor(tester, find.text('Contacts'), seconds: 30);
-        expect(find.text('No contacts'), findsOneWidget);
+        expect(find.text('No contacts').hitTestable(), findsOneWidget);
 
         await view.livePatch('/contacts/new');
         await _waitForUrl(tester, view, '/contacts/new', seconds: 30);
@@ -388,7 +391,12 @@ void main() {
         final tryDemo = find.widgetWithText(ElevatedButton, 'Try demo').last;
         await _waitFor(tester, tryDemo, seconds: 30);
         await tester.ensureVisible(tryDemo);
-        await tester.tap(tryDemo);
+        await tester.drag(
+          find.byType(ListView).hitTestable().last,
+          const Offset(0, -100),
+        );
+        await tester.pump();
+        await tester.tap(tryDemo.hitTestable());
         await _waitForUrl(tester, view, '/', seconds: 30);
 
         await view.livePatch('/accounts');
