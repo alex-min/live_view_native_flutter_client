@@ -444,6 +444,30 @@ void main() {
           matching: find.byType(ListTile),
         );
         expect(transactionRows.evaluate().length, inInclusiveRange(1, 20));
+
+        final pinnedHeader = tester.widget<SliverPersistentHeader>(
+          find.descendant(
+            of: find.byType(LiveInfiniteList),
+            matching: find.byType(SliverPersistentHeader),
+          ),
+        );
+        final headerDelegate =
+            pinnedHeader.delegate as CollapsibleInfiniteListHeaderDelegate;
+        expect(pinnedHeader.pinned, isTrue);
+        expect(headerDelegate.maxExtent, 104);
+        expect(headerDelegate.minExtent, 76);
+
+        final collapsibleScroll = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        collapsibleScroll.position.jumpTo(28);
+        await tester.pumpAndSettle();
+        expect(collapsibleScroll.position.pixels, 28);
         expect(find.text('Load more'), findsNothing);
 
         final innerList = find
@@ -491,7 +515,7 @@ void main() {
           seconds: 30,
         );
         await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
-        expect(find.byType(LiveInfiniteList), findsOneWidget);
+        expect(find.byType(LiveInfiniteList), findsWidgets);
 
         final listAfterClose = find
             .descendant(

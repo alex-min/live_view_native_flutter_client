@@ -52,6 +52,8 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     'dragStartBehavior',
     'keyboardDismissBehavior',
     'restorationId',
+    'collapsibleHeaderHeight',
+    'collapsedHeaderHeight',
   ];
 
   @override
@@ -178,12 +180,17 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     }
 
     final position = _scrollController.position;
-    final firstVisible = (position.pixels / itemExtent).floor().clamp(
+    final headerHeight = doubleAttribute('collapsibleHeaderHeight') ?? 0;
+    final collapsedHeight = doubleAttribute('collapsedHeaderHeight') ?? 0;
+    final listPixels = (position.pixels - (headerHeight - collapsedHeight))
+        .clamp(0, double.infinity);
+    final firstVisible = (listPixels / itemExtent).floor().clamp(
       0,
       totalCount - 1,
     );
     final lastVisible =
-        ((position.pixels + position.viewportDimension) / itemExtent)
+        ((listPixels + position.viewportDimension - collapsedHeight) /
+                itemExtent)
             .ceil()
             .clamp(1, totalCount) -
         1;
@@ -269,6 +276,19 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
 
   Widget _renderVirtualList(List<Widget> children) {
     final totalCount = intAttribute('totalCount') ?? 0;
+    final headerHeight = doubleAttribute('collapsibleHeaderHeight');
+    final collapsedHeight = doubleAttribute('collapsedHeaderHeight');
+    if (headerHeight != null &&
+        collapsedHeight != null &&
+        children.isNotEmpty) {
+      return _renderCollapsibleVirtualList(
+        children.first,
+        children.skip(1).toList(),
+        totalCount,
+        headerHeight,
+        collapsedHeight,
+      );
+    }
     if (totalCount <= 0) {
       return ListView(
         controller: _scrollController,
@@ -315,6 +335,55 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     );
   }
 
+  Widget _renderCollapsibleVirtualList(
+    Widget header,
+    List<Widget> children,
+    int totalCount,
+    double headerHeight,
+    double collapsedHeight,
+  ) {
+    final loadedStart = intAttribute('loadedStart') ?? 0;
+    final loadedCount = intAttribute('loadedCount') ?? children.length;
+
+    return CustomScrollView(
+      controller: _scrollController,
+      primary: false,
+      restorationId: getAttribute('restorationId'),
+      keyboardDismissBehavior:
+          scrollViewKeyboardDismissBehaviorAttribute(
+            'keyboardDismissBehavior',
+          ) ??
+          ScrollViewKeyboardDismissBehavior.manual,
+      slivers: [
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: CollapsibleInfiniteListHeaderDelegate(
+            minExtent: collapsedHeight.clamp(0, headerHeight),
+            maxExtent: headerHeight,
+            child: header,
+          ),
+        ),
+        if (totalCount == 0)
+          SliverToBoxAdapter(
+            child: children.isEmpty ? const SizedBox.shrink() : children.first,
+          )
+        else
+          SliverFixedExtentList(
+            itemExtent: doubleAttribute('itemExtent')!,
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final loadedIndex = index - loadedStart;
+              if (loadedIndex < 0 ||
+                  loadedIndex >= loadedCount ||
+                  loadedIndex >= children.length) {
+                return const SizedBox.shrink();
+              }
+              return children[loadedIndex];
+            }, childCount: totalCount),
+          ),
+      ],
+    );
+  }
+
   List<Widget> _flattenDynamicChildren(List<Widget> children) {
     final flattened = <Widget>[];
     for (final child in children) {
@@ -331,4 +400,43 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     }
     return flattened;
   }
+}
+
+@visibleForTesting
+class CollapsibleInfiniteListHeaderDelegate
+    extends SliverPersistentHeaderDelegate {
+  @override
+  final double minExtent;
+  @override
+  final double maxExtent;
+  final Widget child;
+
+  const CollapsibleInfiniteListHeaderDelegate({
+    required this.minExtent,
+    required this.maxExtent,
+    required this.child,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) => ClipRect(
+    child: ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: OverflowBox(
+        alignment: Alignment.topCenter,
+        minHeight: maxExtent,
+        maxHeight: maxExtent,
+        child: child,
+      ),
+    ),
+  );
+
+  @override
+  bool shouldRebuild(CollapsibleInfiniteListHeaderDelegate oldDelegate) =>
+      minExtent != oldDelegate.minExtent ||
+      maxExtent != oldDelegate.maxExtent ||
+      child != oldDelegate.child;
 }

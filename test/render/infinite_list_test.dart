@@ -6,6 +6,52 @@ import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart
 import '../test_helpers.dart';
 
 void main() {
+  testWidgets('collapses its pinned header as transactions scroll', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 400));
+    final children =
+        List.generate(
+          10,
+          (index) => '<SizedBox height="50"><Text>Row $index</Text></SizedBox>',
+        ).join();
+    final (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '<InfiniteList phx-load-page="load_page" totalCount="100" '
+              'pageSize="10" loadedStart="0" loadedCount="10" '
+              'itemExtent="50" collapsibleHeaderHeight="200" '
+              'collapsedHeaderHeight="80" loadKey="0">'
+              '<Container><Text>Summary header</Text></Container>'
+              '$children</InfiniteList>',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(LiveInfiniteList),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    final header = find.ancestor(
+      of: find.text('Summary header'),
+      matching: find.byType(ClipRect),
+    );
+    expect(find.byType(CustomScrollView), findsOneWidget);
+    expect(tester.getSize(header.first).height, 200);
+
+    scrollable.position.jumpTo(120);
+    await tester.pumpAndSettle();
+
+    expect(tester.getSize(header.first).height, 80);
+    expect(find.text('Summary header'), findsOneWidget);
+  });
+
   testWidgets(
     'virtualizes the full extent and loads arbitrary pages in either direction',
     (tester) async {
