@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_balance_chart.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
@@ -438,6 +439,20 @@ void main() {
 
         expect(find.byKey(const Key('main_app_bar')), findsNothing);
         expect(find.byType(BottomNavigationBar), findsOneWidget);
+        expect(find.byType(LiveBalanceChart), findsOneWidget);
+        expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
+
+        final balancePainter = tester
+            .widget<CustomPaint>(
+              find.byWidgetPredicate(
+                (widget) =>
+                    widget is CustomPaint &&
+                    widget.painter is BalanceHistoryPainter,
+              ),
+            )
+            .painter! as BalanceHistoryPainter;
+        expect(balancePainter.points.length, greaterThan(1));
+        expect(balancePainter.directions.last, 'current');
 
         final transactionRows = find.descendant(
           of: find.byType(LiveInfiniteList),
@@ -454,7 +469,7 @@ void main() {
         final headerDelegate =
             pinnedHeader.delegate as CollapsibleInfiniteListHeaderDelegate;
         expect(pinnedHeader.pinned, isTrue);
-        expect(headerDelegate.maxExtent, 104);
+        expect(headerDelegate.maxExtent, 340);
         expect(headerDelegate.minExtent, 76);
 
         final collapsibleScroll = tester.state<ScrollableState>(
@@ -476,8 +491,8 @@ void main() {
               matching: find.byType(Scrollable),
             )
             .hitTestable()
-            .last;
-        final scrollable = tester.state<ScrollableState>(innerList);
+            .first;
+        final scrollable = collapsibleScroll;
         final fullExtent = scrollable.position.maxScrollExtent;
         expect(fullExtent, greaterThan(40 * 64 * 5));
 
@@ -579,7 +594,7 @@ void main() {
                 matching: find.byType(Scrollable),
               )
               .hitTestable()
-              .last;
+              .first;
           final restoredScrollable = tester.state<ScrollableState>(
             restoredList,
           );
@@ -600,7 +615,7 @@ void main() {
                   matching: find.byType(Scrollable),
                 )
                 .hitTestable()
-                .last;
+                .first;
             final returnedScrollable = tester.state<ScrollableState>(
               returnedList,
             );
