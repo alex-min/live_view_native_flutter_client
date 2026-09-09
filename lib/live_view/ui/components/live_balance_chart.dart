@@ -18,6 +18,9 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
   final attributes = [
     'points',
     'directions',
+    'pointOffset',
+    'windowSize',
+    'edgeMargin',
     'height',
     'collapsedHeight',
     'lineColor',
@@ -57,19 +60,38 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
             : ((scrollOffset - scope.collapseExtent).clamp(0, double.infinity) /
                     scope.itemExtent)
                 .floor();
-    final selectedIndex =
-        (points.length - 1 - visibleTransaction)
+    final pointOffset = getInt(getAttribute('pointOffset')) ?? 0;
+    final selectedIndexForWindow =
+        (points.length - 1 - (visibleTransaction - pointOffset))
             .clamp(0, math.max(points.length - 1, 0))
             .toInt();
+    final requestedWindowSize = getInt(getAttribute('windowSize')) ?? 80;
+    final windowSize = math.max(2, requestedWindowSize);
+    final requestedMargin = getInt(getAttribute('edgeMargin')) ?? 12;
+    final edgeMargin = requestedMargin.clamp(0, windowSize ~/ 2).toInt();
+    final windowStart =
+        points.length <= windowSize
+            ? 0
+            : (selectedIndexForWindow - edgeMargin)
+                .clamp(0, points.length - windowSize)
+                .toInt();
+    final windowEnd = math.min(points.length, windowStart + windowSize);
+    final visiblePoints = points.sublist(windowStart, windowEnd);
+    final visibleDirections = List.generate(visiblePoints.length, (index) {
+      final sourceIndex = windowStart + index;
+      return sourceIndex < directions.length ? directions[sourceIndex] : '';
+    });
+    final selectedIndex = selectedIndexForWindow - windowStart;
 
     return SizedBox(
       height: height,
       width: double.infinity,
       child: CustomPaint(
         painter: BalanceHistoryPainter(
-          points: points,
-          directions: directions,
+          points: visiblePoints,
+          directions: visibleDirections,
           selectedIndex: selectedIndex,
+          windowStart: windowStart,
           lineColor: lineColor,
           gridColor: Theme.of(context).colorScheme.outlineVariant,
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -84,6 +106,7 @@ class BalanceHistoryPainter extends CustomPainter {
   final List<double> points;
   final List<String> directions;
   final int selectedIndex;
+  final int windowStart;
   final Color lineColor;
   final Color gridColor;
   final Color backgroundColor;
@@ -92,6 +115,7 @@ class BalanceHistoryPainter extends CustomPainter {
     required this.points,
     required this.directions,
     this.selectedIndex = -1,
+    this.windowStart = 0,
     required this.lineColor,
     required this.gridColor,
     this.backgroundColor = Colors.transparent,
@@ -201,6 +225,7 @@ class BalanceHistoryPainter extends CustomPainter {
       oldDelegate.points != points ||
       oldDelegate.directions != directions ||
       oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.windowStart != windowStart ||
       oldDelegate.lineColor != lineColor ||
       oldDelegate.gridColor != gridColor ||
       oldDelegate.backgroundColor != backgroundColor;

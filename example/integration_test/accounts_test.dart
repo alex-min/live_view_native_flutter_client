@@ -77,12 +77,7 @@ void main() {
         expect(find.text('Manual'), findsOneWidget);
 
         await view.livePatch('/accounts/new/manual');
-        await _waitForUrl(
-          tester,
-          view,
-          '/accounts/new/manual',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
 
         // The form has three text fields: initial balance, name, description.
         final fields = find.descendant(
@@ -148,17 +143,10 @@ void main() {
         await _waitFor(tester, find.text('This month'), seconds: 30);
         expect(find.text('Income'), findsOneWidget);
         expect(find.text('Expenses'), findsOneWidget);
-        expect(
-          find.text('No transactions for this period'),
-          findsOneWidget,
-        );
+        expect(find.text('No transactions for this period'), findsOneWidget);
 
         await tester.tap(find.byIcon(Icons.calendar_today));
-        await _waitFor(
-          tester,
-          find.byType(LiveMonthPickerDrawer),
-          seconds: 30,
-        );
+        await _waitFor(tester, find.byType(LiveMonthPickerDrawer), seconds: 30);
         expect(find.byType(BottomSheet), findsOneWidget);
         expect(find.text(DateTime.now().year.toString()), findsOneWidget);
         expect(find.byIcon(Icons.close), findsOneWidget);
@@ -240,10 +228,12 @@ void main() {
         expect(editedContactName, findsOneWidget);
         await tester.enterText(editedContactName, 'Alex Martin');
         await tester.pump();
-        await tester.tap(find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        ));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(Form),
+            matching: find.byType(ElevatedButton),
+          ),
+        );
         await _waitForUrl(tester, view, '/contacts', seconds: 30);
         await _waitFor(tester, find.text('Alex Martin'), seconds: 30);
 
@@ -276,10 +266,12 @@ void main() {
         );
         await tester.enterText(loanFields.at(0), '12.50');
         await tester.pump();
-        await tester.tap(find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        ));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(Form),
+            matching: find.byType(ElevatedButton),
+          ),
+        );
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         await tester.pump();
@@ -347,10 +339,12 @@ void main() {
         );
         await tester.enterText(borrowingFields.at(0), '20');
         await tester.pump();
-        await tester.tap(find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        ));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(Form),
+            matching: find.byType(ElevatedButton),
+          ),
+        );
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         await tester.pump();
@@ -530,20 +524,30 @@ void main() {
         final fullExtent = scrollable.position.maxScrollExtent;
         expect(fullExtent, greaterThan(40 * 64 * 5));
 
+        final deepChartWindows = <String>{};
         for (var jump = 0; jump < 12; jump++) {
           final target = fullExtent * (jump.isEven ? 0.3 : 0.7);
           scrollable.position.jumpTo(target);
           await tester.pump();
-          await _waitFor(
-            tester,
-            transactionRows.hitTestable(),
-            seconds: 30,
-          );
+          await _waitFor(tester, transactionRows.hitTestable(), seconds: 30);
 
           expect(transactionRows.evaluate().length, inInclusiveRange(1, 20));
           expect(scrollable.position.maxScrollExtent, closeTo(fullExtent, 1));
           expect(scrollable.position.pixels, closeTo(target, 1));
+          final deepPainter = tester
+              .widget<CustomPaint>(
+                find.byWidgetPredicate(
+                  (widget) =>
+                      widget is CustomPaint &&
+                      widget.painter is BalanceHistoryPainter,
+                ),
+              )
+              .painter! as BalanceHistoryPainter;
+          expect(deepPainter.points.length, lessThanOrEqualTo(80));
+          expect(deepPainter.selectedIndex, inInclusiveRange(10, 70));
+          deepChartWindows.add(deepPainter.points.join(','));
         }
+        expect(deepChartWindows.length, greaterThan(1));
 
         var positionBeforeEdit = scrollable.position.pixels;
         await tester.tap(transactionRows.hitTestable().first);
@@ -592,11 +596,7 @@ void main() {
           final target = extentAfterClose * fraction;
           scrollableAfterClose.position.jumpTo(target);
           await tester.pump();
-          await _waitFor(
-            tester,
-            transactionRows.hitTestable(),
-            seconds: 30,
-          );
+          await _waitFor(tester, transactionRows.hitTestable(), seconds: 30);
           expect(scrollableAfterClose.position.pixels, closeTo(target, 1));
         }
 
@@ -660,11 +660,7 @@ void main() {
                 returnedExtent * (jump.isEven ? 0.35 : 0.65),
               );
               await tester.pump();
-              await _waitFor(
-                tester,
-                returnedRows.hitTestable(),
-                seconds: 30,
-              );
+              await _waitFor(tester, returnedRows.hitTestable(), seconds: 30);
             }
 
             positionBeforeEdit = returnedScrollable.position.pixels;
@@ -697,12 +693,7 @@ void main() {
         await _signUpAndOnboard(tester, view);
 
         await view.livePatch('/accounts/new/manual');
-        await _waitForUrl(
-          tester,
-          view,
-          '/accounts/new/manual',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
 
         // Until "Investment" is picked, the only dropdown is the account
         // type one; the currency field is a CurrencyInput, not a dropdown.
@@ -833,8 +824,11 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -845,8 +839,11 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
   throw Exception('Timed out waiting for $finder');
 }
 
-Future<void> _waitForAbsent(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitForAbsent(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isEmpty) {
@@ -858,8 +855,12 @@ Future<void> _waitForAbsent(WidgetTester tester, Finder finder,
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, Object url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  Object url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if ((url is String && view.currentUrl == url) ||
@@ -899,7 +900,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

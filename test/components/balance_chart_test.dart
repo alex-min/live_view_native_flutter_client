@@ -119,4 +119,120 @@ void main() {
     await tester.pump();
     expect(painter().selectedIndex, 1);
   });
+
+  testWidgets(
+    'slides an older point window before selection reaches the edge',
+    (tester) async {
+      tester.setScreenSize(const Size(400, 400));
+      final points = List.generate(121, (index) => index).join(',');
+      final directions = List.filled(121, 'expense').join(',');
+      final rows =
+          List.generate(
+            121,
+            (index) =>
+                '<SizedBox height="50"><Text>Row $index</Text></SizedBox>',
+          ).join();
+      final (view, _) = await connect(
+        LiveView(),
+        rendered: {
+          's': [
+            '<InfiniteList phx-load-page="load_page" totalCount="160" '
+                'pageSize="40" loadedStart="0" loadedCount="121" '
+                'itemExtent="50" collapsibleHeaderHeight="200" '
+                'collapsedHeaderHeight="120">'
+                '<BalanceChart points="$points" directions="$directions" '
+                'pointOffset="0" windowSize="80" edgeMargin="12" '
+                'height="160" collapsedHeight="120" />'
+                '$rows</InfiniteList>',
+          ],
+        },
+      );
+
+      await tester.runLiveView(view);
+      await tester.pumpAndSettle();
+
+      BalanceHistoryPainter painter() =>
+          tester
+                  .widget<CustomPaint>(
+                    find.byWidgetPredicate(
+                      (widget) =>
+                          widget is CustomPaint &&
+                          widget.painter is BalanceHistoryPainter,
+                    ),
+                  )
+                  .painter!
+              as BalanceHistoryPainter;
+      final scrollable = tester.state<ScrollableState>(
+        find.descendant(
+          of: find.byType(LiveInfiniteList),
+          matching: find.byType(Scrollable),
+        ),
+      );
+
+      expect(painter().points.length, 80);
+      expect(painter().windowStart, 41);
+
+      scrollable.position.jumpTo(80 + 68 * 50);
+      await tester.pump();
+      expect(painter().selectedIndex, 12);
+      expect(painter().windowStart, 40);
+
+      scrollable.position.jumpTo(80 + 69 * 50);
+      await tester.pump();
+      expect(painter().windowStart, 39);
+      expect(painter().selectedIndex, 12);
+      expect(painter().points.first, 39);
+    },
+  );
+
+  testWidgets('maps deep list offsets into a newly loaded chart window', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 400));
+    final points = List.generate(121, (index) => index).join(',');
+    final rows =
+        List.generate(
+          121,
+          (index) => '<SizedBox height="50"><Text>Row $index</Text></SizedBox>',
+        ).join();
+    final (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '<InfiniteList phx-load-page="load_page" totalCount="300" '
+              'pageSize="40" loadedStart="80" loadedCount="121" '
+              'itemExtent="50" collapsibleHeaderHeight="200" '
+              'collapsedHeaderHeight="120">'
+              '<BalanceChart points="$points" pointOffset="80" '
+              'windowSize="80" edgeMargin="12" height="160" '
+              'collapsedHeight="120" />$rows</InfiniteList>',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(LiveInfiniteList),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    scrollable.position.jumpTo(80 + 140 * 50);
+    await tester.pump();
+
+    final painter =
+        tester
+                .widget<CustomPaint>(
+                  find.byWidgetPredicate(
+                    (widget) =>
+                        widget is CustomPaint &&
+                        widget.painter is BalanceHistoryPainter,
+                  ),
+                )
+                .painter!
+            as BalanceHistoryPainter;
+    expect(painter.selectedIndex, 19);
+    expect(painter.windowStart, 41);
+  });
 }
