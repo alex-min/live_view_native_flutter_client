@@ -120,6 +120,20 @@ TextStyle? getTextStyle(String? style, BuildContext context) {
               "Unknown fontWeight: $styleValue, supported text styles: ${textFontMap.keys.join(', ')}",
             );
           }
+        case 'fontSize':
+          final value = double.tryParse(styleValue);
+          if (value != null) {
+            finalStyle = finalStyle.merge(TextStyle(fontSize: value));
+          } else {
+            debugPrint("Invalid fontSize $styleValue");
+          }
+        case 'letterSpacing':
+          final value = double.tryParse(styleValue);
+          if (value != null) {
+            finalStyle = finalStyle.merge(TextStyle(letterSpacing: value));
+          } else {
+            debugPrint("Invalid letterSpacing $styleValue");
+          }
         default:
           debugPrint("Unknown property $styleKey");
       }

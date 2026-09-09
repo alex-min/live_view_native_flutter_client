@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_bar_chart.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
@@ -180,25 +179,34 @@ void main() {
         );
         await view.livePatch('/dashboard');
         await _waitForUrl(tester, view, '/dashboard', seconds: 30);
-        await _waitFor(tester, find.text('Home'), seconds: 30);
+        await _waitFor(tester, find.text('Total net worth'), seconds: 30);
         expect(
           tester.state(find.byType(LiveFloatingActionButton)),
           same(floatingButtonState),
           reason: 'the docked action must persist while navigating',
         );
-        expect(find.text('Statement'), findsWidgets);
-        expect(find.text('Income and expenses'), findsWidgets);
-        expect(find.text('Statistics'), findsOneWidget);
-        expect(
-          find.text('Explore your income and spending trends'),
-          findsOneWidget,
-        );
-        expect(find.byType(LiveBarChart), findsOneWidget);
+        expect(find.text('Total net worth'), findsWidgets);
+        expect(find.text('CASH FLOW'), findsOneWidget);
+        expect(find.text('Money received'), findsOneWidget);
+        expect(find.text('Money spent'), findsOneWidget);
+        expect(find.text('Send'), findsOneWidget);
+        expect(find.text('Request'), findsOneWidget);
+        expect(find.text('Transfer'), findsWidgets);
+        expect(find.text('Trends'), findsOneWidget);
         expect(find.byType(LiveCosmicBackground), findsWidgets);
+        final balanceVisibility = find.byWidgetPredicate(
+          (widget) =>
+              widget is IconButton && widget.color == const Color(0xCCFFFFFF),
+        );
+        expect(balanceVisibility, findsOneWidget);
+        await tester.tap(balanceVisibility);
+        await _waitFor(tester, find.text('••••••'), seconds: 30);
+        await tester.tap(balanceVisibility);
+        await _waitFor(tester, find.text('€42.50'), seconds: 30);
         await tester.drag(find.byType(ListView).last, const Offset(0, -300));
         await tester.pump();
-        await _waitFor(tester, find.text('Recent expenses'), seconds: 30);
-        expect(find.text('Recent expenses'), findsOneWidget);
+        await _waitFor(tester, find.text('Money activity'), seconds: 30);
+        expect(find.text('Money activity'), findsWidgets);
         expect(find.text('No expenses yet'), findsOneWidget);
         expect(find.text('€42.50'), findsWidgets);
 

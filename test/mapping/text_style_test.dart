@@ -35,6 +35,12 @@ main() {
       const TextStyle(fontWeight: FontWeight.bold),
     );
 
+    await setStyle(tester, 'fontSize: 10; letterSpacing: 1.3');
+    expect(
+      materialTextStyle()!.resolve({}),
+      const TextStyle(fontSize: 10, letterSpacing: 1.3),
+    );
+
     await setStyle(tester, """'
           pressed: {
             fontWeight: bold
