@@ -177,18 +177,9 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                     ignoring: compactOpacity < 0.95,
                     child: Opacity(
                       opacity: compactOpacity,
-                      child: Container(
+                      child: SizedBox(
+                        key: const ValueKey('balance_chart_compact_header'),
                         height: 48,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surface.withValues(alpha: 0.96),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             final expandedSearchWidth = math.min(

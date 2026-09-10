@@ -171,6 +171,10 @@ void main() {
       find.byKey(const ValueKey('balance_chart_search_button')),
       findsOneWidget,
     );
+    expect(
+      tester.widget(find.byKey(const ValueKey('balance_chart_compact_header'))),
+      isA<SizedBox>(),
+    );
     expect(find.byType(TextField), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('balance_chart_search_button')));

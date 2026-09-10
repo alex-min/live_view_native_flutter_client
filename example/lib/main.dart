@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
       Platform.isAndroid
           ?
           // android emulator
-          'http://10.0.2.2:4000'
+          'https://alex-thinkpad.tailb56625.ts.net'
           // computer
           : 'http://localhost:4000',
     );
