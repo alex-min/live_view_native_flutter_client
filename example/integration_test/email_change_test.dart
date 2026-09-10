@@ -94,8 +94,12 @@ void main() {
         await tester.tap(acceptButton);
 
         // Complete the currency onboarding step (EUR is pre-selected).
-        await _waitForUrl(tester, view, '/users/onboarding/currency',
-            seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/onboarding/currency',
+          seconds: 30,
+        );
         final nextButton = find.descendant(
           of: find.byType(Form),
           matching: find.byType(ElevatedButton),
@@ -125,12 +129,7 @@ void main() {
         await _waitFor(tester, unlockButton, seconds: 30);
         await tester.tap(unlockButton);
         await tester.pump();
-        await _waitForUrl(
-          tester,
-          view,
-          '/users/sudo_mode/log_in',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/users/sudo_mode/log_in', seconds: 30);
         await tester.pumpAndSettle();
 
         await _waitFor(tester, find.byType(TextField));
@@ -202,8 +201,11 @@ void main() {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -215,8 +217,12 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  String url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final currentPath = Uri.tryParse(view.currentUrl ?? '')?.path ?? '';
@@ -256,7 +262,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

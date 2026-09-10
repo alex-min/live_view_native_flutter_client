@@ -87,8 +87,12 @@ void main() {
         await tester.tap(acceptButton);
 
         // Complete the currency onboarding step (EUR is pre-selected).
-        await _waitForUrl(tester, view, '/users/onboarding/currency',
-            seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/onboarding/currency',
+          seconds: 30,
+        );
         final nextButton = find.descendant(
           of: find.byType(Form),
           matching: find.byType(ElevatedButton),
@@ -119,9 +123,9 @@ void main() {
         final searchField = find.byWidgetPredicate(
           (widget) =>
               widget is TextField &&
-              (widget.decoration?.hintText
-                      ?.toLowerCase()
-                      .contains('currency') ??
+              (widget.decoration?.hintText?.toLowerCase().contains(
+                        'currency',
+                      ) ??
                   false),
         );
         await _waitFor(tester, searchField, seconds: 30);
@@ -164,8 +168,11 @@ void main() {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -177,8 +184,11 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 }
 
 /// Waits up to [seconds] for [finder] to stop matching any widget.
-Future<void> _waitForDisappearance(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitForDisappearance(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isEmpty) {
@@ -190,8 +200,12 @@ Future<void> _waitForDisappearance(WidgetTester tester, Finder finder,
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  String url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final currentPath = Uri.tryParse(view.currentUrl ?? '')?.path ?? '';
@@ -231,7 +245,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

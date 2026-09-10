@@ -167,39 +167,66 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                       opacity: compactOpacity,
                       child: Container(
                         height: 48,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainer,
-                          borderRadius: BorderRadius.circular(16),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: 0.96),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
                           children: [
                             Expanded(
-                              child: Text(
-                                compactTitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
+                              flex: 3,
+                              child: SizedBox(
+                                height: 38,
+                                child: TextField(
+                                  controller: _searchController,
+                                  onChanged: _sendSearch,
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    hintText: searchLabel,
+                                    prefixIcon: const Icon(
+                                      Icons.search_rounded,
+                                      size: 18,
+                                    ),
+                                    prefixIconConstraints: const BoxConstraints(
+                                      minWidth: 38,
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(11),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    filled: true,
+                                    fillColor:
+                                        Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainer,
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            SizedBox(
-                              width: 172,
-                              height: 40,
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: _sendSearch,
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  hintText: searchLabel,
-                                  prefixIcon: const Icon(
-                                    Icons.search,
-                                    size: 18,
-                                  ),
-                                  border: InputBorder.none,
-                                  filled: true,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                compactTitle,
+                                maxLines: 2,
+                                textAlign: TextAlign.right,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 13,
+                                  height: 1.05,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.1,
                                 ),
                               ),
                             ),
@@ -462,20 +489,26 @@ class BalanceHistoryPainter extends CustomPainter {
       math.max(amount.width, date.width) + 16,
     );
     final height = date.text!.toPlainText().isEmpty ? 28.0 : 40.0;
-    final left = (point.dx - width / 2).clamp(4.0, size.width - width - 4);
-    final preferredTop = point.dy - height - 12;
-    final top =
-        preferredTop >= 4
-            ? preferredTop
-            : (point.dy + 12).clamp(4.0, size.height - height - 4);
-    final rect = Rect.fromLTWH(left, top, width, height);
+    final rect = positionBalanceTooltip(
+      size: size,
+      point: point,
+      width: width,
+      height: height,
+      topInset: topInset,
+    );
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(10)),
-      Paint()..color = tooltipColor.withValues(alpha: 0.94),
+      Paint()..color = tooltipColor.withValues(alpha: 0.96),
     );
-    amount.paint(canvas, Offset(left + (width - amount.width) / 2, top + 5));
+    amount.paint(
+      canvas,
+      Offset(rect.left + (width - amount.width) / 2, rect.top + 5),
+    );
     if (date.text!.toPlainText().isNotEmpty) {
-      date.paint(canvas, Offset(left + (width - date.width) / 2, top + 22));
+      date.paint(
+        canvas,
+        Offset(rect.left + (width - date.width) / 2, rect.top + 22),
+      );
     }
   }
 
@@ -494,4 +527,29 @@ class BalanceHistoryPainter extends CustomPainter {
       oldDelegate.tooltipColor != tooltipColor ||
       oldDelegate.tooltipTextColor != tooltipTextColor ||
       oldDelegate.topInset != topInset;
+}
+
+@visibleForTesting
+Rect positionBalanceTooltip({
+  required Size size,
+  required Offset point,
+  required double width,
+  required double height,
+  required double topInset,
+}) {
+  const edgePadding = 4.0;
+  const pointGap = 12.0;
+  final left = (point.dx - width / 2).clamp(
+    edgePadding,
+    size.width - width - edgePadding,
+  );
+  final minimumTop = math.min(topInset + edgePadding, size.height - height);
+  final maximumTop = math.max(minimumTop, size.height - height - edgePadding);
+  final above = point.dy - height - pointGap;
+  final below = point.dy + pointGap;
+  final top =
+      above >= minimumTop
+          ? above
+          : below.clamp(minimumTop, maximumTop).toDouble();
+  return Rect.fromLTWH(left.toDouble(), top, width, height);
 }

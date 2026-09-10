@@ -53,11 +53,7 @@ void main() {
         await tester.tap(find.text('Automated').last);
         await tester.pumpAndSettle();
         await _waitForUrl(tester, view, '/pro', seconds: 30);
-        await _waitFor(
-          tester,
-          find.text('Activate Pro (test)'),
-          seconds: 30,
-        );
+        await _waitFor(tester, find.text('Activate Pro (test)'), seconds: 30);
 
         // Upgrade to Pro.
         final activateButton = find.widgetWithText(
@@ -76,17 +72,8 @@ void main() {
         // With Pro active, the automated account page shows the provider
         // connect button.
         await view.livePatch('/accounts/new/automated');
-        await _waitForUrl(
-          tester,
-          view,
-          '/accounts/new/automated',
-          seconds: 30,
-        );
-        await _waitFor(
-          tester,
-          find.text('Connect with Plaid'),
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/accounts/new/automated', seconds: 30);
+        await _waitFor(tester, find.text('Connect with Plaid'), seconds: 30);
         expect(
           find.widgetWithText(ElevatedButton, 'Connect with Plaid'),
           findsOneWidget,
@@ -167,8 +154,11 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -181,8 +171,12 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 
 /// Waits up to [seconds] for the live view to navigate to [url] (a plain
 /// string or a [RegExp] matched against the current url).
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, Pattern url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  Pattern url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final current = view.currentUrl;
@@ -223,7 +217,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

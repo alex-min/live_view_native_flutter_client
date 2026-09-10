@@ -48,8 +48,10 @@ void main() {
         await _waitForUrl(tester, view, '/pro', seconds: 30);
 
         const activateProText = 'Activate Pro (test)';
-        final activateButton =
-            find.widgetWithText(ElevatedButton, activateProText);
+        final activateButton = find.widgetWithText(
+          ElevatedButton,
+          activateProText,
+        );
         await _waitFor(tester, activateButton, seconds: 30);
         await tester.ensureVisible(activateButton);
         await tester.pumpAndSettle();
@@ -130,8 +132,11 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -143,8 +148,12 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  String url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final currentPath = Uri.tryParse(view.currentUrl ?? '')?.path ?? '';
@@ -184,7 +193,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

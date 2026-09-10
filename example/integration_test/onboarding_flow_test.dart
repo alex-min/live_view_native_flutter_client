@@ -108,8 +108,12 @@ void main() {
 
         // The next onboarding step asks for the default currency, with EUR
         // pre-selected.
-        await _waitForUrl(tester, view, '/users/onboarding/currency',
-            seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/onboarding/currency',
+          seconds: 30,
+        );
         await _waitFor(tester, find.textContaining('EUR (€)'), seconds: 30);
 
         // Keep EUR and move on with the onboarding.
@@ -127,9 +131,11 @@ void main() {
         // The email is inside a TextButton wrapped with AbsorbPointer, so the
         // text itself is not hit-testable. Tap the button that contains it.
         final settingsButton = find.widgetWithText(LiveTextButton, email).last;
-        expect(settingsButton, findsOneWidget,
-            reason:
-                'The app bar should contain a settings button for the user');
+        expect(
+          settingsButton,
+          findsOneWidget,
+          reason: 'The app bar should contain a settings button for the user',
+        );
         await tester.tap(settingsButton);
         await tester.pump();
 
@@ -154,8 +160,11 @@ void main() {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -167,8 +176,12 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  String url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (view.currentUrl == url && view.isCurrentRouteReady) {
@@ -207,7 +220,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

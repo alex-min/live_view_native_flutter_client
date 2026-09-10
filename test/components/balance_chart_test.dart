@@ -7,6 +7,20 @@ import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart
 import '../test_helpers.dart';
 
 void main() {
+  test('keeps the collapsed chart tooltip below controls and inside edges', () {
+    final rect = positionBalanceTooltip(
+      size: const Size(400, 120),
+      point: const Offset(390, 66),
+      width: 96,
+      height: 40,
+      topInset: 64,
+    );
+
+    expect(rect.top, greaterThanOrEqualTo(68));
+    expect(rect.bottom, lessThanOrEqualTo(116));
+    expect(rect.right, lessThanOrEqualTo(396));
+  });
+
   test('interpolates chart values and scale when an outlier leaves view', () {
     final tween = BalanceChartFrameTween(
       begin: BalanceChartFrame(

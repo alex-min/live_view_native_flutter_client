@@ -123,10 +123,12 @@ void main() {
         await tester.enterText(transactionFields.at(2), 'Courses');
         await tester.pump();
 
-        await tester.tap(find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        ));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(Form),
+            matching: find.byType(ElevatedButton),
+          ),
+        );
 
         // Creating redirects to the accounts page; reopen the list.
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
@@ -180,7 +182,9 @@ void main() {
         expect(invisibleBar.color, Colors.transparent);
         expect(invisibleBar.elevation, 0);
         expect(
-            tester.widget<Scaffold>(find.byType(Scaffold)).extendBody, isTrue);
+          tester.widget<Scaffold>(find.byType(Scaffold)).extendBody,
+          isTrue,
+        );
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
         await tester.tap(closeButton);
@@ -253,10 +257,12 @@ void main() {
         await Future.delayed(const Duration(seconds: 1));
         await tester.pump();
 
-        await tester.tap(find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        ));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(Form),
+            matching: find.byType(ElevatedButton),
+          ),
+        );
 
         // Back on the transaction list with the updated row.
         await _waitForUrl(
@@ -387,10 +393,12 @@ Future<void> _createAccount(
   await tester.enterText(fields.at(1), name);
   await tester.pump();
 
-  await tester.tap(find.descendant(
-    of: find.byType(Form),
-    matching: find.byType(ElevatedButton),
-  ));
+  await tester.tap(
+    find.descendant(
+      of: find.byType(Form),
+      matching: find.byType(ElevatedButton),
+    ),
+  );
   await _waitForUrl(tester, view, '/accounts', seconds: 30);
   await _waitFor(tester, find.text(name), seconds: 30);
 }
@@ -465,8 +473,11 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -479,8 +490,12 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 
 /// Waits up to [seconds] for the live view to navigate to [url] (a plain
 /// string or a [RegExp] matched against the current url).
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, Pattern url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  Pattern url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final current = view.currentUrl;
@@ -521,7 +536,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

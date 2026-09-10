@@ -38,9 +38,7 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
         await _signUpAndOnboard(tester, view);
 
-        await view.connect(
-          'http://$_serverHost:$_serverPort/users/settings',
-        );
+        await view.connect('http://$_serverHost:$_serverPort/users/settings');
         await _waitForUrl(tester, view, '/users/settings');
         await tester.pumpAndSettle();
         await Future.delayed(const Duration(seconds: 1));
@@ -65,10 +63,7 @@ void main() {
         await _waitForUrl(tester, view, '/accounts');
         await _waitFor(tester, find.text('Cash'));
 
-        final quitDemoMode = find.widgetWithText(
-          TextButton,
-          'Quit demo mode',
-        );
+        final quitDemoMode = find.widgetWithText(TextButton, 'Quit demo mode');
         await _waitFor(tester, quitDemoMode);
         await tester.ensureVisible(quitDemoMode.last);
         await tester.tap(quitDemoMode.last);
@@ -139,8 +134,11 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -151,8 +149,11 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
   throw Exception('Timed out waiting for $finder');
 }
 
-Future<void> _waitForAbsent(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitForAbsent(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isEmpty) {
@@ -163,8 +164,12 @@ Future<void> _waitForAbsent(WidgetTester tester, Finder finder,
   throw Exception('Timed out waiting for $finder to disappear');
 }
 
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  String url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (view.currentUrl == url && view.isCurrentRouteReady) {
