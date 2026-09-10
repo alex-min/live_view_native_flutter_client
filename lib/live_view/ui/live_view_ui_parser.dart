@@ -29,6 +29,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_filled_button.dart
 import 'package:liveview_flutter/live_view/ui/components/live_flex.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_google_sign_in_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hidden_input.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_hint_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_html_view.dart';
@@ -286,6 +287,9 @@ class LiveViewUiParser {
         'InfiniteList',
       ], (state) => [LiveInfiniteList(state: state, key: Key(uuid.v4()))])
       ..add(['Form'], (state) => [LiveForm(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'GoogleSignInButton',
+      ], (state) => [LiveGoogleSignInButton(state: state, key: Key(uuid.v4()))])
       ..add([
         'TextField',
       ], (state) => [LiveTextField(state: state, key: Key(uuid.v4()))])

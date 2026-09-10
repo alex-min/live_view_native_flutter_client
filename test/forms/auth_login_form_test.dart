@@ -5,6 +5,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_bottom_app_bar.dar
 import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_checkbox.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_google_sign_in_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text_field.dart';
 
@@ -75,6 +76,7 @@ void main() async {
                                 </Expanded>
                               </Row>
                             </Form>
+                            <GoogleSignInButton action="/users/auth/google/native" label="Continue with Google" />
                           </Column>
                         </Container>
                         <SizedBox height="16.0" />
@@ -110,6 +112,7 @@ void main() async {
     expect(find.byType(LiveTextField), findsNWidgets(2));
     expect(find.byType(LiveCheckbox), findsOneWidget);
     expect(find.byType(LiveElevatedButton), findsOneWidget);
+    expect(find.byType(LiveGoogleSignInButton), findsOneWidget);
     expect(find.byType(LiveTextButton), findsNWidgets(2));
     expect(find.byType(LiveBottomAppBar), findsOneWidget);
     expect(find.byType(LiveCosmicBackground), findsOneWidget);
