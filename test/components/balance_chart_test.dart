@@ -40,7 +40,7 @@ void main() {
         's': [
           '<BalanceChart points="80,120,105" '
               'directions="expense,income,current" height="142" '
-              'labels="|€120\nJan 1, 2026|€105\nJan 2, 2026" '
+              'pointLabels="|€120\nJan 1, 2026|€105\nJan 2, 2026" '
               'lineColor="#8D63FF" />',
         ],
       },

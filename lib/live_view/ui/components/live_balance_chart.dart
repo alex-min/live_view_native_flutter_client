@@ -18,7 +18,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
   final attributes = [
     'points',
     'directions',
-    'labels',
+    'pointLabels',
     'pointOffset',
     'windowSize',
     'edgeMargin',
@@ -41,7 +41,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
             .whereType<double>()
             .toList();
     final directions = (getAttribute('directions') ?? '').split(',');
-    final labels = (getAttribute('labels') ?? '').split('|');
+    final labels = (getAttribute('pointLabels') ?? '').split('|');
     final lineColor =
         getColor(context, getAttribute('lineColor')) ?? const Color(0xFF8D63FF);
     final scope = InfiniteListScrollScope.maybeOf(context);
