@@ -112,10 +112,23 @@ class LiveView {
   PhoenixChannel? _channel;
   StreamSubscription<Message>? _channelMessageSubscription;
   String? _channelUrl;
+  String? _renderedUrl;
   Push? _pendingLeavePush;
   bool _isJoiningChannel = false;
 
   List<Widget>? lastRender;
+
+  /// Whether the current URL's channel has joined and its full render has
+  /// replaced the loading/previous route.
+  ///
+  /// A URL changes before asynchronous LiveView navigation finishes. Tests
+  /// and clients that need to sequence navigation must wait for this signal,
+  /// rather than treating [currentUrl] alone as proof that the route is ready.
+  bool get isCurrentRouteReady =>
+      _channel?.state == PhoenixChannelState.joined &&
+      _channelUrl == currentUrl &&
+      _renderedUrl == currentUrl &&
+      redirectToUrl == null;
 
   // dynamic global state
   late StateNotifier changeNotifier;
@@ -587,6 +600,7 @@ class LiveView {
           viewType: viewType,
         ).parse();
     lastRender = render.$1;
+    _renderedUrl = currentUrl;
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
     router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);

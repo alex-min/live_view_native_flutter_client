@@ -220,7 +220,7 @@ Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final currentPath = Uri.tryParse(view.currentUrl ?? '')?.path ?? '';
-    if (currentPath == url) {
+    if (currentPath == url && view.isCurrentRouteReady) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));

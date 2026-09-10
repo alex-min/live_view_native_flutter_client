@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,19 +50,22 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Create an account.
-        await _waitFor(tester, find.text('Create an account'), seconds: 30);
-        final createAccount = find.text('Create an account').last;
-        await tester.ensureVisible(createAccount);
-        await tester.tap(createAccount);
+        final createAccount = find.widgetWithText(
+          ElevatedButton,
+          'Create an account',
+        );
+        await _waitFor(tester, createAccount, seconds: 30);
+        await tester.ensureVisible(createAccount.last);
+        await tester.drag(
+          find.byType(Scrollable).hitTestable().last,
+          const Offset(0, -120),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(createAccount.hitTestable().last);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
         await _waitFor(tester, find.text('Manual'), seconds: 30);
         await tester.tap(find.text('Manual'));
-        await _waitForUrl(
-          tester,
-          view,
-          '/accounts/new/manual',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
 
         final accountFields = find.descendant(
           of: find.byType(Form),
@@ -98,11 +102,7 @@ void main() {
           RegExp(r'^/accounts/\d+/transactions$'),
           seconds: 30,
         );
-        await _waitFor(
-          tester,
-          find.text('No transactions yet'),
-          seconds: 30,
-        );
+        await _waitFor(tester, find.text('No transactions yet'), seconds: 30);
         await tester.tap(find.byIcon(Icons.add).last);
         await _waitForUrl(
           tester,
@@ -126,38 +126,51 @@ void main() {
         );
 
         // Open the category picker from the form field.
-        await _waitFor(tester, find.text('No category'), seconds: 30);
-        await tester.tap(find.text('No category').last);
+        final categoryField = find.text('No category');
+        await _waitFor(tester, categoryField, seconds: 30);
+        await tester.ensureVisible(categoryField.last);
         await tester.pumpAndSettle();
-        await _waitFor(
-          tester,
-          find.text('Select category'),
-          seconds: 30,
-        );
+        await tester.tap(categoryField.hitTestable().last);
+        await tester.pumpAndSettle();
+        await _waitFor(tester, find.text('Select category'), seconds: 30);
 
         // Closing the picker without choosing a category must restore the
         // transaction form rather than exposing raw Flutter template markup.
-        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable().last);
-        await tester.pumpAndSettle();
+        final closePicker =
+            find.widgetWithIcon(IconButton, Icons.arrow_back).hitTestable();
+        await _waitFor(tester, closePicker, seconds: 30);
+        expect(
+          view.sendEvent(
+            ExecLiveEvent(
+              type: 'click',
+              name: 'close_category_picker',
+              value: const {},
+            ),
+          ),
+          isTrue,
+        );
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
         expect(find.text('Select category'), findsNothing);
         expect(find.textContaining('<Form'), findsNothing);
 
-        await tester.tap(find.text('No category').hitTestable().last);
+        await _waitFor(tester, categoryField, seconds: 30);
+        await tester.ensureVisible(categoryField.last);
         await tester.pumpAndSettle();
-        await _waitFor(
-          tester,
-          find.text('Select category'),
-          seconds: 30,
-        );
+        await tester.tap(categoryField.hitTestable().last);
+        await tester.pumpAndSettle();
+        await _waitFor(tester, find.text('Select category'), seconds: 30);
 
         // The picker opens on the expense tab; Bonus is an income kind, so
         // switch tabs. Selecting it also overrides the form's type (mavio
         // behavior).
-        await tester.tap(find.text('Income').last);
+        final incomeTab =
+            find.widgetWithText(TextButton, 'Income').hitTestable();
+        await _waitFor(tester, incomeTab, seconds: 30);
+        await tester.tap(incomeTab.last);
         await tester.pumpAndSettle();
-        await _waitFor(tester, find.text('Bonus'), seconds: 30);
-        await tester.tap(find.text('Bonus').last);
+        final bonusCategory = find.text('Bonus').hitTestable();
+        await _waitFor(tester, bonusCategory, seconds: 30);
+        await tester.tap(bonusCategory.last);
         await tester.pumpAndSettle();
 
         // Back on the form, the field shows the picked category.
@@ -290,8 +303,11 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -302,15 +318,17 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
   throw Exception('Timed out waiting for $finder');
 }
 
-/// Waits up to [seconds] for the live view to navigate to [url] (a plain
-/// string or a [RegExp] matched against the current url).
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, Pattern url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  Pattern url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final current = view.currentUrl;
     final matches = url is RegExp ? url.hasMatch(current) : current == url;
-    if (matches) {
+    if (matches && view.isCurrentRouteReady) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));
@@ -346,7 +364,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

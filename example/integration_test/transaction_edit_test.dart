@@ -485,7 +485,7 @@ Future<void> _waitForUrl(WidgetTester tester, LiveView view, Pattern url,
     await tester.pump();
     final current = view.currentUrl;
     final matches = url is RegExp ? url.hasMatch(current) : current == url;
-    if (matches) {
+    if (matches && view.isCurrentRouteReady) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));

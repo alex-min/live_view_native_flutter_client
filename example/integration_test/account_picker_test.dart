@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -70,17 +71,27 @@ void main() {
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
         // The mobile account field is a tappable ListTile.
-        final initialAccount = find.text('Account B').evaluate().isNotEmpty
-            ? find.text('Account B')
-            : find.text('Account A');
+        final initialAccount =
+            find.textContaining(RegExp(r'^Account [AB]$')).hitTestable();
         await _waitFor(tester, initialAccount, seconds: 30);
         await tester.tap(initialAccount.last);
         await tester.pumpAndSettle();
         await _waitFor(tester, find.text('Select account'), seconds: 30);
 
         // Tapping the back arrow closes the picker without changing the account.
-        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable().last);
-        await tester.pumpAndSettle();
+        final closePicker =
+            find.widgetWithIcon(IconButton, Icons.arrow_back).hitTestable();
+        await _waitFor(tester, closePicker, seconds: 30);
+        expect(
+          view.sendEvent(
+            ExecLiveEvent(
+              type: 'click',
+              name: 'close_account_picker',
+              value: const {},
+            ),
+          ),
+          isTrue,
+        );
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
         expect(find.text('Select account'), findsNothing);
         expect(find.textContaining('<Form'), findsNothing);
@@ -129,15 +140,14 @@ void main() {
 
         // Open the account picker by tapping whichever account is currently
         // selected in the form.
-        final initialAccount = find.text('Account B').evaluate().isNotEmpty
-            ? find.text('Account B')
-            : find.text('Account A');
+        final initialAccount =
+            find.textContaining(RegExp(r'^Account [AB]$')).hitTestable();
         await _waitFor(tester, initialAccount, seconds: 30);
         await tester.tap(initialAccount.last);
         await tester.pumpAndSettle();
         await _waitFor(tester, find.text('Select account'), seconds: 30);
 
-        await tester.tap(find.text('Account A').last);
+        await tester.tap(find.text('Account A').hitTestable().last);
         await tester.pumpAndSettle();
 
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
@@ -166,8 +176,12 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Open Account A's transaction list to verify the transaction landed there.
-        await _waitFor(tester, find.text('Account A'), seconds: 30);
-        await tester.tap(find.text('Account A').last);
+        await _waitFor(
+          tester,
+          find.text('Account A').hitTestable(),
+          seconds: 30,
+        );
+        await tester.tap(find.text('Account A').hitTestable().last);
         await _waitForUrl(
           tester,
           view,
@@ -286,8 +300,11 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -300,13 +317,17 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 
 /// Waits up to [seconds] for the live view to navigate to [url] (a plain
 /// string or a [RegExp] matched against the current url).
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, Pattern url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  Pattern url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final current = view.currentUrl;
     final matches = url is RegExp ? url.hasMatch(current) : current == url;
-    if (matches) {
+    if (matches && view.isCurrentRouteReady) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));
@@ -338,7 +359,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

@@ -832,12 +832,29 @@ Future<void> _waitFor(
 }) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
+    if (find
+        .text('Unable to parse the Flutter live view data')
+        .evaluate()
+        .isNotEmpty) {
+      throw Exception('LiveView XML failed to parse. ${_visibleText()}');
+    }
     if (finder.evaluate().isNotEmpty) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));
   }
-  throw Exception('Timed out waiting for $finder');
+  throw Exception('Timed out waiting for $finder. ${_visibleText()}');
+}
+
+String _visibleText() {
+  final visibleText = find
+      .byType(Text)
+      .evaluate()
+      .map((element) => (element.widget as Text).data)
+      .whereType<String>()
+      .take(20)
+      .join(' | ');
+  return 'Visible text: $visibleText';
 }
 
 Future<void> _waitForAbsent(
@@ -864,8 +881,9 @@ Future<void> _waitForUrl(
 }) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
-    if ((url is String && view.currentUrl == url) ||
-        (url is RegExp && url.hasMatch(view.currentUrl))) {
+    if (view.isCurrentRouteReady &&
+        ((url is String && view.currentUrl == url) ||
+            (url is RegExp && url.hasMatch(view.currentUrl)))) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));

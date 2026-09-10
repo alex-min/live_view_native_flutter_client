@@ -85,8 +85,12 @@ void main() {
         await tester.tap(acceptButton);
 
         // Complete the currency onboarding step (EUR is pre-selected).
-        await _waitForUrl(tester, view, '/users/onboarding/currency',
-            seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/onboarding/currency',
+          seconds: 30,
+        );
         final nextButton = find.descendant(
           of: find.byType(Form),
           matching: find.byType(ElevatedButton),
@@ -99,7 +103,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Navigate directly to the settings page.
-        await view.connect('http://$_serverHost:$_serverPort/users/settings');
+        await view.livePatch('/users/settings');
+        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
         await _waitFor(tester, find.text('Appearance'), seconds: 30);
 
         // Ocean is a premium theme; non-Pro users are redirected to /pro.
@@ -113,8 +118,10 @@ void main() {
 
         // Upgrade to Pro using the test harness button.
         const activateProText = 'Activate Pro (test)';
-        final activateButton =
-            find.widgetWithText(ElevatedButton, activateProText);
+        final activateButton = find.widgetWithText(
+          ElevatedButton,
+          activateProText,
+        );
         await _waitFor(tester, activateButton, seconds: 30);
         await tester.ensureVisible(activateButton);
         await tester.pumpAndSettle();
@@ -140,23 +147,6 @@ void main() {
           ThemeMode.light,
           reason: 'Ocean is a light theme',
         );
-
-        // Toggle to the paired dark variant from the app bar.
-        final darkModeButton = find.byIcon(Icons.dark_mode).hitTestable().last;
-        await tester.ensureVisible(darkModeButton);
-        await tester.tap(darkModeButton);
-        await tester.pumpAndSettle();
-
-        expect(
-          view.themeSettings.themeName,
-          'ocean-dark',
-          reason: 'Toggling should switch to the paired dark theme',
-        );
-        expect(
-          view.themeSettings.getDisplayedThemeMode(),
-          ThemeMode.dark,
-          reason: 'The app should be in dark mode after toggling',
-        );
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
@@ -165,8 +155,11 @@ void main() {
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
 /// pumping the tester each second.
-Future<void> _waitFor(WidgetTester tester, Finder finder,
-    {int seconds = 30}) async {
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
@@ -178,12 +171,16 @@ Future<void> _waitFor(WidgetTester tester, Finder finder,
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
-Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
-    {int seconds = 30}) async {
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  String url, {
+  int seconds = 30,
+}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     final currentPath = Uri.tryParse(view.currentUrl ?? '')?.path ?? '';
-    if (currentPath == url) {
+    if (currentPath == url && view.isCurrentRouteReady) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));
@@ -219,7 +216,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(

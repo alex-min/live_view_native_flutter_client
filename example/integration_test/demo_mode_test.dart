@@ -167,7 +167,7 @@ Future<void> _waitForUrl(WidgetTester tester, LiveView view, String url,
     {int seconds = 30}) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
-    if (view.currentUrl == url) {
+    if (view.currentUrl == url && view.isCurrentRouteReady) {
       return;
     }
     await Future.delayed(const Duration(seconds: 1));

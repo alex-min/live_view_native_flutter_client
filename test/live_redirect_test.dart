@@ -36,6 +36,7 @@ void main() {
     var (view, socket) = await connectOnAccountsForm(tester);
 
     expect(view.currentUrl, '/accounts/new');
+    expect(view.isCurrentRouteReady, isTrue);
 
     view.handleMessage(
       Message(
@@ -45,6 +46,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
+    expect(view.isCurrentRouteReady, isFalse);
 
     // No dead-view reload: the client shows a loading page and waits to
     // rejoin the channel, like a live-patch link.
@@ -54,9 +56,14 @@ void main() {
     );
 
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(view.currentUrl, '/accounts');
+    view.handleRenderedMessage({
+      's': ['<viewBody><Text>Accounts</Text></viewBody>'],
+    });
+    await tester.pumpAndSettle();
+    expect(view.isCurrentRouteReady, isTrue);
     // The channel is rejoined with a redirect param, not a fresh dead-view GET.
     expect(socket.liveSocket?.navigationLogs.last, {
       'url': null,

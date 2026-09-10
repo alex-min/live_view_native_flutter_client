@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -18,7 +19,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
   final attributes = [
     'points',
     'directions',
-    'pointLabels',
+    'pointlabels',
     'pointOffset',
     'windowSize',
     'edgeMargin',
@@ -41,7 +42,13 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
             .whereType<double>()
             .toList();
     final directions = (getAttribute('directions') ?? '').split(',');
-    final labels = (getAttribute('pointLabels') ?? '').split('|');
+    final encodedLabels = getAttribute('pointlabels') ?? '';
+    final labels =
+        encodedLabels.isEmpty
+            ? <String>[]
+            : utf8
+                .decode(base64Url.decode(base64Url.normalize(encodedLabels)))
+                .split('|');
     final lineColor =
         getColor(context, getAttribute('lineColor')) ?? const Color(0xFF8D63FF);
     final scope = InfiniteListScrollScope.maybeOf(context);
