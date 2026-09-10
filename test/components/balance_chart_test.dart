@@ -95,7 +95,9 @@ void main() {
               'collapsibleHeaderHeight="200" collapsedHeaderHeight="120">'
               '<BalanceChart points="80,90,100" '
               'directions="expense,income,current" height="160" '
-              'collapsedHeight="120" />'
+              'collapsedHeight="120" '
+              'compacttitle="Q29tcGFjdCBhY2NvdW50" '
+              'searchlabel="U2VhcmNoIHRyYW5zYWN0aW9ucw" />'
               '$rows</InfiniteList>',
         ],
       },
@@ -117,12 +119,21 @@ void main() {
             as BalanceHistoryPainter;
 
     final scrollable = tester.state<ScrollableState>(
-      find.descendant(
-        of: find.byType(LiveInfiniteList),
-        matching: find.byType(Scrollable),
-      ),
+      find
+          .descendant(
+            of: find.byType(LiveInfiniteList),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
     expect(painter().selectedIndex, 2);
+    Opacity compactOpacity() => tester.widget<Opacity>(
+      find.ancestor(
+        of: find.text('Compact account'),
+        matching: find.byType(Opacity),
+      ),
+    );
+    expect(compactOpacity().opacity, 0);
 
     scrollable.position.jumpTo(80);
     await tester.pump();
@@ -140,6 +151,8 @@ void main() {
           .height,
       120,
     );
+    expect(compactOpacity().opacity, closeTo(1, 0.0001));
+    expect(painter().topInset, closeTo(64, 0.0001));
 
     scrollable.position.jumpTo(130);
     await tester.pump();

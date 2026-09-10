@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/number.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
@@ -16,6 +18,9 @@ class LiveBalanceChart extends LiveStateWidget<LiveBalanceChart> {
 }
 
 class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
+  final _searchController = TextEditingController();
+  Timer? _searchDebounce;
+
   final attributes = [
     'points',
     'directions',
@@ -26,7 +31,18 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
     'height',
     'collapsedHeight',
     'lineColor',
+    'compacttitle',
+    'searchlabel',
+    'searchvalue',
+    'searchevent',
   ];
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
@@ -102,6 +118,14 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
       selectedIndex: selectedIndex,
       windowStart: windowStart,
     );
+    final compactOpacity = ((collapseProgress - 0.55) / 0.45).clamp(0.0, 1.0);
+    final compactTitle = _decodeAttribute('compacttitle');
+    final searchLabel = _decodeAttribute('searchlabel');
+    final searchValue = _decodeAttribute('searchvalue');
+    if (!_searchController.selection.isValid &&
+        _searchController.text != searchValue) {
+      _searchController.text = searchValue;
+    }
 
     return SizedBox(
       height: height,
@@ -110,26 +134,107 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
         tween: BalanceChartFrameTween(end: frame),
         duration: const Duration(milliseconds: 550),
         curve: Curves.easeOutCubic,
-        builder:
-            (context, animatedFrame, _) => CustomPaint(
-              painter: BalanceHistoryPainter(
-                points: animatedFrame.points,
-                directions: animatedFrame.directions,
-                labels: animatedFrame.labels,
-                selectedIndex: animatedFrame.selectedIndex,
-                windowStart: animatedFrame.windowStart,
-                scaleMinimum: animatedFrame.minimum,
-                scaleMaximum: animatedFrame.maximum,
-                lineColor: lineColor,
-                gridColor: Theme.of(context).colorScheme.outlineVariant,
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                tooltipColor: Theme.of(context).colorScheme.inverseSurface,
-                tooltipTextColor:
-                    Theme.of(context).colorScheme.onInverseSurface,
+        builder: (context, animatedFrame, _) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              CustomPaint(
+                painter: BalanceHistoryPainter(
+                  points: animatedFrame.points,
+                  directions: animatedFrame.directions,
+                  labels: animatedFrame.labels,
+                  selectedIndex: animatedFrame.selectedIndex,
+                  windowStart: animatedFrame.windowStart,
+                  scaleMinimum: animatedFrame.minimum,
+                  scaleMaximum: animatedFrame.maximum,
+                  lineColor: lineColor,
+                  gridColor: Theme.of(context).colorScheme.outlineVariant,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  tooltipColor: Theme.of(context).colorScheme.inverseSurface,
+                  tooltipTextColor:
+                      Theme.of(context).colorScheme.onInverseSurface,
+                  topInset: 12 + 52 * compactOpacity,
+                ),
               ),
-            ),
+              if (compactTitle.isNotEmpty || searchLabel.isNotEmpty)
+                Positioned(
+                  top: 6,
+                  left: 12,
+                  right: 12,
+                  child: IgnorePointer(
+                    ignoring: compactOpacity < 0.95,
+                    child: Opacity(
+                      opacity: compactOpacity,
+                      child: Container(
+                        height: 48,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                compactTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 172,
+                              height: 40,
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: _sendSearch,
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: searchLabel,
+                                  prefixIcon: const Icon(
+                                    Icons.search,
+                                    size: 18,
+                                  ),
+                                  border: InputBorder.none,
+                                  filled: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  String _decodeAttribute(String name) {
+    final value = getAttribute(name) ?? '';
+    if (value.isEmpty) return '';
+    return utf8.decode(base64Url.decode(base64Url.normalize(value)));
+  }
+
+  void _sendSearch(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      final event = getAttribute('searchevent');
+      if (event == null || event.isEmpty) return;
+      liveView.sendEvent(
+        ExecLiveEvent(
+          type: 'form',
+          name: event,
+          value: Uri(queryParameters: {'search': value}).query,
+        ),
+      );
+    });
   }
 }
 
@@ -208,6 +313,7 @@ class BalanceHistoryPainter extends CustomPainter {
   final Color backgroundColor;
   final Color tooltipColor;
   final Color tooltipTextColor;
+  final double topInset;
 
   const BalanceHistoryPainter({
     required this.points,
@@ -222,6 +328,7 @@ class BalanceHistoryPainter extends CustomPainter {
     this.backgroundColor = Colors.transparent,
     this.tooltipColor = const Color(0xFF24212F),
     this.tooltipTextColor = Colors.white,
+    this.topInset = 12,
   });
 
   @override
@@ -231,9 +338,10 @@ class BalanceHistoryPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
     const horizontalPadding = 8.0;
-    const verticalPadding = 12.0;
+    final topPadding = math.min(topInset, size.height - 10);
+    const bottomPadding = 10.0;
     final width = math.max(0, size.width - horizontalPadding * 2);
-    final height = math.max(0, size.height - verticalPadding * 2);
+    final height = math.max(0, size.height - topPadding - bottomPadding);
     final minimum = scaleMinimum ?? points.reduce(math.min);
     final maximum = scaleMaximum ?? points.reduce(math.max);
     final range = math.max(maximum - minimum, 1.0);
@@ -243,7 +351,7 @@ class BalanceHistoryPainter extends CustomPainter {
           ..color = gridColor.withValues(alpha: 0.55)
           ..strokeWidth = 1;
     for (var row = 0; row < 3; row++) {
-      final y = verticalPadding + height * row / 2;
+      final y = topPadding + height * row / 2;
       canvas.drawLine(
         Offset(horizontalPadding, y),
         Offset(size.width - horizontalPadding, y),
@@ -257,7 +365,7 @@ class BalanceHistoryPainter extends CustomPainter {
               ? size.width / 2
               : horizontalPadding + width * index / (points.length - 1);
       final normalized = (points[index] - minimum) / range;
-      return Offset(x, verticalPadding + height * (1 - normalized));
+      return Offset(x, topPadding + height * (1 - normalized));
     }
 
     final line = Path()..moveTo(offsetFor(0).dx, offsetFor(0).dy);
@@ -277,11 +385,8 @@ class BalanceHistoryPainter extends CustomPainter {
 
     final fill =
         Path.from(line)
-          ..lineTo(
-            offsetFor(points.length - 1).dx,
-            size.height - verticalPadding,
-          )
-          ..lineTo(offsetFor(0).dx, size.height - verticalPadding)
+          ..lineTo(offsetFor(points.length - 1).dx, size.height - bottomPadding)
+          ..lineTo(offsetFor(0).dx, size.height - bottomPadding)
           ..close();
     canvas.drawPath(
       fill,
@@ -290,9 +395,11 @@ class BalanceHistoryPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            lineColor.withValues(alpha: 0.28),
+            lineColor.withValues(alpha: 0.52),
+            lineColor.withValues(alpha: 0.18),
             lineColor.withValues(alpha: 0.02),
           ],
+          stops: const [0, 0.48, 1],
         ).createShader(Offset.zero & size),
     );
     canvas.drawPath(
@@ -385,5 +492,6 @@ class BalanceHistoryPainter extends CustomPainter {
       oldDelegate.gridColor != gridColor ||
       oldDelegate.backgroundColor != backgroundColor ||
       oldDelegate.tooltipColor != tooltipColor ||
-      oldDelegate.tooltipTextColor != tooltipTextColor;
+      oldDelegate.tooltipTextColor != tooltipTextColor ||
+      oldDelegate.topInset != topInset;
 }

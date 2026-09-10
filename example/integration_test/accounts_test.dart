@@ -283,7 +283,7 @@ void main() {
         await _waitFor(tester, find.text('Money activity'), seconds: 30);
         expect(find.text('Net activity this month'), findsOneWidget);
         expect(find.text('Income minus expenses'), findsOneWidget);
-        expect(find.text('Search transactions'), findsOneWidget);
+        expect(find.text('Search transactions'), findsNWidgets(2));
         expect(find.byType(LiveBalanceChart), findsOneWidget);
         final activityScroll = tester.state<ScrollableState>(
           find
@@ -295,11 +295,16 @@ void main() {
         );
         activityScroll.position.jumpTo(600);
         await tester.pump();
+        expect(find.text('Money activity').hitTestable(), findsOneWidget);
+        final transactionSearch = find.descendant(
+          of: find.byType(LiveBalanceChart),
+          matching: find.byType(TextField),
+        );
+        expect(transactionSearch, findsOneWidget);
         await _waitFor(tester, find.text('Lent to Alex Martin'), seconds: 30);
         expect(find.text('Lent to Alex Martin'), findsOneWidget);
         expect(find.textContaining('Integration account'), findsWidgets);
 
-        final transactionSearch = find.byType(TextField);
         expect(transactionSearch, findsOneWidget);
         await tester.enterText(transactionSearch, 'no matching transaction');
         await _waitForAbsent(tester, find.text('Lent to Alex Martin'));
@@ -491,6 +496,20 @@ void main() {
         collapsibleScroll.position.jumpTo(334);
         await tester.pumpAndSettle();
         expect(collapsibleScroll.position.pixels, 334);
+        expect(
+          find.descendant(
+            of: find.byType(LiveBalanceChart),
+            matching: find.text('Cash').hitTestable(),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(LiveBalanceChart),
+            matching: find.byType(EditableText).hitTestable(),
+          ),
+          findsOneWidget,
+        );
         final scrolledBalancePainter = tester
             .widget<CustomPaint>(
               find.byWidgetPredicate(
@@ -573,8 +592,12 @@ void main() {
 
         final listAfterClose = find
             .descendant(
-              of: find.byType(LiveInfiniteList),
-              matching: find.byType(Scrollable),
+              of: find.byType(CustomScrollView),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Scrollable &&
+                    widget.axisDirection == AxisDirection.down,
+              ),
             )
             .hitTestable();
         expect(listAfterClose, findsOneWidget);
