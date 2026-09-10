@@ -19,7 +19,15 @@ class LiveBalanceChart extends LiveStateWidget<LiveBalanceChart> {
 
 class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
   Timer? _searchDebounce;
+  bool _searchExpanded = false;
+
+  @override
+  void initState() {
+    _searchFocusNode.addListener(_handleSearchFocus);
+    super.initState();
+  }
 
   final attributes = [
     'points',
@@ -41,6 +49,9 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _searchFocusNode
+      ..removeListener(_handleSearchFocus)
+      ..dispose();
     super.dispose();
   }
 
@@ -122,6 +133,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
     final compactTitle = _decodeAttribute('compacttitle');
     final searchLabel = _decodeAttribute('searchlabel');
     final searchValue = _decodeAttribute('searchvalue');
+    final showSearch = _searchExpanded || searchValue.isNotEmpty;
     if (!_searchController.selection.isValid &&
         _searchController.text != searchValue) {
       _searchController.text = searchValue;
@@ -177,60 +189,115 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                           ),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: SizedBox(
-                                height: 38,
-                                child: TextField(
-                                  controller: _searchController,
-                                  onChanged: _sendSearch,
-                                  decoration: InputDecoration(
-                                    isDense: true,
-                                    hintText: searchLabel,
-                                    prefixIcon: const Icon(
-                                      Icons.search_rounded,
-                                      size: 18,
-                                    ),
-                                    prefixIconConstraints: const BoxConstraints(
-                                      minWidth: 38,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 10,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(11),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    filled: true,
-                                    fillColor:
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final expandedSearchWidth = math.min(
+                              220.0,
+                              math.max(150.0, constraints.maxWidth * 0.62),
+                            );
+                            return Row(
+                              children: [
+                                AnimatedContainer(
+                                  key: const ValueKey(
+                                    'balance_chart_search_control',
+                                  ),
+                                  width: showSearch ? expandedSearchWidth : 38,
+                                  height: 38,
+                                  duration: const Duration(milliseconds: 280),
+                                  curve: Curves.easeOutCubic,
+                                  decoration: BoxDecoration(
+                                    color:
                                         Theme.of(
                                           context,
                                         ).colorScheme.surfaceContainer,
+                                    borderRadius: BorderRadius.circular(11),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 180),
+                                    child:
+                                        showSearch
+                                            ? TextField(
+                                              key: const ValueKey(
+                                                'balance_chart_search_field',
+                                              ),
+                                              controller: _searchController,
+                                              focusNode: _searchFocusNode,
+                                              onChanged: _sendSearch,
+                                              decoration: InputDecoration(
+                                                isDense: true,
+                                                hintText: searchLabel,
+                                                prefixIcon: const Icon(
+                                                  Icons.search_rounded,
+                                                  size: 18,
+                                                ),
+                                                prefixIconConstraints:
+                                                    const BoxConstraints(
+                                                      minWidth: 38,
+                                                    ),
+                                                suffixIcon: IconButton(
+                                                  key: const ValueKey(
+                                                    'balance_chart_search_close',
+                                                  ),
+                                                  tooltip: searchLabel,
+                                                  onPressed: _closeSearch,
+                                                  icon: const Icon(
+                                                    Icons.close_rounded,
+                                                    size: 17,
+                                                  ),
+                                                ),
+                                                suffixIconConstraints:
+                                                    const BoxConstraints(
+                                                      minWidth: 38,
+                                                    ),
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                    ),
+                                                border: InputBorder.none,
+                                              ),
+                                            )
+                                            : IconButton(
+                                              key: const ValueKey(
+                                                'balance_chart_search_button',
+                                              ),
+                                              tooltip: searchLabel,
+                                              onPressed: _openSearch,
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints.tightFor(
+                                                    width: 38,
+                                                    height: 38,
+                                                  ),
+                                              icon: const Icon(
+                                                Icons.search_rounded,
+                                                size: 19,
+                                              ),
+                                            ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                compactTitle,
-                                maxLines: 2,
-                                textAlign: TextAlign.right,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  fontSize: 13,
-                                  height: 1.05,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.1,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    compactTitle,
+                                    maxLines: 2,
+                                    textAlign: TextAlign.right,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                      fontSize: 13,
+                                      height: 1.05,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -262,6 +329,29 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
         ),
       );
     });
+  }
+
+  void _openSearch() {
+    setState(() => _searchExpanded = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocusNode.requestFocus();
+    });
+  }
+
+  void _closeSearch() {
+    _searchDebounce?.cancel();
+    if (_searchController.text.isNotEmpty) {
+      _searchController.clear();
+      _sendSearch('');
+    }
+    _searchFocusNode.unfocus();
+    setState(() => _searchExpanded = false);
+  }
+
+  void _handleSearchFocus() {
+    if (!_searchFocusNode.hasFocus && _searchController.text.isEmpty) {
+      setState(() => _searchExpanded = false);
+    }
   }
 }
 

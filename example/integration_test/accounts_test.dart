@@ -283,7 +283,11 @@ void main() {
         await _waitFor(tester, find.text('Money activity'), seconds: 30);
         expect(find.text('Net activity this month'), findsOneWidget);
         expect(find.text('Income minus expenses'), findsOneWidget);
-        expect(find.text('Search transactions'), findsNWidgets(2));
+        expect(find.text('Search transactions'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('balance_chart_search_button')),
+          findsOneWidget,
+        );
         expect(find.byType(LiveBalanceChart), findsOneWidget);
         final activityScroll = tester.state<ScrollableState>(
           find
@@ -296,6 +300,12 @@ void main() {
         activityScroll.position.jumpTo(600);
         await tester.pump();
         expect(find.text('Money activity').hitTestable(), findsOneWidget);
+        final compactSearchButton = find.byKey(
+          const ValueKey('balance_chart_search_button'),
+        );
+        expect(compactSearchButton.hitTestable(), findsOneWidget);
+        await tester.tap(compactSearchButton);
+        await tester.pumpAndSettle();
         final transactionSearch = find.descendant(
           of: find.byType(LiveBalanceChart),
           matching: find.byType(TextField),
@@ -506,10 +516,26 @@ void main() {
         expect(
           find.descendant(
             of: find.byType(LiveBalanceChart),
+            matching: find
+                .byKey(const ValueKey('balance_chart_search_button'))
+                .hitTestable(),
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('balance_chart_search_button')),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: find.byType(LiveBalanceChart),
             matching: find.byType(EditableText).hitTestable(),
           ),
           findsOneWidget,
         );
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        expect(find.byType(TextField), findsNothing);
         final scrolledBalancePainter = tester
             .widget<CustomPaint>(
               find.byWidgetPredicate(

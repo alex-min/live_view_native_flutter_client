@@ -167,6 +167,26 @@ void main() {
     );
     expect(compactOpacity().opacity, closeTo(1, 0.0001));
     expect(painter().topInset, closeTo(64, 0.0001));
+    expect(
+      find.byKey(const ValueKey('balance_chart_search_button')),
+      findsOneWidget,
+    );
+    expect(find.byType(TextField), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('balance_chart_search_button')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('balance_chart_search_field')),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus,
+      isTrue,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('balance_chart_search_close')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing);
 
     scrollable.position.jumpTo(130);
     await tester.pump();
