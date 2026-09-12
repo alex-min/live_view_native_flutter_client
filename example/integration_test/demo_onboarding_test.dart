@@ -1,0 +1,259 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:liveview_flutter/liveview_flutter.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_text_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Host and port where the StartupKit dev server is expected to run.
+const _serverHost = 'localhost';
+const _serverPort = 4000;
+
+class _TestApp extends StatelessWidget {
+  final LiveView view;
+
+  const _TestApp({required this.view});
+
+  @override
+  Widget build(BuildContext context) => view.rootView;
+}
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group('Demo account onboarding', () {
+    testWidgets(
+      'try the demo, accept the terms, pick a currency and claim the account by email',
+      (tester) async {
+        await _ensureServer();
+        SharedPreferences.setMockInitialValues({});
+
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+
+        // Cookieless visitors are bounced to the /welcome start screen.
+        await _waitForUrl(tester, view, '/welcome', seconds: 30);
+        await _waitFor(
+          tester,
+          find.text('Welcome to StartupKit'),
+          seconds: 30,
+        );
+        final tryTheDemo = find.widgetWithText(
+          ElevatedButton,
+          'Try the demo',
+        );
+        await _waitFor(tester, tryTheDemo, seconds: 30);
+
+        // The button submits the POST /users/demo form, which creates a
+        // demo user, logs them in and bounces them into the onboarding.
+        await tester.tap(tryTheDemo);
+        await _waitForUrl(tester, view, '/users/accept-tos', seconds: 30);
+        await _waitFor(tester, find.text('Terms of Service'), seconds: 30);
+
+        final acceptButton = find.widgetWithText(ElevatedButton, 'I Accept');
+        await _waitFor(tester, acceptButton, seconds: 30);
+        await tester.ensureVisible(acceptButton);
+        await tester.tap(acceptButton);
+
+        // The next onboarding step asks for the default currency, with EUR
+        // pre-selected.
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/onboarding/currency',
+          seconds: 30,
+        );
+        await _waitFor(tester, find.textContaining('EUR (€)'), seconds: 30);
+
+        final nextButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.widgetWithText(ElevatedButton, 'Next'),
+        );
+        await _waitFor(tester, nextButton, seconds: 30);
+        await tester.tap(nextButton.last);
+
+        // Demo users land on the regular accounts page with the same empty
+        // state as any fresh user — no demo data is seeded.
+        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitFor(tester, find.text('Accounts'), seconds: 30);
+        await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
+
+        // The app bar shows the demo email; tap it to open the settings page.
+        final demoEmail = find.textContaining('@demo.com');
+        await _waitFor(tester, demoEmail, seconds: 30);
+        final settingsButton = find.ancestor(
+          of: demoEmail,
+          matching: find.byType(LiveTextButton),
+        );
+        expect(
+          settingsButton,
+          findsWidgets,
+          reason: 'The app bar should contain a settings button for the user',
+        );
+        await tester.tap(settingsButton.last);
+        await tester.pump();
+        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+        await tester.pumpAndSettle();
+
+        // Demo users see the claim hint and their email is not sudo-locked.
+        await _waitFor(
+          tester,
+          find.text(
+            "You're using a demo account. Set your email to claim this account and keep your data.",
+          ),
+          seconds: 30,
+        );
+        expect(
+          find.text('Sensitive changes are locked'),
+          findsNothing,
+          reason: 'Demo accounts should not need sudo mode to change email',
+        );
+
+        // Change the email to a unique address, without any password prompt.
+        final newEmail =
+            'demo+${DateTime.now().millisecondsSinceEpoch}@example.com';
+        final emailField = find.widgetWithText(TextField, 'Email');
+        await _waitFor(tester, emailField, seconds: 30);
+        await tester.enterText(emailField, newEmail);
+        await tester.pump();
+
+        // phx-change can replace the field controller. Refill after that
+        // diff settles, then submit.
+        await Future.delayed(const Duration(seconds: 1));
+        await tester.pump();
+        await tester.enterText(emailField, newEmail);
+        await tester.pump();
+
+        final changeEmailButton = find.widgetWithText(
+          ElevatedButton,
+          'Change email',
+        );
+        await _waitFor(tester, changeEmailButton, seconds: 30);
+        await tester.ensureVisible(changeEmailButton);
+        await tester.pump();
+        await tester.tap(changeEmailButton);
+        await tester.pump();
+
+        // The confirmation link email is covered by the web tests; here we
+        // only assert the "link sent" feedback flash.
+        await _waitFor(
+          tester,
+          find.text(
+            'A link to confirm your email change has been sent to the new address.',
+          ),
+          seconds: 30,
+        );
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
+  });
+}
+
+/// Waits up to [seconds] for [finder] to match at least one widget,
+/// pumping the tester each second.
+Future<void> _waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int seconds = 30,
+}) async {
+  for (var i = 0; i < seconds; i++) {
+    await tester.pump();
+    if (finder.evaluate().isNotEmpty) {
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+  throw Exception('Timed out waiting for $finder');
+}
+
+/// Waits up to [seconds] for the live view to navigate to [url].
+Future<void> _waitForUrl(
+  WidgetTester tester,
+  LiveView view,
+  String url, {
+  int seconds = 30,
+}) async {
+  for (var i = 0; i < seconds; i++) {
+    await tester.pump();
+    if (view.currentUrl == url && view.isCurrentRouteReady) {
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+  throw Exception('Timed out waiting for url $url (got ${view.currentUrl})');
+}
+
+/// Ensures the StartupKit dev server is running on [_serverHost]:[_serverPort].
+///
+/// If no server is listening, the dev database is migrated and seeded, then
+/// `mix phx.server` is started. The server is left running so the test can
+/// interact with a real Phoenix backend.
+Future<void> _ensureServer() async {
+  if (await _serverReady()) {
+    return;
+  }
+
+  final setup = await Process.run(
+    'mix',
+    ['ecto.setup'],
+    workingDirectory: '../../startup_kit',
+    environment: {'MIX_ENV': 'dev'},
+  );
+  if (setup.exitCode != 0) {
+    throw Exception('mix ecto.setup failed:\n${setup.stderr}\n${setup.stdout}');
+  }
+
+  final seed = await Process.run(
+    'mix',
+    ['run', 'priv/repo/seeds.exs'],
+    workingDirectory: '../../startup_kit',
+    environment: {'MIX_ENV': 'dev'},
+  );
+  if (seed.exitCode != 0) {
+    throw Exception(
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
+  }
+
+  final process = await Process.start(
+    'mix',
+    ['phx.server'],
+    workingDirectory: '../../startup_kit',
+    environment: {'MIX_ENV': 'dev'},
+  );
+  process.stdout.listen(stdout.add);
+  process.stderr.listen(stderr.add);
+
+  for (var i = 0; i < 60; i++) {
+    if (await _serverReady()) {
+      return;
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  throw Exception(
+    'StartupKit server did not start on $_serverHost:$_serverPort',
+  );
+}
+
+Future<bool> _serverReady() async {
+  try {
+    final socket = await Socket.connect(
+      _serverHost,
+      _serverPort,
+      timeout: const Duration(seconds: 1),
+    );
+    socket.destroy();
+    return true;
+  } on Object {
+    return false;
+  }
+}

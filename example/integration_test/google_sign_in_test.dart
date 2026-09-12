@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_google_sign_in_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _serverHost = 'localhost';
 const _serverPort = 4000;
@@ -16,6 +17,8 @@ void main() {
     tester,
   ) async {
     await _ensureServer();
+    SharedPreferences.setMockInitialValues({});
+
     var view = LiveView()
       ..catchExceptions = false
       ..disableAnimations = true
