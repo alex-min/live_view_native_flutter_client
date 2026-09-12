@@ -25,7 +25,7 @@ void main() {
 
   group('Demo account onboarding', () {
     testWidgets(
-      'try the demo, accept the terms, pick a currency and claim the account by email',
+      'try the demo, pick a currency and claim the account by email',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -46,16 +46,11 @@ void main() {
 
         // The button submits the POST /users/demo form, which creates a
         // demo user, logs them in and bounces them into the onboarding.
+        // Demo users skip the terms of service step, so the currency step
+        // is their whole onboarding.
         await tester.tap(tryTheDemo);
-        await _waitForUrl(tester, view, '/users/accept-tos', seconds: 30);
-        await _waitFor(tester, find.text('Terms of Service'), seconds: 30);
 
-        final acceptButton = find.widgetWithText(ElevatedButton, 'I Accept');
-        await _waitFor(tester, acceptButton, seconds: 30);
-        await tester.ensureVisible(acceptButton);
-        await tester.tap(acceptButton);
-
-        // The next onboarding step asks for the default currency, with EUR
+        // The onboarding step asks for the default currency, with EUR
         // pre-selected.
         await _waitForUrl(
           tester,
@@ -72,11 +67,18 @@ void main() {
         await _waitFor(tester, nextButton, seconds: 30);
         await tester.tap(nextButton.last);
 
-        // Demo users land on the regular accounts page with the same empty
-        // state as any fresh user — no demo data is seeded.
+        // Demo users land on the accounts page with the demo dataset
+        // already seeded by the currency onboarding step. The list is
+        // virtualized, so assert on the first row ("Stock picks" sorts
+        // above "Cash") and on the empty state being gone.
         await _waitForUrl(tester, view, '/', seconds: 30);
         await _waitFor(tester, find.text('Accounts'), seconds: 30);
-        await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
+        await _waitFor(tester, find.text('Stock picks'), seconds: 30);
+        expect(
+          find.text('No accounts yet'),
+          findsNothing,
+          reason: 'Demo accounts should get the demo dataset on onboarding',
+        );
 
         // The demo email is hidden from the app bar; the settings page is
         // still reachable through the bottom navigation.
