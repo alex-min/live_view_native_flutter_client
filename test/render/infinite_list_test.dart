@@ -15,7 +15,7 @@ void main() {
           10,
           (index) => '<SizedBox height="50"><Text>Row $index</Text></SizedBox>',
         ).join();
-    final (view, _) = await connect(
+    final (view, server) = await connect(
       LiveView(),
       rendered: {
         's': [
@@ -51,6 +51,53 @@ void main() {
     expect(tester.getSize(header.first).height, 80);
     expect(find.text('Summary header'), findsOneWidget);
   });
+
+  testWidgets(
+    'keeps row widget state across parent rebuilds so dropdown menus stay open',
+    (tester) async {
+      tester.setScreenSize(const Size(400, 400));
+      final children =
+          List.generate(
+            10,
+            (index) =>
+                '<SizedBox height="50"><ListTile><title><Text>Row $index</Text></title>'
+                '<trailing><DropdownButton><icon><Icon name="more_vert" /></icon>'
+                '<DropdownMenuItem label="Edit" value="edit" phx-click="edit_row" phx-value-id="7" />'
+                '<DropdownMenuItem label="Delete" value="delete" />'
+                '</DropdownButton></trailing></ListTile></SizedBox>',
+          ).join();
+      final (view, server) = await connect(
+        LiveView(),
+        rendered: {
+          's': [
+            '<InfiniteList phx-load-page="load_page" totalCount="10" '
+                'pageSize="10" loadedStart="0" loadedCount="10" '
+                'itemExtent="50">$children</InfiniteList>',
+          ],
+        },
+      );
+
+      await tester.runLiveView(view);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await tester.pumpAndSettle();
+
+      // The dropdown menu is a route owned by the row's State; before the
+      // children were cached, any parent rebuild re-parsed the rows with new
+      // keys, disposed the state and removed the just-opened menu.
+      expect(find.text('Edit'), findsWidgets);
+      expect(find.text('Delete'), findsWidgets);
+
+      // Tapping an item sends its phx-click event and dismisses the menu.
+      await tester.tap(find.text('Edit').last);
+      await tester.pumpAndSettle();
+      expect(
+        server.lastChannelAction,
+        liveEvents.phxClick({'id': '7'}, eventName: 'edit_row'),
+      );
+    },
+  );
 
   testWidgets(
     'virtualizes the full extent and loads arbitrary pages in either direction',

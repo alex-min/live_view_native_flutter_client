@@ -295,6 +295,7 @@ void main() {
                 of: find.byType(CustomScrollView),
                 matching: find.byType(Scrollable),
               )
+              .hitTestable()
               .first,
         );
         activityScroll.position.jumpTo(600);
@@ -380,8 +381,10 @@ void main() {
         await tester.tap(overflowMenu.last);
         await tester.pumpAndSettle();
         await _waitFor(tester, find.text('Mark as inactive'), seconds: 30);
-        await tester.tap(find.text('Mark as inactive').last);
-        await tester.pump();
+        final markInactive = find.text('Mark as inactive').last;
+        await tester.ensureVisible(markInactive);
+        await tester.tap(markInactive, warnIfMissed: true);
+        await tester.pumpAndSettle();
 
         // The account leaves the active list and an inactive section appears.
         await _waitFor(tester, find.text('Inactive accounts (1)'), seconds: 30);
@@ -418,28 +421,56 @@ void main() {
 
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
-        final tryDemo = find.widgetWithText(ElevatedButton, 'Try demo').last;
-        await _waitFor(tester, tryDemo, seconds: 30);
-        await tester.ensureVisible(tryDemo);
+        final tryDemoFinder = find.widgetWithText(ElevatedButton, 'Try demo');
+        await _waitFor(tester, tryDemoFinder, seconds: 30);
+        await tester.ensureVisible(tryDemoFinder.last);
         await tester.drag(
-          find.byType(ListView).hitTestable().last,
+          find.byType(CustomScrollView).hitTestable().last,
           const Offset(0, -100),
         );
         await tester.pump();
-        await tester.tap(tryDemo.hitTestable());
+        await tester.tap(tryDemoFinder.last.hitTestable());
         await _waitForUrl(tester, view, '/', seconds: 30);
 
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
-        final cashAccount = find.widgetWithText(ListTile, 'Cash').last;
-        await _waitFor(tester, cashAccount, seconds: 30);
-        await tester.ensureVisible(cashAccount);
-        await tester.drag(
-          find.byType(ListView).hitTestable().last,
-          const Offset(0, -200),
+        // Rows build lazily: scroll until the Cash row enters the viewport.
+        // The previous accounts route stays mounted underneath, so scope the
+        // finders to the visible list.
+        final visibleList = find.byType(LiveInfiniteList).hitTestable().last;
+        final cashTile = find.descendant(
+          of: visibleList,
+          matching: find.widgetWithText(ListTile, 'Cash'),
         );
-        final visibleCashAccount =
-            find.widgetWithText(ListTile, 'Cash').hitTestable();
+        await tester.scrollUntilVisible(
+          cashTile,
+          80,
+          scrollable: find.descendant(
+            of: visibleList,
+            matching: find.byType(Scrollable),
+          ),
+        );
+        final cashAccount = cashTile.hitTestable();
+        if (cashAccount.evaluate().isEmpty) {
+          // The row can sit under the docked action button; nudge the list
+          // so it is fully tappable.
+          await tester.drag(
+            find
+                .descendant(
+                  of: visibleList,
+                  matching: find.byType(CustomScrollView),
+                )
+                .hitTestable(),
+            const Offset(0, -200),
+          );
+          await tester.pump();
+        }
+        final visibleCashAccount = find
+            .descendant(
+              of: visibleList,
+              matching: find.widgetWithText(ListTile, 'Cash'),
+            )
+            .hitTestable();
         await _waitFor(tester, visibleCashAccount, seconds: 30);
         await tester.tap(visibleCashAccount);
         await _waitForUrl(
@@ -501,6 +532,7 @@ void main() {
                 of: find.byType(CustomScrollView),
                 matching: find.byType(Scrollable),
               )
+              .hitTestable()
               .first,
         );
         collapsibleScroll.position.jumpTo(334);
@@ -728,6 +760,90 @@ void main() {
     );
 
     testWidgets(
+      'collapses the statement header when the account list scrolls',
+      (tester) async {
+        await _ensureServer();
+        SharedPreferences.setMockInitialValues({});
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+        await _signUpAndOnboard(tester, view);
+
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+
+        // Seed demo accounts so the list has rows to scroll.
+        final tryDemoFinder = find.widgetWithText(ElevatedButton, 'Try demo');
+        await _waitFor(tester, tryDemoFinder, seconds: 30);
+        await tester.ensureVisible(tryDemoFinder.last);
+        await tester.drag(
+          find.byType(CustomScrollView).hitTestable().last,
+          const Offset(0, -100),
+        );
+        await tester.pump();
+        await tester.tap(tryDemoFinder.last.hitTestable());
+        await _waitForUrl(tester, view, '/', seconds: 30);
+
+        await view.livePatch('/accounts');
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        // Rows build lazily; the first row is visible without scrolling.
+        await _waitFor(tester, find.text('Stock picks'), seconds: 30);
+        expect(
+          find.text('Total net worth').hitTestable(),
+          findsOneWidget,
+          reason: 'The statement header should start fully expanded',
+        );
+
+        // The header is a pinned sliver that shrinks to nothing.
+        final pinnedHeader = tester.widget<SliverPersistentHeader>(
+          find.descendant(
+            of: find.byType(LiveInfiniteList).hitTestable().last,
+            matching: find.byType(SliverPersistentHeader),
+          ),
+        );
+        final headerDelegate =
+            pinnedHeader.delegate as CollapsibleInfiniteListHeaderDelegate;
+        expect(pinnedHeader.pinned, isTrue);
+        expect(headerDelegate.maxExtent, 440);
+        expect(headerDelegate.minExtent, 0);
+
+        final scrollable = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(LiveInfiniteList).hitTestable().last,
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        scrollable.position.jumpTo(500);
+        await tester.pump();
+        expect(
+          find.text('Total net worth').hitTestable(),
+          findsNothing,
+          reason: 'Scrolling should collapse the statement header away',
+        );
+        expect(
+          find.byType(ListTile).hitTestable(),
+          findsWidgets,
+          reason: 'The account rows should stay visible while scrolled',
+        );
+
+        scrollable.position.jumpTo(0);
+        await tester.pump();
+        expect(
+          find.text('Total net worth').hitTestable(),
+          findsOneWidget,
+          reason: 'Scrolling back to the top should restore the header',
+        );
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
+
+    testWidgets(
       'creates an investment account with an investment kind',
       (tester) async {
         await _ensureServer();
@@ -807,7 +923,7 @@ void main() {
 /// Signs up a brand new user and completes the onboarding (TOS + default
 /// currency). Mirrors the onboarding flow integration test.
 Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
-  final signUpButton = find.byType(ElevatedButton).last;
+  final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
   await _waitFor(tester, signUpButton, seconds: 30);
   await tester.tap(signUpButton);
   await _waitForUrl(tester, view, '/users/register', seconds: 30);

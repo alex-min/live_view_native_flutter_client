@@ -29,6 +29,8 @@ void main() {
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
+        // Wide enough for the desktop app bar actions (window_width >= 900).
+        await tester.binding.setSurfaceSize(const Size(1200, 900));
 
         final view = LiveView();
         view.catchExceptions = false;
@@ -37,6 +39,12 @@ void main() {
 
         await tester.pumpWidget(_TestApp(view: view));
         await view.connect('http://$_serverHost:$_serverPort/currencies');
+
+        // Logged-out visitors get a single "Sign in" link in the app bar,
+        // without any account email or "Sign up" button.
+        await _waitFor(tester, find.widgetWithText(TextButton, 'Sign in'));
+        expect(find.text('Sign up'), findsNothing);
+        expect(find.textContaining('@'), findsNothing);
 
         // The picker lists currencies as native list tiles. The ListView
         // builds children lazily, so only the first currencies (AED, ...)

@@ -81,6 +81,26 @@ class LiveDynamicComponent extends LiveStateWidget<LiveDynamicComponent> {
       return rows;
     }
 
+    // A conditional revealed by a diff can arrive without its statics when
+    // the slot was previously empty (the diff only carries the new nested
+    // content). Synthesize the empty statics around the numbered slots so
+    // the regular interpolation renders them.
+    if (content['s'] is! List) {
+      final numericKeys =
+          content.keys
+              .whereType<String>()
+              .map(int.tryParse)
+              .whereType<int>()
+              .toList();
+      if (numericKeys.isNotEmpty) {
+        content = Map<String, dynamic>.from(content)
+          ..['s'] = List<String>.filled(
+            numericKeys.reduce((a, b) => a > b ? a : b) + 2,
+            '',
+          );
+      }
+    }
+
     return state.parser
         .parseHtml(List<String>.from(content['s'] ?? []), content, newState)
         .$1;

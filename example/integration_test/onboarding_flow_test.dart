@@ -41,7 +41,7 @@ void main() {
 
         // Tap the sign-up button on the home page to navigate to the
         // registration form via a real live-patch navigation.
-        final signUpButton = find.byType(ElevatedButton).last;
+        final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
         await _waitFor(tester, signUpButton, seconds: 30);
         await tester.tap(signUpButton);
         await _waitForUrl(tester, view, '/users/register', seconds: 30);

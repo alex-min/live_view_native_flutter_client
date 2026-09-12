@@ -45,7 +45,7 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         // Navigate to the registration form.
-        final signUpButton = find.byType(ElevatedButton).last;
+        final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
         await _waitFor(tester, signUpButton, seconds: 30);
         await tester.tap(signUpButton);
         await _waitForUrl(tester, view, '/users/register', seconds: 30);

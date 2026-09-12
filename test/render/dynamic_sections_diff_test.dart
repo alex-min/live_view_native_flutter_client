@@ -121,4 +121,48 @@ main() async {
 
     expect(find.text('row B'), findsOneWidget);
   });
+
+  testWidgets(
+    'renders a conditional inside a virtual list whose content only appears in a diff',
+    (tester) async {
+      // Shape of the accounts screen: an InfiniteList flattens its dynamic
+      // children, holding a list comprehension next to an inner conditional
+      // that is empty on first render. When the diff fills the inner slot,
+      // the new subtree must mount.
+      var view =
+          LiveView()..handleRenderedMessage({
+            's': [
+              '<InfiniteList phx-load-page="load_page" totalCount="2" '
+                  'pageSize="2" loadedStart="0" loadedCount="2" '
+                  'itemExtent="50"><Container><Text>HEADER</Text></Container>',
+              '',
+              '</InfiniteList>',
+            ],
+            '0': {
+              's': ['<SizedBox height="50"><Text>active row</Text></SizedBox>'],
+              'd': [[]],
+            },
+            '1': '',
+          });
+
+      await tester.runLiveView(view);
+      await tester.pumpAndSettle();
+      expect(find.text('active row'), findsOneWidget);
+      expect(find.text('Inactive accounts (1)'), findsNothing);
+
+      view.handleDiffMessage({
+        '0': {'d': []},
+        '1': {
+          's': [
+            '<SizedBox height="50"><Text>Inactive accounts (1)</Text></SizedBox>',
+          ],
+        },
+      });
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('active row'), findsNothing);
+      expect(find.text('Inactive accounts (1)'), findsOneWidget);
+    },
+  );
 }

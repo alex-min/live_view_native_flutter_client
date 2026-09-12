@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _serverHost = 'localhost';
@@ -28,6 +29,8 @@ void main() {
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
+        // Wide enough for the desktop app bar actions (window_width >= 900).
+        await tester.binding.setSurfaceSize(const Size(1200, 900));
 
         final view = LiveView();
         view.catchExceptions = false;
@@ -36,7 +39,7 @@ void main() {
 
         await tester.pumpWidget(_TestApp(view: view));
         await view.connect('http://$_serverHost:$_serverPort/');
-        await _signUpAndOnboard(tester, view);
+        final email = await _signUpAndOnboard(tester, view);
 
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
         await _waitForUrl(tester, view, '/users/settings');
@@ -59,9 +62,26 @@ void main() {
         await _waitFor(tester, find.text('Using demo data'));
         expect(find.text('Quit demo mode'), findsOneWidget);
 
+        // The demo app bar hides the account email while demo mode is on.
+        // (The settings page stays mounted underneath with the email in its
+        // form field, so only consider hit-testable text.)
+        expect(find.text(email).hitTestable(), findsNothing);
+
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts');
-        await _waitFor(tester, find.text('Cash'));
+        // Rows build lazily: scroll until the Cash row enters the viewport.
+        final visibleList = find.byType(LiveInfiniteList).hitTestable().last;
+        await tester.scrollUntilVisible(
+          find.descendant(
+            of: visibleList,
+            matching: find.text('Cash'),
+          ),
+          80,
+          scrollable: find.descendant(
+            of: visibleList,
+            matching: find.byType(Scrollable),
+          ),
+        );
 
         final quitDemoMode = find.widgetWithText(TextButton, 'Quit demo mode');
         await _waitFor(tester, quitDemoMode);
@@ -80,8 +100,8 @@ void main() {
   });
 }
 
-Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
-  final signUpButton = find.byType(ElevatedButton).last;
+Future<String> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
+  final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
   await _waitFor(tester, signUpButton);
   await tester.tap(signUpButton);
   await _waitForUrl(tester, view, '/users/register');
@@ -132,6 +152,8 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
   await _waitFor(tester, find.text(email));
   await tester.pumpAndSettle();
+
+  return email;
 }
 
 Future<void> _waitFor(

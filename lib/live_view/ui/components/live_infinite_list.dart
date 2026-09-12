@@ -4,6 +4,8 @@ import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
+import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
+import 'package:liveview_flutter/live_view/ui/node_state.dart';
 
 /// A server-driven list that can either append pages or virtualize a large,
 /// fixed-height data set.
@@ -83,6 +85,10 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   void initState() {
     _scrollController.addListener(_handleScroll);
     super.initState();
+    // Listen to the dynamic keys of our direct children so server diffs
+    // targeting them (row updates, conditionals appearing) invalidate the
+    // parsed children cache and the list re-renders from the new variables.
+    listenInnerTextKeys();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _restoreScrollOffset();
       _requestNextPageIfNeeded();
@@ -262,13 +268,11 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     final childState = widget.state.copyWith(variables: currentVariables);
 
     if (_isVirtual) {
-      final children = _flattenDynamicChildren(
-        multipleChildren(state: childState),
-      );
+      final children = _parsedChildren(childState);
       return _renderVirtualList(children);
     }
 
-    final children = multipleChildren(state: childState);
+    final children = _parsedChildren(childState);
 
     return ListView(
       controller: _scrollController,
@@ -411,6 +415,34 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
         ],
       ),
     );
+  }
+
+  List<Widget>? _cachedChildren;
+  Object? _cachedNode;
+  Map<dynamic, dynamic>? _cachedVariables;
+
+  /// Parses the server children once and reuses the widget instances across
+  /// rebuilds. Re-parsing on every build gives children new random keys, which
+  /// disposes and recreates their state (dismissing open dropdown menus and
+  /// losing scroll-dependent state) whenever an ancestor rebuilds, e.g. when a
+  /// popup route pushes and the surrounding focus tree updates.
+  List<Widget> _parsedChildren(NodeState childState) {
+    if (_cachedChildren != null &&
+        identical(_cachedNode, widget.state.node) &&
+        identical(_cachedVariables, currentVariables)) {
+      return _cachedChildren!;
+    }
+    _cachedNode = widget.state.node;
+    _cachedVariables = currentVariables;
+    // Merged diffs can carry compact template references (integer statics
+    // indexes and `p` template maps) that only make sense expanded.
+    final resolvedState = childState.copyWith(
+      variables: expandVariables(Map<String, dynamic>.from(currentVariables)),
+    );
+    _cachedChildren = _flattenDynamicChildren(
+      multipleChildren(state: resolvedState),
+    );
+    return _cachedChildren!;
   }
 
   List<Widget> _flattenDynamicChildren(List<Widget> children) {

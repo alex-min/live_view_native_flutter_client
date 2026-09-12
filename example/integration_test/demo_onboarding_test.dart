@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_text_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -41,15 +40,8 @@ void main() {
 
         // Cookieless visitors are bounced to the /welcome start screen.
         await _waitForUrl(tester, view, '/welcome', seconds: 30);
-        await _waitFor(
-          tester,
-          find.text('Welcome to StartupKit'),
-          seconds: 30,
-        );
-        final tryTheDemo = find.widgetWithText(
-          ElevatedButton,
-          'Try the demo',
-        );
+        await _waitFor(tester, find.text('Welcome to StartupKit'), seconds: 30);
+        final tryTheDemo = find.widgetWithText(ElevatedButton, 'Try the demo');
         await _waitFor(tester, tryTheDemo, seconds: 30);
 
         // The button submits the POST /users/demo form, which creates a
@@ -86,20 +78,14 @@ void main() {
         await _waitFor(tester, find.text('Accounts'), seconds: 30);
         await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
 
-        // The app bar shows the demo email; tap it to open the settings page.
-        final demoEmail = find.textContaining('@demo.com');
-        await _waitFor(tester, demoEmail, seconds: 30);
-        final settingsButton = find.ancestor(
-          of: demoEmail,
-          matching: find.byType(LiveTextButton),
-        );
+        // The demo email is hidden from the app bar; the settings page is
+        // still reachable through the bottom navigation.
         expect(
-          settingsButton,
-          findsWidgets,
-          reason: 'The app bar should contain a settings button for the user',
+          find.textContaining('@demo.com'),
+          findsNothing,
+          reason: 'The demo account email should not appear in the app bar',
         );
-        await tester.tap(settingsButton.last);
-        await tester.pump();
+        await view.livePatch('/users/settings');
         await _waitForUrl(tester, view, '/users/settings', seconds: 30);
         await tester.pumpAndSettle();
 

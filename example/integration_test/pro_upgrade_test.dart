@@ -69,7 +69,7 @@ void main() {
 /// Signs up a brand new user and completes the onboarding (TOS + default
 /// currency). Mirrors the theme settings integration test.
 Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
-  final signUpButton = find.byType(ElevatedButton).last;
+  final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
   await _waitFor(tester, signUpButton, seconds: 30);
   await tester.tap(signUpButton);
   await _waitForUrl(tester, view, '/users/register', seconds: 30);
