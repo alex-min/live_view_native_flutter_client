@@ -51,21 +51,16 @@ void main() {
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
-        // Empty state: no accounts yet, with a create button.
+        // Empty state: no accounts yet, with a create button and no
+        // overview figures (the merged overview only shows with accounts).
         await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
-        expect(find.text('Total net worth'), findsWidgets);
-        expect(find.text('Available to spend'), findsWidgets);
-        expect(find.text('Saved & invested'), findsWidgets);
-        expect(
-          // The statement total is formatted server-side in the persisted
-          // English locale.
-          find.text('€0'),
-          findsWidgets,
-          reason: 'The statement total should be zero before any account',
-        );
+        expect(find.text('Total'), findsNothing);
+        expect(find.text('Available'), findsNothing);
+        expect(find.text('Saved'), findsNothing);
 
         // Open the creation form.
-        final addAccount = find.widgetWithText(ElevatedButton, 'Add account');
+        final addAccount =
+            find.widgetWithText(ElevatedButton, 'Create an account');
         await _waitFor(tester, addAccount.hitTestable(), seconds: 30);
         await tester.tap(addAccount.hitTestable().last);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
@@ -119,7 +114,6 @@ void main() {
         // statement total is updated.
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
-        expect(find.byType(LiveCosmicBackground), findsWidgets);
         expect(find.byIcon(Icons.payments), findsOneWidget);
         expect(
           find.text('€42.50'),
@@ -161,41 +155,36 @@ void main() {
         await _waitForUrl(tester, view, '/', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
 
-        // The Home item opens the Mavio-style dashboard. It shows the total
-        // statement, the income/expense chart, and the recent-expense state.
+        // The Home item opens the dashboard, matching the mobile web home:
+        // a statement card, the income/expense summary, and the empty
+        // recent-expense state.
         final floatingButtonState = tester.state(
           find.byType(LiveFloatingActionButton),
         );
         await view.livePatch('/dashboard');
         await _waitForUrl(tester, view, '/dashboard', seconds: 30);
-        await _waitFor(tester, find.text('Total net worth'), seconds: 30);
+        await _waitFor(tester, find.text('Statement'), seconds: 30);
         expect(
           tester.state(find.byType(LiveFloatingActionButton)),
           same(floatingButtonState),
           reason: 'the docked action must persist while navigating',
         );
-        expect(find.text('Total net worth'), findsWidgets);
-        expect(find.text('CASH FLOW'), findsOneWidget);
-        expect(find.text('Money received'), findsOneWidget);
-        expect(find.text('Money spent'), findsOneWidget);
-        expect(find.text('Send'), findsOneWidget);
-        expect(find.text('Request'), findsOneWidget);
-        expect(find.text('Transfer'), findsWidgets);
-        expect(find.text('Trends'), findsOneWidget);
+        expect(find.text('Net this month'), findsOneWidget);
+        expect(find.text('INCOME'), findsOneWidget);
+        expect(find.text('EXPENSES'), findsOneWidget);
+        expect(find.text('Monthly flow'), findsOneWidget);
+        expect(find.text('Statistics'), findsOneWidget);
         expect(find.byType(LiveCosmicBackground), findsWidgets);
-        final balanceVisibility = find.byWidgetPredicate(
-          (widget) =>
-              widget is IconButton && widget.color == const Color(0xCCFFFFFF),
-        );
-        expect(balanceVisibility, findsOneWidget);
-        await tester.tap(balanceVisibility);
-        await _waitFor(tester, find.text('••••••'), seconds: 30);
-        await tester.tap(balanceVisibility);
-        await _waitFor(tester, find.text('€42.50'), seconds: 30);
+        expect(find.text('RECENT EXPENSES'), findsOneWidget);
+        expect(find.text('View all'), findsOneWidget);
+        // The old Mavio-style home is gone: no quick actions, no fake chart,
+        // no balance eye toggle.
+        expect(find.text('Send'), findsNothing);
+        expect(find.text('Trends'), findsNothing);
+        expect(find.text('Money activity'), findsNothing);
+        expect(find.text('••••••'), findsNothing);
         await tester.drag(find.byType(ListView).last, const Offset(0, -300));
         await tester.pump();
-        await _waitFor(tester, find.text('Money activity'), seconds: 30);
-        expect(find.text('Money activity'), findsWidgets);
         expect(find.text('No expenses yet'), findsOneWidget);
         expect(find.text('€42.50'), findsWidgets);
 
@@ -395,11 +384,8 @@ void main() {
         await tester.pump();
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
 
-        // The row overflow menu offers to mark it active again.
-        final inactiveOverflowMenu = find.byIcon(Icons.more_vert);
-        await _waitFor(tester, inactiveOverflowMenu, seconds: 30);
-        await tester.tap(inactiveOverflowMenu.last);
-        await tester.pumpAndSettle();
+        // The row overflow menu offers to mark it active again, inline in
+        // the inactive row like the web view.
         await _waitFor(tester, find.text('Mark as active'), seconds: 30);
       },
       timeout: const Timeout(Duration(minutes: 3)),
@@ -425,7 +411,7 @@ void main() {
         await _waitFor(tester, tryDemoFinder, seconds: 30);
         await tester.ensureVisible(tryDemoFinder.last);
         await tester.drag(
-          find.byType(CustomScrollView).hitTestable().last,
+          find.byType(ListView).hitTestable().last,
           const Offset(0, -100),
         );
         await tester.pump();
@@ -437,10 +423,10 @@ void main() {
         // Rows build lazily: scroll until the Cash row enters the viewport.
         // The previous accounts route stays mounted underneath, so scope the
         // finders to the visible list.
-        final visibleList = find.byType(LiveInfiniteList).hitTestable().last;
+        final visibleList = find.byType(ListView).hitTestable().last;
         final cashTile = find.descendant(
           of: visibleList,
-          matching: find.widgetWithText(ListTile, 'Cash'),
+          matching: find.text('Cash'),
         );
         await tester.scrollUntilVisible(
           cashTile,
@@ -455,12 +441,7 @@ void main() {
           // The row can sit under the docked action button; nudge the list
           // so it is fully tappable.
           await tester.drag(
-            find
-                .descendant(
-                  of: visibleList,
-                  matching: find.byType(CustomScrollView),
-                )
-                .hitTestable(),
+            visibleList,
             const Offset(0, -200),
           );
           await tester.pump();
@@ -468,7 +449,7 @@ void main() {
         final visibleCashAccount = find
             .descendant(
               of: visibleList,
-              matching: find.widgetWithText(ListTile, 'Cash'),
+              matching: find.text('Cash'),
             )
             .hitTestable();
         await _waitFor(tester, visibleCashAccount, seconds: 30);
@@ -760,7 +741,7 @@ void main() {
     );
 
     testWidgets(
-      'collapses the statement header when the account list scrolls',
+      'scrolls the account list like the mobile web page',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -781,7 +762,7 @@ void main() {
         await _waitFor(tester, tryDemoFinder, seconds: 30);
         await tester.ensureVisible(tryDemoFinder.last);
         await tester.drag(
-          find.byType(CustomScrollView).hitTestable().last,
+          find.byType(ListView).hitTestable().last,
           const Offset(0, -100),
         );
         await tester.pump();
@@ -790,31 +771,16 @@ void main() {
 
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
-        // Rows build lazily; the first row is visible without scrolling.
+        // The merged overview and the filter pills render above the list.
         await _waitFor(tester, find.text('Stock picks'), seconds: 30);
-        expect(
-          find.text('Total net worth').hitTestable(),
-          findsOneWidget,
-          reason: 'The statement header should start fully expanded',
-        );
+        expect(find.text('Total').hitTestable(), findsOneWidget);
+        expect(find.text('All').hitTestable(), findsOneWidget);
 
-        // The header is a pinned sliver that shrinks to nothing.
-        final pinnedHeader = tester.widget<SliverPersistentHeader>(
-          find.descendant(
-            of: find.byType(LiveInfiniteList).hitTestable().last,
-            matching: find.byType(SliverPersistentHeader),
-          ),
-        );
-        final headerDelegate =
-            pinnedHeader.delegate as CollapsibleInfiniteListHeaderDelegate;
-        expect(pinnedHeader.pinned, isTrue);
-        expect(headerDelegate.maxExtent, 440);
-        expect(headerDelegate.minExtent, 0);
-
+        // The whole page scrolls away like mobile web: no pinned header.
         final scrollable = tester.state<ScrollableState>(
           find
               .descendant(
-                of: find.byType(LiveInfiniteList).hitTestable().last,
+                of: find.byType(ListView).hitTestable().last,
                 matching: find.byType(Scrollable),
               )
               .first,
@@ -822,12 +788,17 @@ void main() {
         scrollable.position.jumpTo(500);
         await tester.pump();
         expect(
-          find.text('Total net worth').hitTestable(),
+          find.text('Total').hitTestable(),
           findsNothing,
-          reason: 'Scrolling should collapse the statement header away',
+          reason: 'Scrolling should move the overview out of view',
+        );
+        await tester.scrollUntilVisible(
+          find.text('Stock picks'),
+          120,
+          scrollable: find.byType(Scrollable).hitTestable().first,
         );
         expect(
-          find.byType(ListTile).hitTestable(),
+          find.text('Stock picks').hitTestable(),
           findsWidgets,
           reason: 'The account rows should stay visible while scrolled',
         );
@@ -835,9 +806,9 @@ void main() {
         scrollable.position.jumpTo(0);
         await tester.pump();
         expect(
-          find.text('Total net worth').hitTestable(),
+          find.text('Total').hitTestable(),
           findsOneWidget,
-          reason: 'Scrolling back to the top should restore the header',
+          reason: 'Scrolling back to the top should restore the overview',
         );
       },
       timeout: const Timeout(Duration(minutes: 3)),

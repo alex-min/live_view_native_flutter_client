@@ -13,6 +13,14 @@ class LiveFlex extends LiveStateWidget<LiveFlex> {
 
 class _LiveColState extends StateWidget<LiveFlex> {
   @override
+  void initState() {
+    super.initState();
+    // Rebuild when a server diff targets a comprehension or conditional in
+    // this flex's subtree, so flattened dynamic children stay up to date.
+    listenInnerTextKeys();
+  }
+
+  @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
     'mainAxisAlignment',
     'crossAxisAlignment',
@@ -41,7 +49,7 @@ class _LiveColState extends StateWidget<LiveFlex> {
           getVerticalDirection(getAttribute('verticalDirection')) ??
           VerticalDirection.down,
       textBaseline: getTextBaseline(getAttribute('textBaseline')),
-      children: multipleChildren(),
+      children: flexChildren(),
     );
   }
 }

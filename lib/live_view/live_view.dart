@@ -149,6 +149,21 @@ class LiveView {
   // without losing the list's position.
   final Map<String, double> _scrollOffsets = {};
 
+  /// Typed form values per page, kept on the LiveView instance so they
+  /// survive the widget rebuilds server diffs trigger (each rebuild
+  /// re-parses the form subtree into fresh widget instances).
+  final Map<String, Map<String, dynamic>> _formValues = {};
+
+  Map<String, dynamic>? formValuesFor(String urlPath) => _formValues[urlPath];
+
+  void rememberFormValue(String urlPath, String name, dynamic value) {
+    _formValues.putIfAbsent(urlPath, () => {})[name] = value;
+  }
+
+  void forgetFormValues(String urlPath) {
+    _formValues.remove(urlPath);
+  }
+
   String _scrollOffsetKey(String urlPath, String restorationId) =>
       '$urlPath|$restorationId';
 
@@ -600,6 +615,11 @@ class LiveView {
           viewType: viewType,
         ).parse();
     lastRender = render.$1;
+    if (_renderedUrl != currentUrl) {
+      // Navigated to another page: form values from the previous page must
+      // not leak into same-named fields.
+      _formValues.clear();
+    }
     _renderedUrl = currentUrl;
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();

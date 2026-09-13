@@ -46,6 +46,28 @@ mixin AttributeHelpers {
   Color? colorAttribute(BuildContext context, String attribute) =>
       getColor(context, getAttribute(attribute));
 
+  /// Parses a `"<width> <color>"` pair (e.g. `side="1 @theme.colorScheme.outline"`)
+  /// into a uniform [BorderSide].
+  BorderSide? borderSideAttribute(String attribute, BuildContext context) {
+    final value = getAttribute(attribute);
+    if (value == null) {
+      return null;
+    }
+    final parts = value.trim().split(RegExp(r'\s+'));
+    final width = double.tryParse(parts.first);
+    final color = getColor(
+      context,
+      parts.length > 1 ? parts.sublist(1).join(' ') : null,
+    );
+    if (width == null && color == null) {
+      return null;
+    }
+    return BorderSide(
+      width: width ?? 1.0,
+      color: color ?? Theme.of(context).colorScheme.outline,
+    );
+  }
+
   bool? booleanAttribute(String attribute) =>
       getBoolean(getAttribute(attribute));
 

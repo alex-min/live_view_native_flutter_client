@@ -45,6 +45,16 @@ class _LiveFormState extends StateWidget<LiveForm> {
   bool _dependenciesReady = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Server diffs rebuild the form subtree into fresh widget instances;
+    // restore what the user typed so submits keep their values.
+    formValues = Map<String, dynamic>.from(
+      liveView.formValuesFor(widget.state.urlPath) ?? {},
+    );
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _dependenciesReady = true;
@@ -132,6 +142,11 @@ class _LiveFormState extends StateWidget<LiveForm> {
           if (event.type == FormFieldEventType.change ||
               event.type == FormFieldEventType.initField) {
             formValues[event.name] = event.data;
+            liveView.rememberFormValue(
+              widget.state.urlPath,
+              event.name,
+              event.data,
+            );
           }
 
           if (event.type == FormFieldEventType.change) {

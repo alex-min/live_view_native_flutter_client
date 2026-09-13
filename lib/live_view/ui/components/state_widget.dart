@@ -12,6 +12,7 @@ import 'package:liveview_flutter/live_view/state/attribute_helpers.dart';
 import 'package:liveview_flutter/live_view/state/computed_attributes.dart';
 import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
+import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:provider/provider.dart';
 import 'package:xml/xml.dart';
@@ -218,6 +219,35 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   List<Widget> multipleChildren({NodeState? state}) =>
       StateChild.multipleChildren(state ?? widget.state);
+
+  List<Widget>? _flexChildrenCache;
+  Object? _flexChildrenNode;
+  Map<dynamic, dynamic>? _flexChildrenVariables;
+
+  /// Children parsed for flex parents (Row, Column, Flex): server-side
+  /// comprehensions and conditionals resolve to several sibling widgets and
+  /// are expanded inline so they participate in the flex layout instead of
+  /// being stacked by the dynamic component's internal column.
+  ///
+  /// The parse result is cached and only recomputed when the subtree's
+  /// variables change (a server diff), so unrelated rebuilds keep the
+  /// existing widget instances and their state.
+  List<Widget> flexChildren() {
+    if (_flexChildrenCache != null &&
+        identical(_flexChildrenNode, widget.state.node) &&
+        identical(_flexChildrenVariables, currentVariables)) {
+      return _flexChildrenCache!;
+    }
+    _flexChildrenNode = widget.state.node;
+    _flexChildrenVariables = currentVariables;
+    final childState = widget.state.copyWith(
+      variables: expandVariables(Map<String, dynamic>.from(currentVariables)),
+    );
+    _flexChildrenCache = StateChild.flattenDynamics(
+      StateChild.multipleChildren(childState),
+    );
+    return _flexChildrenCache!;
+  }
 
   /// This is wiping any state the widget holds
   /// Called after changing pages
@@ -453,10 +483,14 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
+      // No AbsorbPointer: child buttons (dropdowns, icon buttons) must stay
+      // tappable. The gesture arena already lets the deepest recognizer win,
+      // so taps on non-interactive areas still reach this detector while
+      // taps on child controls are handled by them.
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => executeAllEvents(tapEvents),
-        child: AbsorbPointer(child: child),
+        child: child,
       ),
     );
   }

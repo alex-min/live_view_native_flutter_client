@@ -92,10 +92,21 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   void sendInitialState() {
     reloadAttributes(node, attributes);
     FormFieldEvent(
-      name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
-      data: getAttribute('initialValue') ?? '',
+      name: fieldName,
+      data: storedValue ?? getAttribute('initialValue') ?? '',
       type: FormFieldEventType.initField,
     ).dispatch(context);
+  }
+
+  String get fieldName =>
+      getAttribute('name') ?? "unamed-text-field-$unamedInput";
+
+  /// The value the user typed before a server diff rebuilt this field, if
+  /// any. Server-rendered initial values are stale after validate round
+  /// trips, so the remembered value wins.
+  String? get storedValue {
+    final value = liveView.formValuesFor(widget.state.urlPath)?[fieldName];
+    return value == null ? null : value.toString();
   }
 
   void parseErrors() {
@@ -152,12 +163,12 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
       onTap: () => executeTapEventsManually(),
       onChanged: (value) {
         FormFieldEvent(
-          name: getAttribute('name') ?? "unamed-text-field-$unamedInput",
+          name: fieldName,
           data: value,
           type: FormFieldEventType.change,
         ).dispatch(context);
       },
-      initialValue: getAttribute('initialValue'),
+      initialValue: storedValue ?? getAttribute('initialValue'),
       textAlign: textAlignAttribute('textAlign') ?? TextAlign.start,
       enabled: booleanAttribute('enabled'),
       cursorWidth: doubleAttribute('cursorWidth') ?? 2.0,

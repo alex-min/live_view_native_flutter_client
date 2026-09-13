@@ -28,6 +28,7 @@ class _LiveActionChipState extends StateWidget<LiveActionChip> {
     'autofocus',
     'backgroundColor',
     'disabledColor',
+    'side',
     'padding',
     'visualDensity',
     'materialTapTargetSize',
@@ -52,6 +53,10 @@ class _LiveActionChipState extends StateWidget<LiveActionChip> {
     avatar ??= StateChild.extractChild<LiveIcon>(children);
     avatar ??= iconWidgetFromAttribute('icon');
 
+    // A bordered chip keeps the pill look server templates use for filter
+    // chips; ActionChip's default shape is already a stadium.
+    final side = borderSideAttribute('side', context);
+
     return ActionChip(
       label: label,
       avatar: avatar,
@@ -59,8 +64,8 @@ class _LiveActionChipState extends StateWidget<LiveActionChip> {
       labelPadding: marginOrPaddingAttribute('labelPadding'),
       pressElevation: doubleAttribute('pressElevation'),
       tooltip: getAttribute('tooltip'),
-      side: null, // TODO: BorderSide
-      shape: null, //TODO: OutlinedBorder
+      side: side,
+      shape: side != null ? StadiumBorder(side: side) : null,
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
       focusNode: null, // TODO: FocusNode
       autofocus: booleanAttribute('autofocus') ?? false,

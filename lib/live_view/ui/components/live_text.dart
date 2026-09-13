@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:liveview_flutter/live_view/mapping/text_align.dart';
+import 'package:liveview_flutter/live_view/mapping/text_overflow.dart';
 import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:liveview_flutter/live_view/mapping/text_style_map.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
@@ -16,7 +17,7 @@ class LiveText extends LiveStateWidget<LiveText> {
 class _LiveViewTextState extends StateWidget<LiveText> {
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['style', 'textAlign']);
+    reloadAttributes(node, ['style', 'textAlign', 'maxLines', 'overflow']);
     listenInnerTextKeys();
   }
 
@@ -30,6 +31,8 @@ class _LiveViewTextState extends StateWidget<LiveText> {
       HtmlUnescape().convert(replaceVariables(text, currentVariables)).trim(),
       style: getTextStyle(getAttribute('style'), context),
       textAlign: getTextAlign(getAttribute('textAlign')),
+      maxLines: intAttribute('maxLines'),
+      overflow: getTextOverflow(getAttribute('overflow')),
     );
   }
 }

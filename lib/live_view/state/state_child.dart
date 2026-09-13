@@ -69,6 +69,27 @@ class StateChild {
     return ret;
   }
 
+  /// Expands [LiveDynamicComponent] children (server-side comprehensions and
+  /// conditionals) into the widgets they render. Flex parents laying out
+  /// siblings (Row, Column, Flex) use this so resolved comprehension items
+  /// participate in the flex layout directly, instead of being stacked in
+  /// the dynamic component's internal column. Dynamics that resolve to
+  /// nothing yet are kept as-is so they keep receiving diffs.
+  static List<Widget> flattenDynamics(List<Widget> children) {
+    final flattened = <Widget>[];
+    for (final child in children) {
+      if (child is LiveDynamicComponent) {
+        final content = LiveDynamicComponent.initialContent(child.state);
+        if (content != null) {
+          flattened.addAll(content);
+          continue;
+        }
+      }
+      flattened.add(child);
+    }
+    return flattened;
+  }
+
   static List<LiveStateWidget> extractChildren<Type extends LiveStateWidget>(
     List<Widget> children,
   ) {

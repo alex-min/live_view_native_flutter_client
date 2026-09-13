@@ -13,6 +13,14 @@ class LiveColumn extends LiveStateWidget<LiveColumn> {
 
 class _LiveColState extends StateWidget<LiveColumn> {
   @override
+  void initState() {
+    super.initState();
+    // Rebuild when a server diff targets a comprehension or conditional in
+    // this column's subtree, so flattened dynamic children stay up to date.
+    listenInnerTextKeys();
+  }
+
+  @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
     'mainAxisAlignment',
     'mainAxisSize',
@@ -38,7 +46,7 @@ class _LiveColState extends StateWidget<LiveColumn> {
           getVerticalDirection(getAttribute('verticalDirection')) ??
           VerticalDirection.down,
       textBaseline: getTextBaseline(getAttribute('textBaseline')),
-      children: multipleChildren(),
+      children: flexChildren(),
     );
   }
 }

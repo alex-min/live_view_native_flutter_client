@@ -25,6 +25,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_dropdown_button.da
 import 'package:liveview_flutter/live_view/ui/components/live_elevated_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_end_drawer.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_expanded.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_segmented_progress_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_filled_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_flex.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
@@ -409,6 +410,12 @@ class LiveViewUiParser {
       ..add([
         'Expanded',
       ], (state) => [LiveExpanded(state: state, key: Key(uuid.v4()))])
+      ..add(
+        ['SegmentedProgressBar'],
+        (state) => [
+          LiveSegmentedProgressBar(state: state, key: Key(uuid.v4())),
+        ],
+      )
       ..add([
         'FilledButton',
       ], (state) => [LiveFilledButton(state: state, key: Key(uuid.v4()))])

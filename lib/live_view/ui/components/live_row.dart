@@ -13,6 +13,14 @@ class LiveRow extends LiveStateWidget<LiveRow> {
 
 class _LiveColState extends StateWidget<LiveRow> {
   @override
+  void initState() {
+    super.initState();
+    // Rebuild when a server diff targets a comprehension or conditional in
+    // this row's subtree, so flattened dynamic children stay up to date.
+    listenInnerTextKeys();
+  }
+
+  @override
   void onStateChange(Map<String, dynamic> diff) => reloadAttributes(node, [
     'mainAxisAlignment',
     'crossAxisAlignment',
@@ -38,7 +46,7 @@ class _LiveColState extends StateWidget<LiveRow> {
           getVerticalDirection(getAttribute('verticalDirection')) ??
           VerticalDirection.down,
       textBaseline: getTextBaseline(getAttribute('textBaseline')),
-      children: multipleChildren(),
+      children: flexChildren(),
     );
   }
 }
