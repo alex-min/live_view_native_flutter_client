@@ -93,7 +93,7 @@ void main() {
         // Demo users see the claim banner and their email is not sudo-locked.
         await _waitFor(
           tester,
-          find.text('Claim the account by setting your email.'),
+          find.text('This demo account and all its data will be deleted soon.'),
           seconds: 30,
         );
         expect(
@@ -110,12 +110,7 @@ void main() {
         await tester.ensureVisible(claimButton.last);
         await tester.pump();
         await tester.tap(claimButton.last);
-        await _waitForUrl(
-          tester,
-          view,
-          '/users/settings/email',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/users/claim', seconds: 30);
         await tester.pumpAndSettle();
 
         final emailField = find.widgetWithText(TextField, 'Email');
@@ -130,14 +125,14 @@ void main() {
         await tester.enterText(emailField, newEmail);
         await tester.pump();
 
-        final changeEmailButton = find.widgetWithText(
+        final claimAccountButton = find.widgetWithText(
           ElevatedButton,
-          'Change email',
+          'Claim account',
         );
-        await _waitFor(tester, changeEmailButton, seconds: 30);
-        await tester.ensureVisible(changeEmailButton);
+        await _waitFor(tester, claimAccountButton, seconds: 30);
+        await tester.ensureVisible(claimAccountButton);
         await tester.pump();
-        await tester.tap(changeEmailButton);
+        await tester.tap(claimAccountButton);
         await tester.pump();
 
         // The confirmation link email is covered by the web tests; here we
