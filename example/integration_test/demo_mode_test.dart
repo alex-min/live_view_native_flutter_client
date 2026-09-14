@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _serverHost = 'localhost';
@@ -29,7 +28,7 @@ void main() {
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
-        // Wide enough for the desktop app bar actions (window_width >= 900).
+        // Wide enough to keep the whole settings menu on screen.
         await tester.binding.setSurfaceSize(const Size(1200, 900));
 
         final view = LiveView();
@@ -47,15 +46,22 @@ void main() {
         await Future.delayed(const Duration(seconds: 1));
         await tester.pumpAndSettle();
 
-        await _waitFor(tester, find.text('Try the app'));
+        // The More group lists the demo mode row; tapping it enters demo
+        // mode like the mobile web settings menu. The row sits at the bottom
+        // of the menu: scroll the top-most settings list until the text is
+        // actually hit-testable (ListView builds children slightly offscreen,
+        // so scrolling until the plain finder matches is not enough).
+        final settingsList = find.byType(ListView).hitTestable().last;
+        await tester.scrollUntilVisible(
+          find.text('Try the app').hitTestable(),
+          80,
+          scrollable: find
+              .descendant(of: settingsList, matching: find.byType(Scrollable))
+              .first,
+        );
         expect(find.text('Demo the app with fake data'), findsWidgets);
 
-        final useDemoData = find
-            .widgetWithText(ElevatedButton, 'Use demo data')
-            .hitTestable()
-            .last;
-        await _waitFor(tester, useDemoData);
-        await tester.ensureVisible(useDemoData);
+        final useDemoData = find.text('Try the app').hitTestable().last;
         await tester.tap(useDemoData);
 
         await _waitForUrl(tester, view, '/dashboard');
@@ -70,17 +76,19 @@ void main() {
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts');
         // Rows build lazily: scroll until the Cash row enters the viewport.
-        final visibleList = find.byType(LiveInfiniteList).hitTestable().last;
+        final visibleList = find.byType(ListView).hitTestable().last;
         await tester.scrollUntilVisible(
           find.descendant(
             of: visibleList,
             matching: find.text('Cash'),
           ),
           80,
-          scrollable: find.descendant(
-            of: visibleList,
-            matching: find.byType(Scrollable),
-          ),
+          scrollable: find
+              .descendant(
+                of: visibleList,
+                matching: find.byType(Scrollable),
+              )
+              .first,
         );
 
         final quitDemoMode = find.widgetWithText(TextButton, 'Quit demo mode');
@@ -150,7 +158,7 @@ Future<String> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await _waitFor(tester, nextButton);
   await tester.tap(nextButton.last);
 
-  await _waitFor(tester, find.text(email));
+  await _waitFor(tester, find.text('No accounts yet'));
   await tester.pumpAndSettle();
 
   return email;

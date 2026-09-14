@@ -795,7 +795,12 @@ void main() {
         await tester.scrollUntilVisible(
           find.text('Stock picks'),
           120,
-          scrollable: find.byType(Scrollable).hitTestable().first,
+          scrollable: find
+              .descendant(
+                of: find.byType(ListView).hitTestable().last,
+                matching: find.byType(Scrollable),
+              )
+              .first,
         );
         expect(
           find.text('Stock picks').hitTestable(),

@@ -42,6 +42,16 @@ void main() {
         const password = 'SuperSecret123!';
 
         await tester.pumpWidget(_TestApp(view: view));
+        // Onboarding is unreliable at mobile sizes, so run it at a large
+        // viewport first and switch to mobile afterwards for the bottom
+        // navigation (the bar only builds below the client's 600px desktop
+        // breakpoint).
+        tester.view.physicalSize = const Size(1280, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
         await view.connect('http://$_serverHost:$_serverPort/');
 
         // Navigate to the registration form.
@@ -107,21 +117,18 @@ void main() {
         await _waitFor(tester, nextButton, seconds: 30);
         await tester.tap(nextButton.last);
 
-        // Wait for the app bar to show the signed-in user's email.
-        await _waitFor(tester, find.text(email), seconds: 30);
+        // Switch to a mobile viewport so the bottom navigation bar builds.
+        tester.view.physicalSize = const Size(400, 800);
         await tester.pumpAndSettle();
 
-        // Navigate to the settings page.
-        final settingsButton = find.widgetWithText(LiveTextButton, email).last;
-        expect(
-          settingsButton,
-          findsOneWidget,
-          reason: 'The app bar should contain a settings button for the user',
-        );
-        await tester.tap(settingsButton);
+        // Navigate to the settings page through the bottom navigation.
+        await _waitFor(tester, find.text('Settings'), seconds: 30);
+        final settingsItem = find.text('Settings').hitTestable().last;
+        await tester.tap(settingsItem);
         await tester.pump();
         await _waitForUrl(tester, view, '/users/settings', seconds: 30);
         await tester.pumpAndSettle();
+        expect(find.text(email).hitTestable(), findsWidgets);
 
         // Sensitive changes are locked, so unlock sudo mode first.
         final unlockButton =
@@ -156,6 +163,18 @@ void main() {
           findsNothing,
           reason: 'Sudo mode should be unlocked after password confirmation',
         );
+
+        // Open the email settings sub-page from the menu.
+        final emailRow = find.text('Email').hitTestable().last;
+        await _waitFor(tester, emailRow, seconds: 30);
+        await tester.tap(emailRow);
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/settings/email',
+          seconds: 30,
+        );
+        await tester.pumpAndSettle();
 
         // Change the email address.
         final emailField = find.widgetWithText(TextField, 'Email');

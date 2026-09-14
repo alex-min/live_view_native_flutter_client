@@ -72,7 +72,6 @@ void main() {
         // virtualized, so assert on the first row ("Stock picks" sorts
         // above "Cash") and on the empty state being gone.
         await _waitForUrl(tester, view, '/', seconds: 30);
-        await _waitFor(tester, find.text('Accounts'), seconds: 30);
         await _waitFor(tester, find.text('Stock picks'), seconds: 30);
         expect(
           find.text('No accounts yet'),
@@ -91,12 +90,10 @@ void main() {
         await _waitForUrl(tester, view, '/users/settings', seconds: 30);
         await tester.pumpAndSettle();
 
-        // Demo users see the claim hint and their email is not sudo-locked.
+        // Demo users see the claim banner and their email is not sudo-locked.
         await _waitFor(
           tester,
-          find.text(
-            "You're using a demo account. Set your email to claim this account and keep your data.",
-          ),
+          find.text('Claim the account by setting your email.'),
           seconds: 30,
         );
         expect(
@@ -108,6 +105,19 @@ void main() {
         // Change the email to a unique address, without any password prompt.
         final newEmail =
             'demo+${DateTime.now().millisecondsSinceEpoch}@example.com';
+        final claimButton = find.widgetWithText(TextButton, 'Claim');
+        await _waitFor(tester, claimButton, seconds: 30);
+        await tester.ensureVisible(claimButton.last);
+        await tester.pump();
+        await tester.tap(claimButton.last);
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/settings/email',
+          seconds: 30,
+        );
+        await tester.pumpAndSettle();
+
         final emailField = find.widgetWithText(TextField, 'Email');
         await _waitFor(tester, emailField, seconds: 30);
         await tester.enterText(emailField, newEmail);

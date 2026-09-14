@@ -98,20 +98,25 @@ void main() {
         await _waitFor(tester, nextButton, seconds: 30);
         await tester.tap(nextButton.last);
 
-        // Wait for the app bar to show the signed-in user's email.
-        await _waitFor(tester, find.text(email), seconds: 30);
+        // Wait for the accounts landing page after onboarding.
+        await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
         await tester.pumpAndSettle();
 
-        // Navigate directly to the settings page.
+        // Navigate to the settings page, then into the appearance sub-page
+        // where the theme tiles live.
         await view.livePatch('/users/settings');
         await _waitForUrl(tester, view, '/users/settings', seconds: 30);
         await _waitFor(tester, find.text('Appearance'), seconds: 30);
+        await tester.tap(find.text('Appearance').hitTestable().last);
+        await tester.pump();
+        await _waitForUrl(tester, view, '/users/settings/theme', seconds: 30);
+        await _waitFor(tester, find.text('Ocean'), seconds: 30);
 
         // Ocean is a premium theme; non-Pro users are redirected to /pro.
-        final oceanButton = find.widgetWithText(ElevatedButton, 'Ocean');
-        await tester.ensureVisible(oceanButton);
+        final oceanTile = find.text('Ocean').hitTestable().last;
+        await tester.ensureVisible(oceanTile);
         await tester.pumpAndSettle();
-        await tester.tap(oceanButton);
+        await tester.tap(oceanTile);
         await tester.pumpAndSettle();
 
         await _waitForUrl(tester, view, '/pro', seconds: 30);
@@ -132,9 +137,14 @@ void main() {
         await _waitFor(tester, find.text('Appearance'), seconds: 30);
 
         // Now that the user is Pro, the Ocean theme can be selected.
-        await tester.ensureVisible(oceanButton);
+        await tester.tap(find.text('Appearance').hitTestable().last);
+        await tester.pump();
+        await _waitForUrl(tester, view, '/users/settings/theme', seconds: 30);
+        await _waitFor(tester, find.text('Ocean'), seconds: 30);
+        final proOceanTile = find.text('Ocean').hitTestable().last;
+        await tester.ensureVisible(proOceanTile);
         await tester.pumpAndSettle();
-        await tester.tap(oceanButton);
+        await tester.tap(proOceanTile);
         await tester.pumpAndSettle();
 
         expect(

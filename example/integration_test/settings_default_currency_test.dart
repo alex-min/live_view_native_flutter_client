@@ -100,39 +100,35 @@ void main() {
         await _waitFor(tester, nextButton, seconds: 30);
         await tester.tap(nextButton.last);
 
-        // Wait for the app bar to show the signed-in user's email.
-        await _waitFor(tester, find.text(email), seconds: 30);
+        // Wait for the accounts landing page after onboarding.
+        await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
         await tester.pumpAndSettle();
 
         // Navigate directly to the settings page.
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
         await _waitFor(tester, find.text('Default currency'), seconds: 30);
 
-        // A fresh user defaults to EUR, shown in the currency input.
-        final currentCurrency = find.textContaining('EUR (€)');
+        // A fresh user defaults to EUR, shown as the row value badge
+        // ("{code} · {symbol}", same label as the mobile web menu).
+        final currentCurrency = find.textContaining('EUR ·');
         await _waitFor(tester, currentCurrency, seconds: 30);
 
-        // Open the dropdown by tapping the field.
-        await tester.ensureVisible(currentCurrency);
-        await tester.tap(currentCurrency);
+        // Open the full-page currency picker by tapping the row.
+        await tester.ensureVisible(currentCurrency.hitTestable().last);
+        await tester.tap(currentCurrency.hitTestable().last);
         await tester.pump();
-
-        // The overlay search field is identified by its hint (autofocus is
-        // not reliable in headless runs where the window has no focus).
-        await _waitFor(tester, find.byType(TextField), seconds: 30);
-        final searchField = find.byWidgetPredicate(
-          (widget) =>
-              widget is TextField &&
-              (widget.decoration?.hintText?.toLowerCase().contains(
-                        'currency',
-                      ) ??
-                  false),
+        await _waitForUrl(
+          tester,
+          view,
+          '/currencies',
+          seconds: 30,
         );
-        await _waitFor(tester, searchField, seconds: 30);
+        await _waitFor(tester, find.text('Currency picker'), seconds: 30);
 
-        // Filtering happens client-side; search by code to stay
-        // locale-independent.
-        await tester.enterText(searchField.first, 'USD');
+        // The picker filters server-side through phx-change; search by code
+        // to stay locale-independent.
+        await _waitFor(tester, find.byType(TextField), seconds: 30);
+        await tester.enterText(find.byType(TextField).first, 'USD');
         await tester.pump();
 
         final usdRow = find.textContaining('USD (');
@@ -140,25 +136,14 @@ void main() {
         await tester.tap(usdRow.last);
         await tester.pump();
 
-        // The dropdown closes and the field shows the staged currency.
-        await _waitForDisappearance(
-          tester,
-          find.textContaining('EUR (€)'),
-          seconds: 30,
-        );
-
-        // Saving persists the new default currency.
-        final saveButton = find.widgetWithText(ElevatedButton, 'Save');
-        await tester.ensureVisible(saveButton);
-        await tester.pumpAndSettle();
-        await tester.tap(saveButton);
-        await tester.pump();
-
-        await _waitFor(tester, find.textContaining('USD ('), seconds: 30);
+        // Selecting a currency saves it server-side and navigates back to the
+        // settings menu.
+        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+        await _waitFor(tester, find.textContaining('USD ·'), seconds: 30);
         expect(
-          find.textContaining('USD ('),
-          findsOneWidget,
-          reason: 'The saved currency should be shown in the currency input',
+          find.textContaining('USD ·'),
+          findsWidgets,
+          reason: 'The saved currency should be shown as the row value badge',
         );
       },
       timeout: const Timeout(Duration(minutes: 3)),

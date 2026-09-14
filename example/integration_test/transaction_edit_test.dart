@@ -304,23 +304,34 @@ void main() {
         await _createAccount(tester, view, name: 'Checking', balance: '200');
         await _createAccount(tester, view, name: 'Savings', balance: '50');
 
-        final transferButton = find.ancestor(
-          of: find.byWidgetPredicate(
-            (widget) =>
-                widget is Text &&
-                (widget.data == 'Transfer' || widget.data == 'Virement'),
-          ),
-          matching: find.byType(TextButton),
-        );
-        await _waitFor(tester, transferButton, seconds: 30);
-        await tester.ensureVisible(transferButton.last);
-        await tester.tap(transferButton.last);
+        // The transfer quick action is desktop-only on the mobile web
+        // accounts page; create the transfer from the FAB and pick the
+        // "Transfer" type in the form instead.
+        await tester.tap(find.byIcon(Icons.add).last);
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/transactions/new\?type=transfer$'),
+          RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
           seconds: 30,
         );
+        await _waitFor(tester, find.byType(Form), seconds: 30);
+
+        final typeDropdown = find
+            .descendant(
+              of: find.byType(Form),
+              matching: find.byType(DropdownButton<String>),
+            )
+            .first;
+        await tester.tap(typeDropdown);
+        await tester.pumpAndSettle();
+        final transferOption = find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data == 'Transfer' || widget.data == 'Virement'),
+        );
+        await _waitFor(tester, transferOption, seconds: 30);
+        await tester.tap(transferOption.last);
+        await tester.pumpAndSettle();
         await _waitFor(tester, find.byType(Form), seconds: 30);
 
         final dropdowns = find

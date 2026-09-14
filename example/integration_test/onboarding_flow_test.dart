@@ -37,6 +37,16 @@ void main() {
         view.throttleSpammyCalls = false;
 
         await tester.pumpWidget(_TestApp(view: view));
+        // Onboarding is unreliable at mobile sizes, so run it at a large
+        // viewport first and switch to mobile afterwards for the bottom
+        // navigation (the bar only builds below the client's 600px desktop
+        // breakpoint).
+        tester.view.physicalSize = const Size(1280, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
         await view.connect('http://$_serverHost:$_serverPort/');
 
         // Tap the sign-up button on the home page to navigate to the
@@ -124,19 +134,14 @@ void main() {
         await _waitFor(tester, nextButton, seconds: 30);
         await tester.tap(nextButton.last);
 
-        // Wait for the app bar to show the signed-in user's email.
-        await _waitFor(tester, find.text(email), seconds: 30);
+        // Switch to a mobile viewport so the bottom navigation bar builds.
+        tester.view.physicalSize = const Size(400, 800);
         await tester.pumpAndSettle();
 
-        // The email is inside a TextButton wrapped with AbsorbPointer, so the
-        // text itself is not hit-testable. Tap the button that contains it.
-        final settingsButton = find.widgetWithText(LiveTextButton, email).last;
-        expect(
-          settingsButton,
-          findsOneWidget,
-          reason: 'The app bar should contain a settings button for the user',
-        );
-        await tester.tap(settingsButton);
+        // Navigate to the settings page through the bottom navigation.
+        await _waitFor(tester, find.text('Settings'), seconds: 30);
+        final settingsItem = find.text('Settings').hitTestable().last;
+        await tester.tap(settingsItem);
         await tester.pump();
 
         // Wait for the settings form to appear.
@@ -172,7 +177,9 @@ Future<void> _waitFor(
     }
     await Future.delayed(const Duration(seconds: 1));
   }
-  throw Exception('Timed out waiting for $finder');
+  throw Exception(
+    'Timed out waiting for $finder. Visible text: ${find.byType(Text).evaluate().map((e) => (e.widget as Text).data).whereType<String>().take(25).join(' | ')}',
+  );
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url].
