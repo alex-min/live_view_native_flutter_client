@@ -160,31 +160,10 @@ void main() {
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
         // Mavio's edit screen replaces the normal navigation with one centered
-        // close button. Closing returns to the same transaction-list route.
-        await _waitFor(tester, find.byType(BottomNavigationBar));
-        final invisibleNavigation = tester.widget<BottomNavigationBar>(
-          find.byType(BottomNavigationBar),
-        );
-        expect(invisibleNavigation.selectedItemColor, Colors.transparent);
-        expect(invisibleNavigation.unselectedItemColor, Colors.transparent);
-        expect(
-          find.ancestor(
-            of: find.byType(BottomNavigationBar),
-            matching: find.byWidgetPredicate(
-              (widget) => widget is IgnorePointer && widget.ignoring,
-            ),
-          ),
-          findsOneWidget,
-        );
-        final invisibleBar = tester.widget<BottomAppBar>(
-          find.byType(BottomAppBar),
-        );
-        expect(invisibleBar.color, Colors.transparent);
-        expect(invisibleBar.elevation, 0);
-        expect(
-          tester.widget<Scaffold>(find.byType(Scaffold)).extendBody,
-          isTrue,
-        );
+        // close button and no bottom bar at all. Closing returns to the same
+        // transaction-list route.
+        expect(find.byType(BottomAppBar), findsNothing);
+        expect(find.byType(BottomNavigationBar), findsNothing);
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
         await tester.tap(closeButton);
