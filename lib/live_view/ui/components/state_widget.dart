@@ -37,7 +37,11 @@ Map<String, dynamic> mergeVariables(
   for (var entry in overlay.entries) {
     var existing = result[entry.key];
     var value = entry.value;
-    if (existing is Map && value is Map) {
+    // A map carrying statics is a complete section replacement (e.g. an
+    // if/else or case switching back to a previous branch). Merging it
+    // recursively with the previously rendered section would retain stale
+    // keys (comprehension rows, prior branch slots) and corrupt the render.
+    if (existing is Map && value is Map && !value.containsKey('s')) {
       result[entry.key] = mergeVariables(
         Map<String, dynamic>.from(existing),
         Map<String, dynamic>.from(value),
