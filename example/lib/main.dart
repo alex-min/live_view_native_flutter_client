@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
       Platform.isAndroid
           ?
           // android emulator
-          'https://alex-thinkpad.tailb56625.ts.net'
+          'https://finance.mavio.fr'
           // computer
           : 'http://localhost:4000',
     );
