@@ -295,20 +295,13 @@ void main() {
         );
         await _waitFor(tester, find.byType(Form), seconds: 30);
 
-        final typeDropdown = find
-            .descendant(
-              of: find.byType(Form),
-              matching: find.byType(DropdownButton<String>),
-            )
-            .first;
-        await tester.tap(typeDropdown);
-        await tester.pumpAndSettle();
         final transferOption = find.byWidgetPredicate(
           (widget) =>
               widget is Text &&
               (widget.data == 'Transfer' || widget.data == 'Virement'),
         );
         await _waitFor(tester, transferOption, seconds: 30);
+        await tester.ensureVisible(transferOption.last);
         await tester.tap(transferOption.last);
         await tester.pumpAndSettle();
         await _waitFor(tester, find.byType(Form), seconds: 30);
@@ -319,11 +312,11 @@ void main() {
               matching: find.byType(DropdownButton<String>),
             )
             .hitTestable();
-        expect(dropdowns, findsNWidgets(3));
+        expect(dropdowns, findsNWidgets(2));
 
         // The newest account (Savings) is selected as the source. Choose
         // Checking in the destination dropdown.
-        await tester.tap(dropdowns.at(2));
+        await tester.tap(dropdowns.at(1));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Checking').last);
         await tester.pumpAndSettle();

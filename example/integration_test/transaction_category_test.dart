@@ -112,8 +112,8 @@ void main() {
         );
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
-        // The type and account dropdowns remain; the category is picked
-        // through a dedicated picker view (mavio's CategoryPage).
+        // The type is a mobile-style pill strip; the account remains a
+        // dropdown and the category uses its dedicated picker view.
         final dropdowns = find.descendant(
           of: find.byType(Form),
           matching: find.byType(DropdownButton<String>),
@@ -121,8 +121,8 @@ void main() {
         await _waitFor(tester, dropdowns, seconds: 30);
         expect(
           dropdowns,
-          findsNWidgets(2),
-          reason: 'The transaction form should have two dropdowns',
+          findsOneWidget,
+          reason: 'The transaction form should have one account dropdown',
         );
 
         // Open the category picker from the form field.

@@ -160,7 +160,6 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                   scaleMinimum: animatedFrame.minimum,
                   scaleMaximum: animatedFrame.maximum,
                   lineColor: lineColor,
-                  gridColor: Theme.of(context).colorScheme.outlineVariant,
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   tooltipColor: Theme.of(context).colorScheme.inverseSurface,
                   tooltipTextColor:
@@ -174,9 +173,9 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                   left: 12,
                   right: 12,
                   child: IgnorePointer(
-                    ignoring: compactOpacity < 0.95,
+                    ignoring: false,
                     child: Opacity(
-                      opacity: compactOpacity,
+                      opacity: 1,
                       child: SizedBox(
                         key: const ValueKey('balance_chart_compact_header'),
                         height: 48,
@@ -269,20 +268,23 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(
-                                    compactTitle,
-                                    maxLines: 2,
-                                    textAlign: TextAlign.right,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
-                                      fontSize: 13,
-                                      height: 1.05,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: -0.1,
+                                  child: Opacity(
+                                    opacity: compactOpacity,
+                                    child: Text(
+                                      compactTitle,
+                                      maxLines: 2,
+                                      textAlign: TextAlign.right,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                        fontSize: 13,
+                                        height: 1.05,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.1,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -417,7 +419,6 @@ class BalanceHistoryPainter extends CustomPainter {
   final double? scaleMinimum;
   final double? scaleMaximum;
   final Color lineColor;
-  final Color gridColor;
   final Color backgroundColor;
   final Color tooltipColor;
   final Color tooltipTextColor;
@@ -432,7 +433,6 @@ class BalanceHistoryPainter extends CustomPainter {
     this.scaleMinimum,
     this.scaleMaximum,
     required this.lineColor,
-    required this.gridColor,
     this.backgroundColor = Colors.transparent,
     this.tooltipColor = const Color(0xFF24212F),
     this.tooltipTextColor = Colors.white,
@@ -453,19 +453,6 @@ class BalanceHistoryPainter extends CustomPainter {
     final minimum = scaleMinimum ?? points.reduce(math.min);
     final maximum = scaleMaximum ?? points.reduce(math.max);
     final range = math.max(maximum - minimum, 1.0);
-
-    final gridPaint =
-        Paint()
-          ..color = gridColor.withValues(alpha: 0.55)
-          ..strokeWidth = 1;
-    for (var row = 0; row < 3; row++) {
-      final y = topPadding + height * row / 2;
-      canvas.drawLine(
-        Offset(horizontalPadding, y),
-        Offset(size.width - horizontalPadding, y),
-        gridPaint,
-      );
-    }
 
     Offset offsetFor(int index) {
       final x =
@@ -603,7 +590,6 @@ class BalanceHistoryPainter extends CustomPainter {
       oldDelegate.scaleMinimum != scaleMinimum ||
       oldDelegate.scaleMaximum != scaleMaximum ||
       oldDelegate.lineColor != lineColor ||
-      oldDelegate.gridColor != gridColor ||
       oldDelegate.backgroundColor != backgroundColor ||
       oldDelegate.tooltipColor != tooltipColor ||
       oldDelegate.tooltipTextColor != tooltipTextColor ||

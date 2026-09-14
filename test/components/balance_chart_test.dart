@@ -142,12 +142,18 @@ void main() {
     );
     expect(painter().selectedIndex, 2);
     Opacity compactOpacity() => tester.widget<Opacity>(
-      find.ancestor(
-        of: find.text('Compact account'),
-        matching: find.byType(Opacity),
-      ),
+      find
+          .ancestor(
+            of: find.text('Compact account'),
+            matching: find.byType(Opacity),
+          )
+          .first,
     );
     expect(compactOpacity().opacity, 0);
+    expect(
+      find.byKey(const ValueKey('balance_chart_search_button')),
+      findsOneWidget,
+    );
 
     scrollable.position.jumpTo(80);
     await tester.pump();

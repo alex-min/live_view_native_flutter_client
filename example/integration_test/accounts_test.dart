@@ -177,6 +177,7 @@ void main() {
         expect(find.byType(LiveCosmicBackground), findsWidgets);
         expect(find.text('RECENT EXPENSES'), findsOneWidget);
         expect(find.text('View all'), findsOneWidget);
+        expect(find.text('€42.50'), findsWidgets);
         // The old Mavio-style home is gone: no quick actions, no fake chart,
         // no balance eye toggle.
         expect(find.text('Send'), findsNothing);
@@ -186,7 +187,6 @@ void main() {
         await tester.drag(find.byType(ListView).last, const Offset(0, -300));
         await tester.pump();
         expect(find.text('No expenses yet'), findsOneWidget);
-        expect(find.text('€42.50'), findsWidgets);
 
         // Contacts use the same server-backed CRUD flow on Flutter.
         await view.livePatch('/contacts');
@@ -241,10 +241,10 @@ void main() {
           of: find.byType(Form),
           matching: find.byType(DropdownButton<String>),
         );
-        expect(loanDropdowns, findsNWidgets(3));
+        expect(loanDropdowns, findsNWidgets(2));
         expect(find.text('Category'), findsNothing);
 
-        await tester.tap(loanDropdowns.at(1));
+        await tester.tap(loanDropdowns.at(0));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Alex Martin').last);
         await tester.pumpAndSettle();
@@ -331,9 +331,9 @@ void main() {
           of: find.byType(Form),
           matching: find.byType(DropdownButton<String>),
         );
-        expect(borrowingDropdowns, findsNWidgets(3));
+        expect(borrowingDropdowns, findsNWidgets(2));
         expect(find.text('Category'), findsNothing);
-        await tester.tap(borrowingDropdowns.at(1));
+        await tester.tap(borrowingDropdowns.at(0));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Alex Martin').last);
         await tester.pumpAndSettle();
@@ -504,7 +504,7 @@ void main() {
         final headerDelegate =
             pinnedHeader.delegate as CollapsibleInfiniteListHeaderDelegate;
         expect(pinnedHeader.pinned, isTrue);
-        expect(headerDelegate.maxExtent, 390);
+        expect(headerDelegate.maxExtent, 430);
         expect(headerDelegate.minExtent, 120);
 
         final collapsibleScroll = tester.state<ScrollableState>(
@@ -558,7 +558,7 @@ void main() {
               ),
             )
             .painter! as BalanceHistoryPainter;
-        expect(scrolledBalancePainter.selectedIndex, initialSelectedPoint - 1);
+        expect(scrolledBalancePainter.selectedIndex, initialSelectedPoint);
         expect(
           tester.getSize(
             find
@@ -793,7 +793,7 @@ void main() {
           reason: 'Scrolling should move the overview out of view',
         );
         await tester.scrollUntilVisible(
-          find.text('Stock picks'),
+          find.text('Stock picks').last,
           120,
           scrollable: find
               .descendant(
