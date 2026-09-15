@@ -7,7 +7,7 @@ import '../test_helpers.dart';
 
 void main() {
   testWidgets(
-    'cosmicBackground layers the animated background behind content',
+    'cosmicBackground layers the static ambient wash behind content',
     (tester) async {
       var (view, _) = await connect(
         LiveView(),
