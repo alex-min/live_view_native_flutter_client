@@ -118,6 +118,17 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         expect(find.byIcon(Icons.payments), findsOneWidget);
+        final accountsCard = find
+            .ancestor(
+              of: find.text('Your accounts'),
+              matching: find.byType(Card),
+            )
+            .hitTestable();
+        expect(accountsCard, findsOneWidget);
+        final accountsRect = tester.getRect(accountsCard);
+        final scaffoldWidth = tester.getSize(find.byType(Scaffold).first).width;
+        expect(accountsRect.left, 0);
+        expect(accountsRect.right, scaffoldWidth);
         expect(
           find.text('€42.50'),
           findsAtLeastNWidgets(2),
