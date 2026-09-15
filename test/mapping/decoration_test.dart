@@ -3,6 +3,37 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/mapping/decoration.dart';
 
 void main() {
+  testWidgets('parse circle decoration shape', (tester) async {
+    await tester.pumpWidget(
+      Builder(
+        builder: (context) {
+          expect(
+            getDecoration(context, 'background: #5353E5; shape: circle'),
+            const BoxDecoration(
+              color: Color(0xFF5353E5),
+              shape: BoxShape.circle,
+            ),
+          );
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  });
+
+  testWidgets('parse Flutter color decoration property', (tester) async {
+    await tester.pumpWidget(
+      Builder(
+        builder: (context) {
+          expect(
+            getDecoration(context, 'color: #5353E5'),
+            const BoxDecoration(color: Color(0xFF5353E5)),
+          );
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  });
+
   testWidgets('parse solid color decoration', (tester) async {
     await tester.pumpWidget(
       Builder(

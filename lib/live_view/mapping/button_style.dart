@@ -4,7 +4,9 @@ import 'package:liveview_flutter/live_view/mapping/css.dart';
 import 'package:liveview_flutter/live_view/mapping/edge_insets.dart';
 import 'package:liveview_flutter/live_view/mapping/material_tap_target_size.dart';
 import 'package:liveview_flutter/live_view/mapping/number.dart';
+import 'package:liveview_flutter/live_view/mapping/style_warnings.dart';
 import 'package:liveview_flutter/live_view/mapping/text_style_map.dart';
+import 'package:liveview_flutter/live_view/mapping/visual_density.dart';
 
 ButtonStyle? getButtonStyle(BuildContext context, String? style) {
   if (style == null) {
@@ -18,6 +20,7 @@ ButtonStyle? getButtonStyle(BuildContext context, String? style) {
   MaterialStateProperty<EdgeInsetsGeometry?>? padding;
   MaterialStateProperty<OutlinedBorder?>? shape;
   MaterialTapTargetSize? tapTargetSize;
+  VisualDensity? visualDensity;
 
   for (var (styleKey, styleValue) in parseCss(style)) {
     switch (styleKey) {
@@ -41,6 +44,10 @@ ButtonStyle? getButtonStyle(BuildContext context, String? style) {
         shape = _parseShape(styleValue);
       case 'tapTargetSize':
         tapTargetSize = getMaterialTapTargetSize(styleValue);
+      case 'visualDensity':
+        visualDensity = getVisualDensity(styleValue);
+      default:
+        warnInvalidStyle('button', 'unknown property "$styleKey"');
     }
   }
   return ButtonStyle(
@@ -52,6 +59,7 @@ ButtonStyle? getButtonStyle(BuildContext context, String? style) {
     padding: padding,
     shape: shape,
     tapTargetSize: tapTargetSize,
+    visualDensity: visualDensity,
   );
 }
 

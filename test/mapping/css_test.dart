@@ -9,6 +9,10 @@ void main() {
     expect(parseCss('    hello  :   world    '), [('hello', 'world')]);
 
     expect(parseCss('hello: world; a: b'), [('hello', 'world'), ('a', 'b')]);
+    expect(parseCss('padding: 0 8; minimumSize: 36 36'), [
+      ('padding', '0 8'),
+      ('minimumSize', '36 36'),
+    ]);
     expect(parseCss('  hello  : world     ; a  : b  '), [
       ('hello', 'world'),
       ('a', 'b'),

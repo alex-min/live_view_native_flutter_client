@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
 import 'package:liveview_flutter/live_view/mapping/material_state.dart';
+import 'package:liveview_flutter/live_view/mapping/style_warnings.dart';
 
 Map<String, TextStyle?> getTextStyleMap(BuildContext context) => {
   'headlineLarge': Theme.of(context).textTheme.headlineLarge,
@@ -85,7 +86,8 @@ TextStyle? getTextStyle(String? style, BuildContext context) {
           if (textThemeMap.containsKey(styleValue)) {
             finalStyle = finalStyle.merge(textThemeMap[styleValue]);
           } else {
-            debugPrint(
+            warnInvalidStyle(
+              'text',
               "Unknown textTheme: $styleValue, supported text styles: ${textThemeMap.keys.join(', ')}",
             );
           }
@@ -103,7 +105,8 @@ TextStyle? getTextStyle(String? style, BuildContext context) {
               ),
             );
           } else {
-            debugPrint(
+            warnInvalidStyle(
+              'text',
               "Unknown fontStyle: $styleValue, supported text styles: ${fontStyleMap.keys.join(', ')}",
             );
           }
@@ -116,7 +119,8 @@ TextStyle? getTextStyle(String? style, BuildContext context) {
               ),
             );
           } else {
-            debugPrint(
+            warnInvalidStyle(
+              'text',
               "Unknown fontWeight: $styleValue, supported text styles: ${textFontMap.keys.join(', ')}",
             );
           }
@@ -125,17 +129,17 @@ TextStyle? getTextStyle(String? style, BuildContext context) {
           if (value != null) {
             finalStyle = finalStyle.merge(TextStyle(fontSize: value));
           } else {
-            debugPrint("Invalid fontSize $styleValue");
+            warnInvalidStyle('text', 'invalid fontSize "$styleValue"');
           }
         case 'letterSpacing':
           final value = double.tryParse(styleValue);
           if (value != null) {
             finalStyle = finalStyle.merge(TextStyle(letterSpacing: value));
           } else {
-            debugPrint("Invalid letterSpacing $styleValue");
+            warnInvalidStyle('text', 'invalid letterSpacing "$styleValue"');
           }
         default:
-          debugPrint("Unknown property $styleKey");
+          warnInvalidStyle('text', 'unknown property "$styleKey"');
       }
     }
     return finalStyle;

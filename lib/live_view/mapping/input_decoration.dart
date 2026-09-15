@@ -4,6 +4,7 @@ import 'package:liveview_flutter/live_view/mapping/border_radius.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
 import 'package:liveview_flutter/live_view/mapping/edge_insets.dart';
+import 'package:liveview_flutter/live_view/mapping/style_warnings.dart';
 
 InputDecoration getInputDecoration(
   BuildContext context,
@@ -33,6 +34,8 @@ InputDecoration getInputDecoration(
         borderRadius = getBorderRadius(value);
       case 'contentPadding':
         contentPadding = getEdgeInsets(value);
+      default:
+        warnInvalidStyle('input decoration', 'unknown property "$prop"');
     }
   }
 
@@ -93,6 +96,7 @@ InputDecoration getInputDecoration(
         ),
       );
     default:
+      warnInvalidStyle('input decoration', 'unknown border "$value"');
       return null;
   }
 }

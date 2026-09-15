@@ -59,6 +59,11 @@ void main() {
     expect(style?.tapTargetSize, MaterialTapTargetSize.shrinkWrap);
   });
 
+  testWidgets('parse visual density', (tester) async {
+    var style = await loadStyle(tester, 'visualDensity: compact');
+    expect(style?.visualDensity, VisualDensity.compact);
+  });
+
   testWidgets('parse radius shape', (tester) async {
     var style = await loadStyle(tester, 'shape: { radius 30 }');
     expect(

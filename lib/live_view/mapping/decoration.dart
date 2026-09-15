@@ -3,6 +3,7 @@ import 'package:liveview_flutter/live_view/mapping/border.dart';
 import 'package:liveview_flutter/live_view/mapping/border_radius.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
+import 'package:liveview_flutter/live_view/mapping/style_warnings.dart';
 
 Decoration? getDecoration(BuildContext context, String? css) {
   if (css == null) {
@@ -14,10 +15,13 @@ Decoration? getDecoration(BuildContext context, String? css) {
   Border? border;
   Gradient? gradient;
   List<BoxShadow>? boxShadow;
+  BoxShape shape = BoxShape.rectangle;
 
   for (var (prop, value) in parseCss(css)) {
     switch (prop) {
       case 'background':
+        color = getColor(context, value);
+      case 'color':
         color = getColor(context, value);
       case 'borderRadius':
         borderRadius = getBorderRadius(value);
@@ -30,6 +34,17 @@ Decoration? getDecoration(BuildContext context, String? css) {
         if (shadow != null) {
           boxShadow = [shadow];
         }
+      case 'shape':
+        switch (value) {
+          case 'circle':
+            shape = BoxShape.circle;
+          case 'rectangle':
+            shape = BoxShape.rectangle;
+          default:
+            warnInvalidStyle('decoration', 'unknown shape "$value"');
+        }
+      default:
+        warnInvalidStyle('decoration', 'unknown property "$prop"');
     }
   }
 
@@ -39,6 +54,7 @@ Decoration? getDecoration(BuildContext context, String? css) {
     border: border,
     gradient: gradient,
     boxShadow: boxShadow,
+    shape: shape,
   );
 }
 
@@ -53,7 +69,10 @@ Decoration? getDecoration(BuildContext context, String? css) {
 ///   gradient: radial #5353E5 0.0 #D94FC3 1.0
 Gradient? _parseGradient(BuildContext context, String value) {
   var parts = value.trim().split(RegExp(r'\s+'));
-  if (parts.length < 3) return null;
+  if (parts.length < 3) {
+    warnInvalidStyle('decoration', 'invalid gradient "$value"');
+    return null;
+  }
 
   var type = parts.first;
   var colors = <Color>[];
@@ -84,6 +103,7 @@ Gradient? _parseGradient(BuildContext context, String value) {
     case 'radial':
       return RadialGradient(colors: colors, stops: stops);
     default:
+      warnInvalidStyle('decoration', 'unknown gradient type "$type"');
       return null;
   }
 }
@@ -99,13 +119,17 @@ Gradient? _parseGradient(BuildContext context, String value) {
 ///   boxShadow: { 0 4 12 0 #805353E5 }
 BoxShadow? _parseBoxShadow(BuildContext context, String value) {
   var parts = value.trim().split(RegExp(r'\s+'));
-  if (parts.length < 4) return null;
+  if (parts.length < 4) {
+    warnInvalidStyle('decoration', 'invalid boxShadow "$value"');
+    return null;
+  }
 
   var offsetX = double.tryParse(parts[0]);
   var offsetY = double.tryParse(parts[1]);
   var blurRadius = double.tryParse(parts[2]);
 
   if (offsetX == null || offsetY == null || blurRadius == null) {
+    warnInvalidStyle('decoration', 'invalid boxShadow "$value"');
     return null;
   }
 
@@ -125,7 +149,10 @@ BoxShadow? _parseBoxShadow(BuildContext context, String value) {
   }
 
   var color = getColor(context, colorToken);
-  if (color == null) return null;
+  if (color == null) {
+    warnInvalidStyle('decoration', 'invalid boxShadow color "$colorToken"');
+    return null;
+  }
 
   return BoxShadow(
     offset: Offset(offsetX, offsetY),

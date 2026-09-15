@@ -1,62 +1,75 @@
-extension StringX on String {
-  isNumber() {
-    var val = codeUnitAt(0);
-    return val >= 48 && val <= 57;
-  }
+import 'package:liveview_flutter/live_view/mapping/style_warnings.dart';
 
-  isLetterOrNumber() {
-    var val = codeUnitAt(0);
-    return (val >= 97 && val <= 122) ||
-        (val >= 65 && val <= 90) ||
-        (val >= 48 && val <= 57) ||
-        this == '#' ||
-        this == '@' ||
-        this == '.';
+extension StringX on String {
+  bool isNumber() {
+    final value = codeUnitAt(0);
+    return value >= 48 && value <= 57;
   }
 }
 
 List<(String, String)> parseCss(String style) {
-  style = style.replaceAll("\n", "");
-  var currentToken = 0;
-  List<String> css = [];
+  final declarations = <(String, String)>[];
+  var cursor = 0;
 
-  while (currentToken < style.length) {
-    if (style[currentToken].isLetterOrNumber()) {
-      var from = currentToken;
-      while (currentToken < style.length &&
-          style[currentToken].isLetterOrNumber()) {
-        currentToken++;
+  while (cursor < style.length) {
+    while (cursor < style.length &&
+        (style[cursor].trim().isEmpty || style[cursor] == ';')) {
+      cursor++;
+    }
+    if (cursor >= style.length) break;
+
+    final propertyStart = cursor;
+    while (cursor < style.length && style[cursor] != ':') {
+      cursor++;
+    }
+    if (cursor >= style.length) {
+      warnInvalidStyle(
+        'CSS',
+        'missing value for property "${style.substring(propertyStart).trim()}" in "$style"',
+      );
+      break;
+    }
+
+    final property = style
+        .substring(propertyStart, cursor)
+        .trim()
+        .replaceFirst(RegExp(r'^[^A-Za-z0-9@#]+'), '');
+    cursor++;
+    while (cursor < style.length && style[cursor].trim().isEmpty) {
+      cursor++;
+    }
+
+    String value;
+    if (cursor < style.length && style[cursor] == '{') {
+      cursor++;
+      final valueStart = cursor;
+      var depth = 1;
+      while (cursor < style.length && depth > 0) {
+        if (style[cursor] == '{') depth++;
+        if (style[cursor] == '}') depth--;
+        cursor++;
       }
-      css.add(style.substring(from, currentToken));
-    } else if (style[currentToken] == '{') {
-      currentToken++;
-      var from = currentToken;
-      var count = 1;
-      while (count != 0 && currentToken < style.length) {
-        if (style[currentToken] == '{') {
-          count++;
-        } else if (style[currentToken] == '}') {
-          count--;
-        }
-        currentToken++;
-      }
-      if (count == 0) {
-        currentToken--;
-      }
-      css.add(style.substring(from, currentToken).trim());
+      value =
+          style.substring(valueStart, depth == 0 ? cursor - 1 : cursor).trim();
     } else {
-      currentToken++;
+      final valueStart = cursor;
+      while (cursor < style.length &&
+          style[cursor] != ';' &&
+          style[cursor] != '\n') {
+        cursor++;
+      }
+      value = style.substring(valueStart, cursor).trim();
+    }
+
+    if (property.isEmpty || value.isEmpty) {
+      warnInvalidStyle(
+        'CSS',
+        'invalid declaration "$property: $value" in "$style"',
+      );
+    } else {
+      declarations.add((property, value));
     }
   }
 
-  // invalid css, we remove the last property
-  if (css.length % 2 == 1) {
-    css.removeLast();
-  }
-
-  List<(String, String)> ret = [];
-  for (var i = 0; i < css.length; i += 2) {
-    ret.add((css[i], css[i + 1]));
-  }
-  return ret;
+  return declarations;
 }
