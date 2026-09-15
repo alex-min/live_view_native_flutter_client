@@ -141,6 +141,8 @@ void main() {
           .first,
     );
     expect(painter().selectedIndex, 2);
+    expect(painter().horizontalInset, 8);
+    expect(painter().bottomInset, 10);
     Opacity compactOpacity() => tester.widget<Opacity>(
       find
           .ancestor(
@@ -173,6 +175,8 @@ void main() {
     );
     expect(compactOpacity().opacity, closeTo(1, 0.0001));
     expect(painter().topInset, closeTo(64, 0.0001));
+    expect(painter().horizontalInset, 0);
+    expect(painter().bottomInset, 0);
     expect(
       find.byKey(const ValueKey('balance_chart_search_button')),
       findsOneWidget,

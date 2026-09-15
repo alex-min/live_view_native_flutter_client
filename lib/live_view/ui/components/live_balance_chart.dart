@@ -165,6 +165,8 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                   tooltipTextColor:
                       Theme.of(context).colorScheme.onInverseSurface,
                   topInset: 12 + 52 * compactOpacity,
+                  horizontalInset: 8 * (1 - collapseProgress),
+                  bottomInset: 10 * (1 - collapseProgress),
                 ),
               ),
               if (compactTitle.isNotEmpty || searchLabel.isNotEmpty)
@@ -423,6 +425,8 @@ class BalanceHistoryPainter extends CustomPainter {
   final Color tooltipColor;
   final Color tooltipTextColor;
   final double topInset;
+  final double horizontalInset;
+  final double bottomInset;
 
   const BalanceHistoryPainter({
     required this.points,
@@ -437,6 +441,8 @@ class BalanceHistoryPainter extends CustomPainter {
     this.tooltipColor = const Color(0xFF24212F),
     this.tooltipTextColor = Colors.white,
     this.topInset = 12,
+    this.horizontalInset = 8,
+    this.bottomInset = 10,
   });
 
   @override
@@ -445,11 +451,9 @@ class BalanceHistoryPainter extends CustomPainter {
 
     canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
-    const horizontalPadding = 8.0;
     final topPadding = math.min(topInset, size.height - 10);
-    const bottomPadding = 10.0;
-    final width = math.max(0, size.width - horizontalPadding * 2);
-    final height = math.max(0, size.height - topPadding - bottomPadding);
+    final width = math.max(0, size.width - horizontalInset * 2);
+    final height = math.max(0, size.height - topPadding - bottomInset);
     final minimum = scaleMinimum ?? points.reduce(math.min);
     final maximum = scaleMaximum ?? points.reduce(math.max);
     final range = math.max(maximum - minimum, 1.0);
@@ -458,7 +462,7 @@ class BalanceHistoryPainter extends CustomPainter {
       final x =
           points.length == 1
               ? size.width / 2
-              : horizontalPadding + width * index / (points.length - 1);
+              : horizontalInset + width * index / (points.length - 1);
       final normalized = (points[index] - minimum) / range;
       return Offset(x, topPadding + height * (1 - normalized));
     }
@@ -480,8 +484,8 @@ class BalanceHistoryPainter extends CustomPainter {
 
     final fill =
         Path.from(line)
-          ..lineTo(offsetFor(points.length - 1).dx, size.height - bottomPadding)
-          ..lineTo(offsetFor(0).dx, size.height - bottomPadding)
+          ..lineTo(offsetFor(points.length - 1).dx, size.height - bottomInset)
+          ..lineTo(offsetFor(0).dx, size.height - bottomInset)
           ..close();
     canvas.drawPath(
       fill,
@@ -593,7 +597,9 @@ class BalanceHistoryPainter extends CustomPainter {
       oldDelegate.backgroundColor != backgroundColor ||
       oldDelegate.tooltipColor != tooltipColor ||
       oldDelegate.tooltipTextColor != tooltipTextColor ||
-      oldDelegate.topInset != topInset;
+      oldDelegate.topInset != topInset ||
+      oldDelegate.horizontalInset != horizontalInset ||
+      oldDelegate.bottomInset != bottomInset;
 }
 
 @visibleForTesting
