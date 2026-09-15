@@ -117,12 +117,7 @@ void main() {
         await tester.ensureVisible(currentCurrency.hitTestable().last);
         await tester.tap(currentCurrency.hitTestable().last);
         await tester.pump();
-        await _waitForUrl(
-          tester,
-          view,
-          '/currencies',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/currencies', seconds: 30);
         await _waitFor(tester, find.text('Currency picker'), seconds: 30);
 
         // The picker filters server-side through phx-change; search by code

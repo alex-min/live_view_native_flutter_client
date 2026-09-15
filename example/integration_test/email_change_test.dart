@@ -166,12 +166,7 @@ void main() {
         final emailRow = find.text('Email').hitTestable().last;
         await _waitFor(tester, emailRow, seconds: 30);
         await tester.tap(emailRow);
-        await _waitForUrl(
-          tester,
-          view,
-          '/users/settings/email',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/users/settings/email', seconds: 30);
         await tester.pumpAndSettle();
 
         // Change the email address.

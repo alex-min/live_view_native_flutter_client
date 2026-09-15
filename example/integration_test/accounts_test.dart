@@ -10,6 +10,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_month_picker_drawer.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_segmented_progress_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -59,8 +60,10 @@ void main() {
         expect(find.text('Saved'), findsNothing);
 
         // Open the creation form.
-        final addAccount =
-            find.widgetWithText(ElevatedButton, 'Create an account');
+        final addAccount = find.widgetWithText(
+          ElevatedButton,
+          'Create an account',
+        );
         await _waitFor(tester, addAccount.hitTestable(), seconds: 30);
         await tester.tap(addAccount.hitTestable().last);
         await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
@@ -278,6 +281,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.byType(LiveBalanceChart), findsOneWidget);
+        expect(find.byType(LiveSegmentedProgressBar), findsOneWidget);
         final activityScroll = tester.state<ScrollableState>(
           find
               .descendant(
@@ -440,17 +444,11 @@ void main() {
         if (cashAccount.evaluate().isEmpty) {
           // The row can sit under the docked action button; nudge the list
           // so it is fully tappable.
-          await tester.drag(
-            visibleList,
-            const Offset(0, -200),
-          );
+          await tester.drag(visibleList, const Offset(0, -200));
           await tester.pump();
         }
         final visibleCashAccount = find
-            .descendant(
-              of: visibleList,
-              matching: find.text('Cash'),
-            )
+            .descendant(of: visibleList, matching: find.text('Cash'))
             .hitTestable();
         await _waitFor(tester, visibleCashAccount, seconds: 30);
         await tester.tap(visibleCashAccount);

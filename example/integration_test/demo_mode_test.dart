@@ -56,7 +56,10 @@ void main() {
           find.text('Try the app').hitTestable(),
           80,
           scrollable: find
-              .descendant(of: settingsList, matching: find.byType(Scrollable))
+              .descendant(
+                of: settingsList,
+                matching: find.byType(Scrollable),
+              )
               .first,
         );
         expect(find.text('Demo the app with fake data'), findsWidgets);
@@ -78,10 +81,7 @@ void main() {
         // Rows build lazily: scroll until the Cash row enters the viewport.
         final visibleList = find.byType(ListView).hitTestable().last;
         await tester.scrollUntilVisible(
-          find.descendant(
-            of: visibleList,
-            matching: find.text('Cash'),
-          ),
+          find.descendant(of: visibleList, matching: find.text('Cash')),
           80,
           scrollable: find
               .descendant(

@@ -13,28 +13,30 @@ const _serverPort = 4000;
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Google sign-in is available on the native login page', (
-    tester,
-  ) async {
-    await _ensureServer();
-    SharedPreferences.setMockInitialValues({});
+  testWidgets(
+    'Google sign-in is available on the native login page',
+    (tester) async {
+      await _ensureServer();
+      SharedPreferences.setMockInitialValues({});
 
-    var view = LiveView()
-      ..catchExceptions = false
-      ..disableAnimations = true
-      ..throttleSpammyCalls = false;
+      var view = LiveView()
+        ..catchExceptions = false
+        ..disableAnimations = true
+        ..throttleSpammyCalls = false;
 
-    await tester.pumpWidget(_TestApp(view));
-    await view.connect('http://$_serverHost:$_serverPort/users/log_in');
+      await tester.pumpWidget(_TestApp(view));
+      await view.connect('http://$_serverHost:$_serverPort/users/log_in');
 
-    for (var i = 0; i < 30; i++) {
-      await tester.pump(const Duration(seconds: 1));
-      if (find.byType(LiveGoogleSignInButton).evaluate().isNotEmpty) break;
-    }
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(LiveGoogleSignInButton).evaluate().isNotEmpty) break;
+      }
 
-    expect(find.byType(LiveGoogleSignInButton), findsOneWidget);
-    expect(find.text('Continue with Google'), findsOneWidget);
-  }, timeout: const Timeout(Duration(minutes: 2)));
+      expect(find.byType(LiveGoogleSignInButton), findsOneWidget);
+      expect(find.text('Continue with Google'), findsOneWidget);
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 }
 
 class _TestApp extends StatelessWidget {
