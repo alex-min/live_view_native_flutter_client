@@ -281,7 +281,13 @@ void main() {
           findsOneWidget,
         );
         expect(find.byType(LiveBalanceChart), findsOneWidget);
-        expect(find.byType(LiveSegmentedProgressBar), findsOneWidget);
+        // The router may retain the outgoing accounts page for one frame.
+        // Assert against the active progress bar rather than counting widgets
+        // owned by both route subtrees during that hand-off.
+        expect(
+          find.byType(LiveSegmentedProgressBar).hitTestable(),
+          findsOneWidget,
+        );
         final activityScroll = tester.state<ScrollableState>(
           find
               .descendant(
