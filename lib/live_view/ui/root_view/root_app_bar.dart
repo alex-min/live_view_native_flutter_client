@@ -5,11 +5,21 @@ import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class RootAppBar extends StatefulWidget implements PreferredSizeWidget {
   final LiveView view;
-  const RootAppBar({super.key, required this.view})
-    : preferredSize = const Size.fromHeight(kToolbarHeight);
+  RootAppBar({super.key, required this.view})
+    : preferredSize = _preferredSize(view);
 
   @override
   final Size preferredSize;
+
+  static Size _preferredSize(LiveView view) {
+    if (view.router.pages.isEmpty) return Size.zero;
+
+    for (final widget in view.router.pages.last.widgets) {
+      if (widget is LiveAppBar) return widget.preferredSize;
+    }
+
+    return Size.zero;
+  }
 
   @override
   State<RootAppBar> createState() => _RootAppBarState();

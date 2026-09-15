@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_appbar.dart';
@@ -55,5 +56,35 @@ void main() {
     expect(find.text('StartupKit'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('Sign up'), findsOneWidget);
+  });
+
+  testWidgets('a zero-height compact app bar leaves no blank top strip', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final view = LiveView()..catchExceptions = false;
+    await tester.pumpWidget(view.rootView);
+
+    const body = '''
+<csrf-token value="csrf"></csrf-token>
+<AppBar toolbarHeight="0" backgroundColor="#00FFFFFF" />
+<div id="phx-id" data-phx-session="session" data-phx-static="static" data-phx-main>
+  <viewBody><Container><Text>Compact page</Text></Container></viewBody>
+</div>
+''';
+
+    final (widgets, rootState) =
+        LiveViewUiParser(
+          html: [body],
+          htmlVariables: {},
+          liveView: view,
+          urlPath: '/',
+          viewType: ViewType.liveView,
+        ).parse();
+
+    view.router.updatePage(url: '/', widget: widgets, rootState: rootState);
+    await tester.pumpAndSettle();
+
+    expect(tester.getSize(find.byKey(const Key('main_app_bar'))).height, 0);
   });
 }

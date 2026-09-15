@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/number.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_leading_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_title_attribute.dart';
@@ -6,8 +7,10 @@ import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class LiveAppBar extends LiveStateWidget<LiveAppBar>
     implements PreferredSizeWidget {
-  const LiveAppBar({super.key, required super.state})
-    : preferredSize = const Size.fromHeight(kToolbarHeight);
+  LiveAppBar({super.key, required super.state})
+    : preferredSize = Size.fromHeight(
+        getDouble(state.node.getAttribute('toolbarHeight')) ?? kToolbarHeight,
+      );
 
   @override
   final Size preferredSize;
