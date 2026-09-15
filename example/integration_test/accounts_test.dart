@@ -572,13 +572,6 @@ void main() {
         );
         expect(find.text('Load more'), findsNothing);
 
-        final innerList = find
-            .descendant(
-              of: find.byType(LiveInfiniteList),
-              matching: find.byType(Scrollable),
-            )
-            .hitTestable()
-            .first;
         final scrollable = collapsibleScroll;
         final fullExtent = scrollable.position.maxScrollExtent;
         expect(fullExtent, greaterThan(40 * 64 * 5));

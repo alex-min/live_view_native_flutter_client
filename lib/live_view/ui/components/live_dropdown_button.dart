@@ -167,7 +167,7 @@ class _LiveDropdownButtonState extends StateWidget<LiveDropdownButton> {
     var items = childrenNodesOf(node, 'DropdownMenuItem').toList();
 
     for (var child in node.children.whereType<XmlText>()) {
-      for (var elementKey in extractDynamicKeys(child.value ?? '')) {
+      for (var elementKey in extractDynamicKeys(child.value)) {
         var vars = widget.state.variables[elementKey.key];
         if (vars is! Map || vars['s'] is! List || vars['d'] is! List) {
           continue;

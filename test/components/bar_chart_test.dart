@@ -55,7 +55,7 @@ void main() {
     await renderChart(tester, '<BarChart income="0" expense="100" />');
 
     final chart = tester.widget<charts.BarChart>(find.byType(charts.BarChart));
-    final series = chart.seriesList.single as charts.Series<dynamic, String>;
+    final series = chart.seriesList.single;
     expect(series.measureFn(0), 4.0);
     expect(series.measureFn(1), 100.0);
   });

@@ -189,7 +189,7 @@ Future<void> _waitForUrl(
 }) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
-    final currentPath = Uri.tryParse(view.currentUrl ?? '')?.path ?? '';
+    final currentPath = Uri.tryParse(view.currentUrl)?.path ?? '';
     if (currentPath == url && view.isCurrentRouteReady) {
       return;
     }

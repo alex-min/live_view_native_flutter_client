@@ -168,22 +168,6 @@ Future<void> _waitFor(
   throw Exception('Timed out waiting for $finder');
 }
 
-/// Waits up to [seconds] for [finder] to stop matching any widget.
-Future<void> _waitForDisappearance(
-  WidgetTester tester,
-  Finder finder, {
-  int seconds = 30,
-}) async {
-  for (var i = 0; i < seconds; i++) {
-    await tester.pump();
-    if (finder.evaluate().isEmpty) {
-      return;
-    }
-    await Future.delayed(const Duration(seconds: 1));
-  }
-  throw Exception('Timed out waiting for $finder to disappear');
-}
-
 /// Waits up to [seconds] for the live view to navigate to [url].
 Future<void> _waitForUrl(
   WidgetTester tester,
@@ -193,7 +177,7 @@ Future<void> _waitForUrl(
 }) async {
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
-    final currentPath = Uri.tryParse(view.currentUrl ?? '')?.path ?? '';
+    final currentPath = Uri.tryParse(view.currentUrl)?.path ?? '';
     if (currentPath == url && view.isCurrentRouteReady) {
       return;
     }

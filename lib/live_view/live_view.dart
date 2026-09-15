@@ -35,7 +35,6 @@ import 'package:phoenix_socket/phoenix_socket.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import "package:universal_html/html.dart" as web_html;
 import 'package:uuid/uuid.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 import './ui/live_view_ui_parser.dart';
 import 'http_client_factory.dart'
