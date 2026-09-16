@@ -788,6 +788,10 @@ class LiveView {
       shortUrlToUri(url),
       headers: {
         ...httpHeaders(),
+        // Dead-view form submissions are infrequent and may follow several
+        // minutes of websocket-only activity. Do not reuse an HTTP socket the
+        // server may have already expired while it was idle.
+        'connection': 'close',
         'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
       },
       body: formValues,
