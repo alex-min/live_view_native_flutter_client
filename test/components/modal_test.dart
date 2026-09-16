@@ -91,4 +91,37 @@ main() async {
       matchesGoldenFile('modal_opened_test.png'),
     );
   });
+
+  testWidgets('dialog presentation renders and dismisses with close event', (
+    tester,
+  ) async {
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '''
+          <flutter>
+            <viewBody>
+              <modal presentation="dialog" close-event="cancel_delete">
+                <title><Text>Delete transaction</Text></title>
+                <content><Text>This cannot be undone.</Text></content>
+              </modal>
+            </viewBody>
+          </flutter>
+          ''',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('Delete transaction'), findsOneWidget);
+    expect(find.text('This cannot be undone.'), findsOneWidget);
+
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+    expect(server.lastChannelAction, liveEvents.event('cancel_delete'));
+  });
 }

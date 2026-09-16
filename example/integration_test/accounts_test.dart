@@ -685,6 +685,8 @@ void main() {
           await _waitFor(tester, deleteButton, seconds: 30);
           await tester.ensureVisible(deleteButton);
           await tester.tap(deleteButton);
+          await _waitFor(tester, find.byType(AlertDialog), seconds: 30);
+          await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
           await _waitForUrl(
             tester,
             view,

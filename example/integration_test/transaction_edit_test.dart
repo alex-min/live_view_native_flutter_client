@@ -220,6 +220,19 @@ void main() {
         );
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
+        final deleteButton = find.widgetWithText(OutlinedButton, 'Delete');
+        await tester.ensureVisible(deleteButton);
+        await tester.pumpAndSettle();
+        await tester.tap(deleteButton);
+        await _waitFor(tester, find.byType(AlertDialog), seconds: 30);
+        expect(
+          find.text('Are you sure you want to delete this transaction?'),
+          findsOneWidget,
+        );
+        await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+
         final editFields = find.descendant(
           of: find.byType(Form),
           matching: find.byType(TextField),

@@ -53,6 +53,10 @@ class _LiveModalState extends StateWidget<LiveModal> {
       showBottomSheet();
       return;
     }
+    if (getAttribute('presentation') == 'dialog') {
+      showDialogModal();
+      return;
+    }
 
     bool fullscreen = booleanAttribute('fullscreen') ?? true;
     isPresented = true;
@@ -86,6 +90,26 @@ class _LiveModalState extends StateWidget<LiveModal> {
         },
       ),
     );
+  }
+
+  void showDialogModal() {
+    isPresented = true;
+    showDialog<void>(
+      context: rootNavigator!.context,
+      useRootNavigator: true,
+      builder: (_) {
+        var children = multipleChildren();
+        var title = StateChild.extractChild<LiveTitleAttribute>(children);
+        var content = StateChild.extractChild<LiveContentAttribute>(children);
+
+        return AlertDialog(title: title, content: content);
+      },
+    ).then((_) {
+      isPresented = false;
+      if (!closingProgrammatically) {
+        sendCloseEvent();
+      }
+    });
   }
 
   void showBottomSheet() {
