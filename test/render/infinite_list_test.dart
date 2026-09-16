@@ -6,6 +6,37 @@ import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart
 import '../test_helpers.dart';
 
 void main() {
+  testWidgets('centers an initial row in a collapsible list viewport', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 400));
+    final children =
+        List.generate(
+          100,
+          (index) => '<SizedBox height="50"><Text>Row $index</Text></SizedBox>',
+        ).join();
+    final (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '<InfiniteList phx-load-page="load_page" totalCount="100" '
+              'pageSize="100" loadedStart="0" loadedCount="100" '
+              'itemExtent="50" collapsibleHeaderHeight="200" '
+              'collapsedHeaderHeight="80" initialScrollIndex="50" '
+              'initialScrollAlignment="center" loadKey="0">'
+              '<Container><Text>Summary header</Text></Container>'
+              '$children</InfiniteList>',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(tester.getCenter(find.text('Row 50')).dy, closeTo(200, 1));
+    expect(server.lastChannelActions, [liveEvents.join]);
+  });
+
   testWidgets('collapses its pinned header as transactions scroll', (
     tester,
   ) async {

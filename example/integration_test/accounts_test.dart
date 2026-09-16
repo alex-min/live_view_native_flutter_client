@@ -50,7 +50,12 @@ void main() {
         // the accounts screen before asserting the empty state.
         await _waitForUrl(tester, view, '/', seconds: 30);
         await view.livePatch('/accounts');
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          '/accounts',
+          seconds: 30,
+        );
 
         // Empty state: no accounts yet, with a create button and no
         // overview figures (the merged overview only shows with accounts).
@@ -115,7 +120,12 @@ void main() {
 
         // Back on the list, the account appears with its balance and the
         // statement total is updated.
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          '/accounts',
+          seconds: 30,
+        );
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         expect(find.byIcon(Icons.payments), findsOneWidget);
         final accountsCard = find
@@ -275,7 +285,12 @@ void main() {
             matching: find.byType(ElevatedButton),
           ),
         );
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$'),
+          seconds: 30,
+        );
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         await tester.pump();
 
@@ -288,17 +303,13 @@ void main() {
         expect(find.text('Income minus expenses'), findsOneWidget);
         expect(find.text('Search transactions'), findsOneWidget);
         expect(
-          find.byKey(const ValueKey('balance_chart_search_button')),
+          find
+              .byKey(const ValueKey('balance_chart_search_button'))
+              .hitTestable(),
           findsOneWidget,
         );
-        expect(find.byType(LiveBalanceChart), findsOneWidget);
-        // The router may retain the outgoing accounts page for one frame.
-        // Assert against the active progress bar rather than counting widgets
-        // owned by both route subtrees during that hand-off.
         expect(
-          find.byType(LiveSegmentedProgressBar).hitTestable(),
-          findsOneWidget,
-        );
+            find.byType(LiveBalanceChart).hitTestable().last, findsOneWidget);
         final activityScroll = tester.state<ScrollableState>(
           find
               .descendant(
@@ -311,14 +322,17 @@ void main() {
         activityScroll.position.jumpTo(600);
         await tester.pump();
         expect(find.text('Money activity').hitTestable(), findsOneWidget);
-        final compactSearchButton = find.byKey(
-          const ValueKey('balance_chart_search_button'),
-        );
+        final compactSearchButton = find
+            .byKey(
+              const ValueKey('balance_chart_search_button'),
+            )
+            .hitTestable()
+            .last;
         expect(compactSearchButton.hitTestable(), findsOneWidget);
         await tester.tap(compactSearchButton);
         await tester.pumpAndSettle();
         final transactionSearch = find.descendant(
-          of: find.byType(LiveBalanceChart),
+          of: find.byType(LiveBalanceChart).hitTestable().last,
           matching: find.byType(TextField),
         );
         expect(transactionSearch, findsOneWidget);
@@ -371,7 +385,12 @@ void main() {
             matching: find.byType(ElevatedButton),
           ),
         );
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$'),
+          seconds: 30,
+        );
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         await tester.pump();
 
@@ -487,7 +506,8 @@ void main() {
 
         expect(find.byKey(const Key('main_app_bar')), findsNothing);
         expect(find.byType(BottomNavigationBar), findsOneWidget);
-        expect(find.byType(LiveBalanceChart), findsOneWidget);
+        expect(
+            find.byType(LiveBalanceChart).hitTestable().last, findsOneWidget);
         expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
 
         final balancePainter = tester
@@ -536,14 +556,14 @@ void main() {
         expect(collapsibleScroll.position.pixels, 334);
         expect(
           find.descendant(
-            of: find.byType(LiveBalanceChart),
+            of: find.byType(LiveBalanceChart).hitTestable().last,
             matching: find.text('Cash').hitTestable(),
           ),
           findsOneWidget,
         );
         expect(
           find.descendant(
-            of: find.byType(LiveBalanceChart),
+            of: find.byType(LiveBalanceChart).hitTestable().last,
             matching: find
                 .byKey(const ValueKey('balance_chart_search_button'))
                 .hitTestable(),
@@ -556,7 +576,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           find.descendant(
-            of: find.byType(LiveBalanceChart),
+            of: find.byType(LiveBalanceChart).hitTestable().last,
             matching: find.byType(EditableText).hitTestable(),
           ),
           findsOneWidget,

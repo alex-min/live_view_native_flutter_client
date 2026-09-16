@@ -142,17 +142,28 @@ void main() {
           ),
         );
 
-        // Creating redirects to the accounts page; reopen the list.
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
-        await _waitFor(tester, find.text('Edit account'), seconds: 30);
-        await tester.tap(find.text('Edit account').last);
+        // Creating opens the selected account's transaction list and keeps
+        // the newly created row near the middle of the viewport.
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/accounts/\d+/transactions$'),
+          RegExp(
+            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
+          ),
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
+        final createdRow = find.ancestor(
+          of: find.text('Courses'),
+          matching: find.byType(ListTile),
+        );
+        expect(
+          (tester.getCenter(createdRow).dy -
+                  tester.view.physicalSize.height / 2)
+              .abs(),
+          lessThan(90),
+          reason: 'The created transaction should be centered in the list',
+        );
 
         // Tap the transaction: the edit form opens, pre-filled.
         tester.view.physicalSize = const Size(400, 800);
@@ -192,7 +203,9 @@ void main() {
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/accounts/\d+/transactions$'),
+          RegExp(
+            r'^/accounts/\d+/transactions(?:\?focus_transaction_id=\d+)?$',
+          ),
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
@@ -217,7 +230,9 @@ void main() {
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/accounts/\d+/transactions$'),
+          RegExp(
+            r'^/accounts/\d+/transactions(?:\?focus_transaction_id=\d+)?$',
+          ),
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
@@ -373,6 +388,16 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(transferSaveButton);
 
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(
+            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
+          ),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Integration transfer'), seconds: 30);
+        await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Savings'), seconds: 30);
         expect(find.textContaining('25'), findsWidgets);

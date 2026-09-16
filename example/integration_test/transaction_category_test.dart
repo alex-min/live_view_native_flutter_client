@@ -198,14 +198,13 @@ void main() {
         await tester.ensureVisible(transactionSave);
         await tester.tap(transactionSave);
 
-        // Back on the accounts page; reopen the transaction list.
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
-        await _waitFor(tester, find.text('Category account'), seconds: 30);
-        await tester.tap(find.text('Category account').last);
+        // Creation opens the account's list with the new row focused.
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/accounts/\d+/transactions$'),
+          RegExp(
+            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
+          ),
           seconds: 30,
         );
 

@@ -53,6 +53,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   final ScrollController _scrollController = ScrollController();
   bool _requestInFlight = false;
   String? _loadKey;
+  bool _initialScrollApplied = false;
 
   final attributes = [
     'phx-load-more',
@@ -79,6 +80,8 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     'restorationId',
     'collapsibleHeaderHeight',
     'collapsedHeaderHeight',
+    'initialScrollIndex',
+    'initialScrollAlignment',
   ];
 
   @override
@@ -90,9 +93,58 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
     // parsed children cache and the list re-renders from the new variables.
     listenInnerTextKeys();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _restoreScrollOffset();
+      if (!_applyInitialScrollPosition()) {
+        _restoreScrollOffset();
+      }
       _requestNextPageIfNeeded();
     });
+  }
+
+  bool _applyInitialScrollPosition() {
+    final index = intAttribute('initialScrollIndex');
+    if (index == null) {
+      return false;
+    }
+    if (_initialScrollApplied) {
+      return true;
+    }
+    if (!mounted || !isOnCurrentRoute || !_scrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _applyInitialScrollPosition();
+      });
+      return true;
+    }
+
+    final position = _scrollController.position;
+    if (!position.hasContentDimensions) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _applyInitialScrollPosition();
+      });
+      return true;
+    }
+
+    final itemExtent = doubleAttribute('itemExtent') ?? 0;
+    if (itemExtent <= 0) {
+      return false;
+    }
+
+    final headerHeight = doubleAttribute('collapsibleHeaderHeight') ?? 0;
+    final collapsedHeight = doubleAttribute('collapsedHeaderHeight') ?? 0;
+    final rowTop = headerHeight + index * itemExtent;
+    final alignment = getAttribute('initialScrollAlignment');
+    final target = switch (alignment) {
+      'end' => rowTop - position.viewportDimension + itemExtent,
+      'center' => rowTop - (position.viewportDimension - itemExtent) / 2,
+      _ => rowTop - collapsedHeight,
+    };
+
+    _initialScrollApplied = true;
+    _scrollController.jumpTo(
+      target
+          .clamp(position.minScrollExtent, position.maxScrollExtent)
+          .toDouble(),
+    );
+    return true;
   }
 
   void _handleScroll() {
@@ -149,6 +201,15 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
       _requestInFlight = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _requestNextPageIfNeeded();
+      });
+    }
+
+    // On a LiveView navigation the initial attributes can arrive in the
+    // first diff after this widget is mounted. Apply the requested position
+    // once those attributes have been reloaded and the slivers have laid out.
+    if (!_initialScrollApplied && intAttribute('initialScrollIndex') != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _applyInitialScrollPosition();
       });
     }
   }
@@ -309,6 +370,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
         collapsedHeight != null &&
         children.isNotEmpty) {
       return _renderCollapsibleVirtualList(
+        context,
         children.first,
         children.skip(1).toList(),
         totalCount,
@@ -363,6 +425,7 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
   }
 
   Widget _renderCollapsibleVirtualList(
+    BuildContext context,
     Widget header,
     List<Widget> children,
     int totalCount,
@@ -411,6 +474,10 @@ class _LiveInfiniteListState extends StateWidget<LiveInfiniteList> {
                 }
                 return children[loadedIndex];
               }, childCount: totalCount),
+            ),
+          if (intAttribute('initialScrollIndex') != null)
+            SliverToBoxAdapter(
+              child: SizedBox(height: MediaQuery.sizeOf(context).height),
             ),
         ],
       ),

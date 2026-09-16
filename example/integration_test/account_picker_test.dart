@@ -173,19 +173,12 @@ void main() {
         await tester.ensureVisible(transactionSave);
         await tester.tap(transactionSave);
 
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
-
-        // Open Account A's transaction list to verify the transaction landed there.
-        await _waitFor(
-          tester,
-          find.text('Account A').hitTestable(),
-          seconds: 30,
-        );
-        await tester.tap(find.text('Account A').hitTestable().last);
         await _waitForUrl(
           tester,
           view,
-          RegExp(r'^/accounts/\d+/transactions$'),
+          RegExp(
+            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
+          ),
           seconds: 30,
         );
         await _waitFor(tester, find.textContaining('12.34'), seconds: 30);
