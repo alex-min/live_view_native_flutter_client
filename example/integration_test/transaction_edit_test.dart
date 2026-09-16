@@ -178,6 +178,15 @@ void main() {
         expect(find.byType(BottomNavigationBar), findsNothing);
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
+        final closeFab = find.ancestor(
+          of: closeButton,
+          matching: find.byType(FloatingActionButton),
+        );
+        expect(
+          tester.getBottomRight(closeFab).dy,
+          lessThanOrEqualTo(tester.view.physicalSize.height - 16),
+          reason: 'The close button should float clear of the screen bottom',
+        );
         await tester.tap(closeButton);
         await tester.tap(closeButton, warnIfMissed: false);
         await _waitForUrl(
