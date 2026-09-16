@@ -99,7 +99,8 @@ void main() {
         expect(find.byIcon(Icons.arrow_back), findsNothing);
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
 
-        // The form has three text fields: amount, date, description.
+        // The date uses the native picker, leaving amount and description as
+        // the form's two text fields.
         final transactionFields = find.descendant(
           of: find.byType(Form),
           matching: find.byType(TextField),
@@ -107,20 +108,26 @@ void main() {
         await _waitFor(tester, transactionFields, seconds: 30);
         expect(
           transactionFields,
-          findsNWidgets(3),
-          reason: 'The transaction form should contain three text fields',
+          findsNWidgets(2),
+          reason: 'The transaction form should contain two text fields',
         );
 
         await tester.enterText(transactionFields.at(0), '12.34');
         await tester.pump();
-        await tester.enterText(transactionFields.at(2), 'Courses');
+        await tester.enterText(transactionFields.at(1), 'Courses');
         await tester.pump();
+
+        await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('20').last);
+        await tester.tap(find.text('OK'));
+        await tester.pumpAndSettle();
 
         await Future.delayed(const Duration(seconds: 1));
         await tester.pump();
         await tester.enterText(transactionFields.at(0), '12.34');
         await tester.pump();
-        await tester.enterText(transactionFields.at(2), 'Courses');
+        await tester.enterText(transactionFields.at(1), 'Courses');
         await tester.pump();
 
         await tester.tap(
@@ -218,7 +225,7 @@ void main() {
           matching: find.byType(TextField),
         );
         await _waitFor(tester, editFields, seconds: 30);
-        expect(editFields, findsNWidgets(3));
+        expect(editFields, findsNWidgets(2));
 
         // The description is pre-filled with the transaction's value.
         expect(
@@ -230,7 +237,7 @@ void main() {
         // Change the description and the amount, then save.
         await tester.enterText(editFields.at(0), '25.50');
         await tester.pump();
-        await tester.enterText(editFields.at(2), 'Courses modifiées');
+        await tester.enterText(editFields.at(1), 'Courses modifiées');
         await tester.pump();
 
         await Future.delayed(const Duration(seconds: 1));
@@ -325,10 +332,10 @@ void main() {
           of: find.byType(Form),
           matching: find.byType(TextField),
         );
-        expect(fields, findsNWidgets(4));
+        expect(fields, findsNWidgets(3));
         await tester.enterText(fields.at(0), '25');
         await tester.pump();
-        await tester.enterText(fields.at(3), 'Integration transfer');
+        await tester.enterText(fields.at(2), 'Integration transfer');
         await tester.pump();
 
         final transferSaveButton = find.descendant(
