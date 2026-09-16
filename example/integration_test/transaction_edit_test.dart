@@ -111,6 +111,11 @@ void main() {
           findsNWidgets(2),
           reason: 'The transaction form should contain two text fields',
         );
+        expect(
+          tester.getTopLeft(transactionFields.first).dy,
+          lessThan(tester.getTopLeft(find.text('Type')).dy),
+          reason: 'The amount field should appear above the type selector',
+        );
 
         await tester.enterText(transactionFields.at(0), '12.34');
         await tester.pump();
