@@ -141,6 +141,22 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     notifyListeners();
   }
 
+  void replacePages({
+    required String url,
+    required List<Widget> widget,
+    required NodeState? rootState,
+  }) {
+    history[url] = widget;
+    pages = [
+      _createPage(
+        RouteSettings(name: url),
+        List<Widget>.from(widget),
+        rootState,
+      ),
+    ];
+    notifyListeners();
+  }
+
   void updatePage({
     required String url,
     required List<Widget> widget,

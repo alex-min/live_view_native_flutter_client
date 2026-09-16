@@ -83,7 +83,10 @@ class FlutterExecAction {
         );
       }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['live-patch'], (value, attributes) {
-        return ExecLivePatch(url: value!['name']);
+        return ExecLivePatch(
+          url: value!['name'],
+          replace: attributes?['live-patch-mode'] == 'replace',
+        );
       }, triggers: [LiveViewExecTrigger.onTap])
       ..add(['phx-href'], (value, attributes) {
         return ExecPhxHref(

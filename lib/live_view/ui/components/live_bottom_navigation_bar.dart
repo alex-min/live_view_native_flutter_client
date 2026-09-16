@@ -48,6 +48,7 @@ class _LiveBottomNavigationBarState
     'backgroundColor',
     'tooltip',
     'live-patch',
+    'live-patch-mode',
     'phx-click',
   ];
   int _currentIndex = 0;

@@ -738,7 +738,7 @@ class LiveView {
 
   Future<void> saveCurrentTheme() => themeSettings.save();
 
-  Future<void> livePatch(String url) async {
+  Future<void> livePatch(String url, {bool replace = false}) async {
     // Guard against duplicate taps: stale junk pages stay in the navigator
     // tree, so a single tap can reach both the current page and an obscured
     // stale copy of the same link, firing livePatch twice for the same url.
@@ -752,11 +752,20 @@ class LiveView {
         'url': url,
       }, "*");
     }
-    router.pushPage(
-      url: 'loading;$url',
-      widget: loadingWidget(url),
-      rootState: router.pages.lastOrNull?.rootState,
-    );
+    final rootState = router.pages.lastOrNull?.rootState;
+    if (replace) {
+      router.replacePages(
+        url: 'loading;$url',
+        widget: loadingWidget(url),
+        rootState: rootState,
+      );
+    } else {
+      router.pushPage(
+        url: 'loading;$url',
+        widget: loadingWidget(url),
+        rootState: rootState,
+      );
+    }
     unawaited(redirectTo(url));
   }
 

@@ -49,8 +49,8 @@ void main() {
             <Text>Home page</Text>
           </viewBody>
           <BottomNavigationBar initialValue="0" selectedItemColor="blue-500">
-            <BottomNavigationBarItem live-patch="/" icon="home" label="Home" />
-            <BottomNavigationBarItem live-patch="/users/settings" icon="settings" label="Settings" />
+            <BottomNavigationBarItem live-patch="/" live-patch-mode="replace" icon="home" label="Home" />
+            <BottomNavigationBarItem live-patch="/users/settings" live-patch-mode="replace" icon="settings" label="Settings" />
           </BottomNavigationBar>
         </flutter>
         """,
@@ -63,6 +63,10 @@ void main() {
 
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
+
+    expect(view.router.pages.map((page) => page.page.name), [
+      'loading;/users/settings',
+    ]);
 
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
     await tester.pumpAndSettle();
