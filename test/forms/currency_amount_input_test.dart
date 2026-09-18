@@ -66,6 +66,10 @@ main() async {
       var formatter = CurrencyAmountFormatter(decimalSeparator: ',');
       expect(formatter.formatEditUpdate(typed(''), typed('1')).text, '1');
       expect(
+        formatter.formatEditUpdate(typed('1 0', 3), typed('1 00', 4)),
+        typed('100', 3),
+      );
+      expect(
         formatter.formatEditUpdate(typed('1000'), typed('10000')),
         typed('10 000', 6),
       );
@@ -104,6 +108,40 @@ main() async {
         ).formatEditUpdate(typed(''), typed('42,50')),
         typed('42.50'),
       );
+    });
+
+    test('treats the foreign separator as the locale one while typing', () {
+      var comma = CurrencyAmountFormatter(decimalSeparator: ',');
+      // typing "." in a comma locale keeps a trailing separator
+      expect(
+        comma.formatEditUpdate(typed('1 000'), typed('1 000.')),
+        typed('1 000,'),
+      );
+      // then the digit is masked like a locale-separator keystroke
+      expect(
+        comma.formatEditUpdate(typed('1 000,'), typed('1 000.5')),
+        typed('1 000,50', 7),
+      );
+
+      var dot = CurrencyAmountFormatter(decimalSeparator: '.');
+      expect(
+        dot.formatEditUpdate(typed('1 000'), typed('1 000,')),
+        typed('1 000.'),
+      );
+      expect(
+        dot.formatEditUpdate(typed('1 000.'), typed('1 000,5')),
+        typed('1 000.50', 7),
+      );
+    });
+
+    test('rejects a second separator even when it is the foreign one', () {
+      var comma = CurrencyAmountFormatter(decimalSeparator: ',');
+      expect(comma.formatEditUpdate(typed('1,5'), typed('1,5.')), typed('1,5'));
+      expect(comma.formatEditUpdate(typed('1,5'), typed('1,5,')), typed('1,5'));
+
+      var dot = CurrencyAmountFormatter(decimalSeparator: '.');
+      expect(dot.formatEditUpdate(typed('1.5'), typed('1.5,')), typed('1.5'));
+      expect(dot.formatEditUpdate(typed('1.5'), typed('1.5.')), typed('1.5'));
     });
 
     test('deleting a thousands space deletes the adjacent digit', () {
@@ -159,6 +197,21 @@ main() async {
       expect(
         server.lastChannelAction,
         liveEvents.phxFormValidate('validate', 'amount=42%2C50&_target=amount'),
+      );
+    });
+
+    testWidgets('masks a comma-separated value typed at once in a dot locale', (
+      tester,
+    ) async {
+      var (_, server) = await renderInput(tester, decimalSeparator: '.');
+
+      await tester.enterText(find.byType(TextField), '42,50');
+      await tester.pumpAndSettle();
+
+      expect(fieldValue(), '42.50');
+      expect(
+        server.lastChannelAction,
+        liveEvents.phxFormValidate('validate', 'amount=42.50&_target=amount'),
       );
     });
 

@@ -24,8 +24,10 @@ extension NumberTruncation on double {
 /// money_input_formatter, minus the arithmetic expressions.
 ///
 /// Only the decimal separator is locale-aware (`","` for French, `"."`
-/// otherwise); the thousands separator is always a plain space. Typing
-/// re-masks the value on every keystroke, keeps a user-typed trailing
+/// otherwise); the thousands separator is always a plain space. Keyboard
+/// input accepts both `,` and `.` as the decimal separator regardless of
+/// the locale; the typed separator is normalized to the locale one.
+/// Typing re-masks the value on every keystroke, keeps a user-typed trailing
 /// separator ("1 000,") or separator + zero ("1 000,0"), rejects a second
 /// decimal separator, deletes the adjacent digit when a thousands space is
 /// deleted, and preserves the cursor by counting non-space characters.
@@ -97,6 +99,24 @@ class CurrencyAmountFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
+    // Accept both ',' and '.' as the decimal separator on keyboard input,
+    // whatever the current language: the foreign separator is swapped for
+    // ours before masking, and a value mixing both separators is rejected.
+    var foreignSeparator = decimalSeparator == '.' ? ',' : '.';
+    if (newValue.text.contains(foreignSeparator)) {
+      var separatorCount =
+          decimalSeparator.allMatches(newValue.text).length +
+          foreignSeparator.allMatches(newValue.text).length;
+      if (separatorCount > 1) {
+        return oldValue;
+      }
+      newValue = TextEditingValue(
+        text: newValue.text.replaceFirst(foreignSeparator, decimalSeparator),
+        selection: newValue.selection,
+        composing: newValue.composing,
+      );
+    }
+
     if (newValue.text == '') {
       return const TextEditingValue(
         text: '',
