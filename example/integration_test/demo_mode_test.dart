@@ -95,7 +95,7 @@ void main() {
         await _waitFor(tester, quitDemoMode);
         await tester.ensureVisible(quitDemoMode.last);
         await tester.tap(quitDemoMode.last);
-        await _waitForUrl(tester, view, '/');
+        await _waitForUrl(tester, view, '/accounts');
         await _waitForAbsent(tester, find.text('Using demo data'));
 
         await view.livePatch('/accounts');

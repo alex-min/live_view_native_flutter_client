@@ -39,8 +39,8 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         // Cookieless visitors are bounced to the /welcome start screen.
-        await _waitForUrl(tester, view, '/welcome', seconds: 30);
-        await _waitFor(tester, find.text('Welcome to StartupKit'), seconds: 30);
+        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitFor(tester, find.text('Welcome to Mavio'), seconds: 30);
         final tryTheDemo = find.widgetWithText(ElevatedButton, 'Try the demo');
         await _waitFor(tester, tryTheDemo, seconds: 30);
 
@@ -71,7 +71,7 @@ void main() {
         // already seeded by the currency onboarding step. The list is
         // virtualized, so assert on the first row ("Stock picks" sorts
         // above "Cash") and on the empty state being gone.
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Stock picks'), seconds: 30);
         expect(
           find.text('No accounts yet'),

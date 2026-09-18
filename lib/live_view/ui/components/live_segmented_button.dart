@@ -4,6 +4,7 @@ import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_icon.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_text.dart';
+import 'package:liveview_flutter/live_view/state/attribute_helpers.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:uuid/uuid.dart';
 
@@ -26,6 +27,8 @@ class _LiveSegmentedButtonState extends StateWidget<LiveSegmentedButton> {
     'showSelectedIcon',
     'emptySelectionAllowed',
     'multiSelectionEnabled',
+    'selectedForegroundColor',
+    'unselectedForegroundColor',
   ];
 
   var unamedInput = const Uuid().v4();
@@ -104,9 +107,31 @@ class _LiveSegmentedButtonState extends StateWidget<LiveSegmentedButton> {
         attributes['name'] ?? button.hashCode.toString(): (button, attributes),
     };
 
+    // State-dependent label colors (for example a white-pill toggle on a
+    // dark card) cannot be expressed with the all() semantics of `style`:
+    // resolve them per selection state so the selected and unselected
+    // segments can keep readable foregrounds.
+    var selectedForeground = colorAttribute(context, 'selectedForegroundColor');
+    var unselectedForeground = colorAttribute(
+      context,
+      'unselectedForegroundColor',
+    );
+    ButtonStyle? segmentStyle = buttonStyleAttribute(context, 'style');
+    if (selectedForeground != null || unselectedForeground != null) {
+      var resolved = ButtonStyle(
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected)
+              ? (selectedForeground ?? unselectedForeground)
+              : (unselectedForeground ?? selectedForeground);
+        }),
+      );
+      segmentStyle =
+          segmentStyle == null ? resolved : segmentStyle.merge(resolved);
+    }
+
     return SegmentedButton<String>(
       showSelectedIcon: booleanAttribute('showSelectedIcon') ?? true,
-      style: buttonStyleAttribute(context, 'style'),
+      style: segmentStyle,
       segments: result.values.map((b) => b.$1).toList(),
       emptySelectionAllowed: booleanAttribute('emptySelectionAllowed') ?? false,
       multiSelectionEnabled: booleanAttribute('multiSelectionEnabled') ?? false,

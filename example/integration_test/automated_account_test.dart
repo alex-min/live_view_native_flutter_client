@@ -42,7 +42,7 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         await _signUpAndOnboard(tester, view);
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Open the account creation page.
         await view.livePatch('/accounts/new');
@@ -57,7 +57,7 @@ void main() {
 
         // Upgrade to Pro.
         final activateButton = find.widgetWithText(
-          ElevatedButton,
+          TextButton,
           'Activate Pro (test)',
         );
         await _waitFor(tester, activateButton, seconds: 30);

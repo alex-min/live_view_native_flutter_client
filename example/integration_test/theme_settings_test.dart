@@ -80,7 +80,7 @@ Future<LiveView> _openMobileThemePicker(WidgetTester tester) async {
   await view.connect('http://$_serverHost:$_serverPort/');
 
   await _signUpAndOnboard(tester, view);
-  await _waitForUrl(tester, view, '/', seconds: 30);
+  await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
   tester.view.physicalSize = _mobileSize;
   await tester.pumpAndSettle();

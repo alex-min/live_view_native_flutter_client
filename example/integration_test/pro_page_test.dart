@@ -23,9 +23,9 @@ class _TestApp extends StatelessWidget {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Pro upgrade', () {
+  group('Pro page', () {
     testWidgets(
-      'sign up and activate Pro from the pro page',
+      'renders the pricing card, switches price with the billing toggle and shows the checkout flash',
       (tester) async {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
@@ -47,19 +47,42 @@ void main() {
         await view.livePatch('/pro');
         await _waitForUrl(tester, view, '/pro', seconds: 30);
 
-        const activateProText = 'Activate Pro (test)';
-        final activateButton = find.widgetWithText(
-          TextButton,
-          activateProText,
+        // The dark Pro card renders with the yearly price by default.
+        await _waitFor(tester, find.textContaining('Mavio Pro'), seconds: 30);
+        expect(find.textContaining('€3.33'), findsWidgets);
+        expect(
+          find.textContaining('€39.99 billed once a year'),
+          findsWidgets,
         );
-        await _waitFor(tester, activateButton, seconds: 30);
-        await tester.ensureVisible(activateButton);
+        expect(find.textContaining('Upgrade to Pro'), findsWidgets);
+
+        // Switching to monthly updates the price and billing note.
+        final monthlyLabel = find.descendant(
+          of: find.byType(SegmentedButton<String>),
+          matching: find.text('Monthly'),
+        );
+        await _waitFor(tester, monthlyLabel, seconds: 30);
+        await tester.ensureVisible(monthlyLabel);
         await tester.pumpAndSettle();
-        await tester.tap(activateButton);
+        await tester.tap(monthlyLabel);
         await tester.pumpAndSettle();
 
-        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
-        await _waitFor(tester, find.text('Appearance'), seconds: 30);
+        await _waitFor(tester, find.textContaining('€4.99'), seconds: 30);
+        expect(find.textContaining('Billed monthly'), findsWidgets);
+
+        // The upgrade button surfaces the coming-soon flash.
+        final upgradeButton = find.widgetWithText(
+          ElevatedButton,
+          'Upgrade to Pro →',
+        );
+        await _waitFor(tester, upgradeButton, seconds: 30);
+        await tester.ensureVisible(upgradeButton);
+        await tester.pumpAndSettle();
+        await tester.tap(upgradeButton);
+        await tester.pumpAndSettle();
+
+        await _waitFor(tester, find.text('Checkout is coming soon.'),
+            seconds: 30);
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

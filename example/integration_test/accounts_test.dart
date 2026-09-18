@@ -48,7 +48,7 @@ void main() {
 
         // Onboarding lands on the dashboard. Open its statement card to reach
         // the accounts screen before asserting the empty state.
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await view.livePatch('/accounts');
         await _waitForUrl(
           tester,
@@ -176,7 +176,7 @@ void main() {
         );
 
         await view.livePatch('/');
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
 
         // The Home item opens the dashboard, matching the mobile web home:
@@ -401,7 +401,7 @@ void main() {
 
         // Return to accounts after exercising the dashboard route.
         await view.livePatch('/');
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
 
         // Mark the account inactive through the row overflow menu.
@@ -456,7 +456,7 @@ void main() {
         );
         await tester.pump();
         await tester.tap(tryDemoFinder.last.hitTestable());
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
@@ -797,7 +797,7 @@ void main() {
         );
         await tester.pump();
         await tester.tap(tryDemoFinder.last.hitTestable());
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);

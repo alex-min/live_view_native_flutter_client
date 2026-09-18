@@ -42,7 +42,7 @@ void main() {
         // The environment runs in a French locale, so assertions use the
         // French translations like the other integration tests.
         await _signUpAndOnboard(tester, view);
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Onboarding now lands on the dashboard; open the statement card to
         // reach the account list.

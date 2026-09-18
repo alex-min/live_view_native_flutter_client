@@ -45,7 +45,7 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         await _signUpAndOnboard(tester, view);
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // The account picker is only a full-page view on small screens.
         // Use 700px width to stay under the mobile breakpoint while giving
@@ -118,7 +118,7 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         await _signUpAndOnboard(tester, view);
-        await _waitForUrl(tester, view, '/', seconds: 30);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         tester.view.physicalSize = const Size(700, 800);
         await tester.pumpAndSettle();
