@@ -242,10 +242,12 @@ void main() {
         await tester.enterText(editedContactName, 'Alex Martin');
         await tester.pump();
         await tester.tap(
-          find.descendant(
-            of: find.byType(Form),
-            matching: find.byType(ElevatedButton),
-          ),
+          find
+              .descendant(
+                of: find.byType(Form),
+                matching: find.byType(ElevatedButton),
+              )
+              .last,
         );
         await _waitForUrl(tester, view, '/contacts', seconds: 30);
         await _waitFor(tester, find.text('Alex Martin'), seconds: 30);
