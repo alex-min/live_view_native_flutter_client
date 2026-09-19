@@ -134,6 +134,28 @@ void main() {
         await tester.pumpAndSettle();
         await _waitFor(tester, find.text('Select category'), seconds: 30);
 
+        // Category management is reachable directly from the picker.
+        final transactionUrl = Uri.parse(view.currentUrl);
+        final manageCategories = find.byTooltip('Custom categories');
+        await _waitFor(tester, manageCategories, seconds: 30);
+        await tester.tap(manageCategories);
+        await _waitForUrl(
+          tester,
+          view,
+          '/settings/categories',
+          seconds: 30,
+        );
+        await view.livePatch(transactionUrl.toString());
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, categoryField, seconds: 30);
+        await tester.tap(categoryField.hitTestable().last);
+        await _waitFor(tester, find.text('Select category'), seconds: 30);
+
         // Closing the picker without choosing a category must restore the
         // transaction form rather than exposing raw Flutter template markup.
         final closePicker =

@@ -81,7 +81,14 @@ void main() {
       await tester.tap(activate);
       await _waitForUrl(tester, view, '/users/settings');
 
-      await view.livePatch('/settings/categories');
+      final categorySettings = find.text('Custom categories');
+      await tester.scrollUntilVisible(
+        categorySettings,
+        300,
+        scrollable: find.byType(Scrollable).hitTestable().first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(categorySettings.last);
       await _waitForUrl(tester, view, '/settings/categories');
       await _waitFor(tester, find.text('Custom categories'));
       final add = find.widgetWithText(ElevatedButton, 'Add category');
