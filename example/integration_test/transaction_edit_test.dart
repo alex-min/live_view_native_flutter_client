@@ -135,12 +135,16 @@ void main() {
         await tester.enterText(transactionFields.at(1), 'Courses');
         await tester.pump();
 
-        await tester.tap(
-          find.descendant(
-            of: find.byType(Form),
-            matching: find.byType(ElevatedButton),
-          ),
-        );
+        final createSaveButton = find
+            .descendant(
+              of: find.byType(Form),
+              matching: find.byType(ElevatedButton),
+            )
+            .first;
+        // The docked close bar can overlap the button at small window
+        // heights; scroll it fully into view before tapping.
+        await tester.ensureVisible(createSaveButton);
+        await tester.tap(createSaveButton);
 
         // Creating opens the selected account's transaction list and keeps
         // the newly created row near the middle of the viewport.
@@ -183,10 +187,21 @@ void main() {
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
         // Mavio's edit screen replaces the normal navigation with one centered
-        // close button and no bottom bar at all. Closing returns to the same
-        // transaction-list route.
-        expect(find.byType(BottomAppBar), findsNothing);
+        // close button docked above an empty, tap-transparent bottom bar (the
+        // bar keeps the close button at the same height as the + on the
+        // account screen). Closing returns to the same transaction-list route.
         expect(find.byType(BottomNavigationBar), findsNothing);
+        final closeBar = find.byType(BottomAppBar);
+        expect(closeBar, findsOneWidget);
+        final ignoringPointers = find
+            .ancestor(of: closeBar, matching: find.byType(IgnorePointer))
+            .evaluate()
+            .map((e) => e.widget as IgnorePointer);
+        expect(
+          ignoringPointers.where((w) => w.ignoring).length,
+          1,
+          reason: 'The empty bar must not intercept taps on the form',
+        );
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
         final closeFab = find.ancestor(

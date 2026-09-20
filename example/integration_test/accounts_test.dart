@@ -281,12 +281,16 @@ void main() {
         );
         await tester.enterText(loanFields.at(0), '12.50');
         await tester.pump();
-        await tester.tap(
-          find.descendant(
-            of: find.byType(Form),
-            matching: find.byType(ElevatedButton),
-          ),
-        );
+        final saveButton = find
+            .descendant(
+              of: find.byType(Form),
+              matching: find.byType(ElevatedButton),
+            )
+            .first;
+        // The docked close bar can overlap the button at small window
+        // heights; scroll it fully into view before tapping.
+        await tester.ensureVisible(saveButton);
+        await tester.tap(saveButton);
         await _waitForUrl(
           tester,
           view,
@@ -381,12 +385,16 @@ void main() {
         );
         await tester.enterText(borrowingFields.at(0), '20');
         await tester.pump();
-        await tester.tap(
-          find.descendant(
-            of: find.byType(Form),
-            matching: find.byType(ElevatedButton),
-          ),
-        );
+        final loanSaveButton = find
+            .descendant(
+              of: find.byType(Form),
+              matching: find.byType(ElevatedButton),
+            )
+            .first;
+        // The docked close bar can overlap the button at small window
+        // heights; scroll it fully into view before tapping.
+        await tester.ensureVisible(loanSaveButton);
+        await tester.tap(loanSaveButton);
         await _waitForUrl(
           tester,
           view,
