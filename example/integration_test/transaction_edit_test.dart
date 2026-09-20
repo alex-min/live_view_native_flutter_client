@@ -522,9 +522,9 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await _waitFor(tester, nextButton, seconds: 30);
   await tester.tap(nextButton.last);
 
-  // The signed-in user's email appears in the app bar once the onboarding
-  // redirect chain lands on the home page.
-  await _waitFor(tester, find.text(email), seconds: 30);
+  // Onboarding completes on the last currency step and redirects to the
+  // accounts page (which has a compact app bar, so the email never shows).
+  await _waitForUrl(tester, view, '/accounts', seconds: 30);
   await tester.pumpAndSettle();
 }
 

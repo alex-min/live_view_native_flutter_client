@@ -148,7 +148,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await _waitFor(tester, nextButton, seconds: 30);
   await tester.tap(nextButton.last);
 
-  await _waitFor(tester, find.text(email), seconds: 30);
+  await _waitForUrl(tester, view, '/accounts', seconds: 30);
   await tester.pumpAndSettle();
 }
 
