@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:liveview_flutter/live_view/mapping/input_decoration.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
@@ -152,6 +153,44 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
             .toList();
   }
 
+  /// Dispatches the enclosing form's submit event, the same path as tapping
+  /// a submit button.
+  void _dispatchSubmit() {
+    FormFieldEvent(
+      name: fieldName,
+      data: _effectiveController.text,
+      type: FormFieldEventType.submit,
+    ).dispatch(context);
+  }
+
+  /// Multiline fields never call onFieldSubmitted (Enter inserts a newline
+  /// through the text input channel), so submitOnEnter also intercepts plain
+  /// Enter key events before they reach the editable and consumes them.
+  KeyEventResult _onSubmitKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        (event.logicalKey != LogicalKeyboardKey.enter &&
+            event.logicalKey != LogicalKeyboardKey.numpadEnter)) {
+      return KeyEventResult.ignored;
+    }
+    var pressed = HardwareKeyboard.instance.logicalKeysPressed;
+    var hasModifier = pressed.any(
+      (key) =>
+          key == LogicalKeyboardKey.shiftLeft ||
+          key == LogicalKeyboardKey.shiftRight ||
+          key == LogicalKeyboardKey.controlLeft ||
+          key == LogicalKeyboardKey.controlRight ||
+          key == LogicalKeyboardKey.metaLeft ||
+          key == LogicalKeyboardKey.metaRight ||
+          key == LogicalKeyboardKey.altLeft ||
+          key == LogicalKeyboardKey.altRight,
+    );
+    if (hasModifier) {
+      return KeyEventResult.ignored;
+    }
+    _dispatchSubmit();
+    return KeyEventResult.handled;
+  }
+
   @override
   Widget render(BuildContext context) {
     var children = multipleChildren();
@@ -159,7 +198,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
     icon ??= StateChild.extractChild<LiveIcon>(children);
     icon ??= iconWidgetFromAttribute('icon');
 
-    return TextFormField(
+    Widget field = TextFormField(
       selectionHeightStyle:
           boxHeightStyleAttribute('selectionHeightStyle') ??
           BoxHeightStyle.tight,
@@ -194,15 +233,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
       onTap: () => executeTapEventsManually(),
       onFieldSubmitted:
           booleanAttribute('submitOnEnter') == true
-              ? (_) {
-                // Same path as tapping a submit button: the enclosing form
-                // sends its phx-submit event with the values it collected.
-                FormFieldEvent(
-                  name: fieldName,
-                  data: _effectiveController.text,
-                  type: FormFieldEventType.submit,
-                ).dispatch(context);
-              }
+              ? (_) => _dispatchSubmit()
               : null,
       controller: _effectiveController,
       onChanged: (value) {
@@ -230,5 +261,10 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
           booleanAttribute('enableIMEPersonalizedLearning') ?? true,
       canRequestFocus: booleanAttribute('canRequestFocus') ?? true,
     );
+
+    if (booleanAttribute('submitOnEnter') == true) {
+      field = Focus(onKeyEvent: _onSubmitKeyEvent, child: field);
+    }
+    return field;
   }
 }
