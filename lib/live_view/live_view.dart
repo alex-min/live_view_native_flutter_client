@@ -159,6 +159,10 @@ class LiveView {
     _formValues.putIfAbsent(urlPath, () => {})[name] = value;
   }
 
+  void forgetFormValue(String urlPath, String name) {
+    _formValues[urlPath]?.remove(name);
+  }
+
   void forgetFormValues(String urlPath) {
     _formValues.remove(urlPath);
   }
@@ -300,7 +304,7 @@ class LiveView {
     };
 
     if (cookie != null) {
-      headers['Cookie'] = cookie!.split(';')[0];
+      headers['Cookie'] = cookie!;
     }
 
     return headers;
@@ -330,17 +334,50 @@ class LiveView {
   }
 
   Future<void> _parseAndSaveCookie(String cookieValue) async {
-    cookie = _parseSetCookieValue(cookieValue);
+    var merged = _mergeCookies(cookie, cookieValue);
+    cookie = merged.isEmpty ? null : merged;
     var prefs = await SharedPreferences.getInstance();
-    await prefs.setString('cookie', cookie.toString());
+    if (cookie == null) {
+      await prefs.remove('cookie');
+    } else {
+      await prefs.setString('cookie', cookie!);
+    }
   }
 
-  String _parseSetCookieValue(String cookieValue) {
-    // Some servers send cookie attributes that Dart's Cookie parser rejects
-    // (e.g. an empty or unknown SameSite value). Extract the first
-    // name/value pair so the session cookie can still be sent back.
-    var pair = cookieValue.split(';').first.trim();
-    return pair.contains('=') ? pair : cookieValue;
+  /// Minimal cookie jar: keeps every name/value pair so cookies set by
+  /// different responses (session, support visitor, ...) accumulate instead
+  /// of replacing each other. Several set-cookie headers may be folded into
+  /// one comma-joined value, so split only where a new name=value pair
+  /// starts — never inside an Expires date.
+  String _mergeCookies(String? existing, String setCookieHeader) {
+    var jar = <String, String>{};
+    for (var pair in existing?.split(';') ?? <String>[]) {
+      var index = pair.indexOf('=');
+      if (index > 0) {
+        jar[pair.substring(0, index).trim()] = pair.substring(index + 1).trim();
+      }
+    }
+    for (var part in setCookieHeader.split(RegExp(r',(?=[^;,]+=)'))) {
+      var segments = part.split(';');
+      var pair = segments.first.trim();
+      var index = pair.indexOf('=');
+      if (index <= 0) {
+        continue;
+      }
+      var name = pair.substring(0, index).trim();
+      var value = pair.substring(index + 1).trim();
+      var attributes = segments.skip(1).join(';').toLowerCase();
+      var deleted =
+          value == '' &&
+          (attributes.contains('max-age=0') ||
+              attributes.contains('expires=thu, 01 jan 1970'));
+      if (deleted) {
+        jar.remove(name);
+      } else {
+        jar[name] = value;
+      }
+    }
+    return jar.entries.map((entry) => '${entry.key}=${entry.value}').join('; ');
   }
 
   bool _isConnectionException(Object e) {
@@ -647,6 +684,16 @@ class LiveView {
         var mode = payload['mode'];
         if (theme is String && mode is String) {
           unawaited(switchTheme(theme, mode));
+        }
+      }
+      if (name == 'clear-composer' && payload is Map) {
+        var field = payload['field'];
+        if (field is String) {
+          // Forget the value first so a server diff rebuilding the field
+          // doesn't restore the text the server just asked to clear, then
+          // let the fields themselves reset their editing controllers.
+          forgetFormValue(currentUrl, field);
+          eventHub.fire('clear-composer', {'field': field});
         }
       }
     }

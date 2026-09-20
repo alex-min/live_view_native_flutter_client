@@ -76,7 +76,61 @@ void main() async {
     );
     expect(formPost.headers['cookie'], isNull);
 
+    // The expired _startup_kit_key cookie is dropped from the jar, leaving
+    // nothing to send.
     var prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('cookie'), '_startup_kit_key=');
+    expect(prefs.getString('cookie'), isNull);
+  });
+
+  testWidgets('forwards every stored cookie, not just the first one', (
+    tester,
+  ) async {
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<Text>hi</Text>'],
+      },
+      sharedPreferences: {'cookie': 'session=abc; support_visitor=xyz'},
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(
+      server.httpRequestsMade[0].headers['cookie'],
+      'session=abc; support_visitor=xyz',
+    );
+  });
+
+  testWidgets('accumulates cookies from several set-cookie headers', (
+    tester,
+  ) async {
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<Text>hi</Text>'],
+      },
+      onRequest: (request) {
+        if (request.url.path == '/' && request.method == 'GET') {
+          return http.Response(
+            xmlCsrf,
+            200,
+            headers: {
+              // Several set-cookie headers can be folded into one
+              // comma-joined value, e.g. by proxies or HTTP/1.1 clients.
+              'set-cookie':
+                  'session=abc; path=/; httponly, support_visitor=xyz; path=/',
+            },
+          );
+        }
+        return null;
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    var prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('cookie'), 'session=abc; support_visitor=xyz');
   });
 }

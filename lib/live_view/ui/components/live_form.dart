@@ -3,7 +3,7 @@ import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-enum FormFieldEventType { initField, change, submit }
+enum FormFieldEventType { initField, change, submit, clear }
 
 class FormFieldEvent extends Notification {
   final String name;
@@ -147,6 +147,13 @@ class _LiveFormState extends StateWidget<LiveForm> {
               event.name,
               event.data,
             );
+          }
+
+          if (event.type == FormFieldEventType.clear) {
+            // Server-driven clear (e.g. the `clear-composer` event): drop the
+            // value locally without emitting a phx-change round trip.
+            formValues.remove(event.name);
+            liveView.forgetFormValue(widget.state.urlPath, event.name);
           }
 
           if (event.type == FormFieldEventType.change) {

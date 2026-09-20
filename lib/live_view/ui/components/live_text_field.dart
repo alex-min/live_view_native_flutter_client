@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -49,12 +50,23 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
     'enableIMEPersonalizedLearning',
     'canRequestFocus',
     'selectionHeightStyle',
+    'submitOnEnter',
   ];
   @override
   handleClickState() => HandleClickState.manual;
   final key = GlobalKey<FormFieldState>();
   var unamedInput = const Uuid().v4();
   List<FormError> errors = [];
+  TextEditingController? _controller;
+  StreamSubscription? _clearComposerSubscription;
+
+  /// The controller backing the field. Owning it (instead of letting
+  /// TextFormField create one from initialValue) lets the client clear the
+  /// text when the server pushes a `clear-composer` event.
+  TextEditingController get _effectiveController =>
+      _controller ??= TextEditingController(
+        text: storedValue ?? getAttribute('initialValue'),
+      );
 
   @override
   void initState() {
@@ -64,6 +76,25 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
       sendInitialState();
     });
     super.initState();
+    _clearComposerSubscription = liveView.eventHub.on('clear-composer', (data) {
+      var field = data is Map ? data['field'] : null;
+      if (field == fieldName && mounted && widget.state.isOnTheCurrentPage) {
+        _effectiveController.clear();
+        FormFieldEvent(
+          name: fieldName,
+          data: '',
+          type: FormFieldEventType.clear,
+        ).dispatch(context);
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _clearComposerSubscription?.cancel();
+    _controller?.dispose();
+    super.dispose();
   }
 
   @override
@@ -161,6 +192,19 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
       ),
       onTapOutside: (_) => executeOnTapOutsideEventsManually(),
       onTap: () => executeTapEventsManually(),
+      onFieldSubmitted:
+          booleanAttribute('submitOnEnter') == true
+              ? (_) {
+                // Same path as tapping a submit button: the enclosing form
+                // sends its phx-submit event with the values it collected.
+                FormFieldEvent(
+                  name: fieldName,
+                  data: _effectiveController.text,
+                  type: FormFieldEventType.submit,
+                ).dispatch(context);
+              }
+              : null,
+      controller: _effectiveController,
       onChanged: (value) {
         FormFieldEvent(
           name: fieldName,
@@ -168,7 +212,6 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
           type: FormFieldEventType.change,
         ).dispatch(context);
       },
-      initialValue: storedValue ?? getAttribute('initialValue'),
       textAlign: textAlignAttribute('textAlign') ?? TextAlign.start,
       enabled: booleanAttribute('enabled'),
       cursorWidth: doubleAttribute('cursorWidth') ?? 2.0,
