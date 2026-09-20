@@ -18,6 +18,7 @@ class _LiveBottomAppBarState extends StateWidget<LiveBottomAppBar> {
     'elevation',
     'shape',
     'height',
+    'ignorePointer',
   ];
 
   @override
@@ -26,7 +27,7 @@ class _LiveBottomAppBarState extends StateWidget<LiveBottomAppBar> {
 
   @override
   Widget render(BuildContext context) {
-    return BottomAppBar(
+    final bar = BottomAppBar(
       height: doubleAttribute('height'),
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
       padding: marginOrPaddingAttribute('padding'),
@@ -37,5 +38,10 @@ class _LiveBottomAppBarState extends StateWidget<LiveBottomAppBar> {
       shadowColor: colorAttribute(context, 'shadowColor'),
       child: singleChild(),
     );
+
+    if (booleanAttribute('ignorePointer') ?? false) {
+      return IgnorePointer(child: bar);
+    }
+    return bar;
   }
 }

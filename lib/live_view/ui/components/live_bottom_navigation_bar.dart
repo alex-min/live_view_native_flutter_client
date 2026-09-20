@@ -131,10 +131,20 @@ class _LiveBottomNavigationBarState
       type = BottomNavigationBarType.fixed;
     }
 
+    // A negative (or out of range) initialValue means "no selection", used
+    // for pages that are not part of the navigation items. Material's
+    // BottomNavigationBar asserts on an invalid currentIndex, so clamp it
+    // and render every item with the unselected look.
+    final hasSelection = _currentIndex >= 0 && _currentIndex < children.length;
+    final currentIndex = hasSelection ? _currentIndex : 0;
+    final unselectedColor =
+        colorAttribute(context, 'unselectedItemColor') ??
+        Theme.of(context).colorScheme.onSurfaceVariant;
+
     final navigationBar = BottomNavigationBar(
       type: type,
       elevation: doubleAttribute('elevation'),
-      currentIndex: _currentIndex,
+      currentIndex: currentIndex,
       onTap: (selected) {
         setState(() {
           _currentIndex = selected;
@@ -149,12 +159,16 @@ class _LiveBottomNavigationBarState
       enableFeedback: booleanAttribute('enableFeedback'),
       iconSize: doubleAttribute('iconSize') ?? 24.0,
       fixedColor: colorAttribute(context, 'fixedColor'),
-      unselectedItemColor: colorAttribute(context, 'unselectedItemColor'),
-      selectedItemColor: colorAttribute(context, 'selectedItemColor'),
+      unselectedItemColor: unselectedColor,
+      selectedItemColor:
+          hasSelection
+              ? colorAttribute(context, 'selectedItemColor')
+              : unselectedColor,
       backgroundColor: colorAttribute(context, 'backgroundColor'),
       showSelectedLabels: booleanAttribute('showSelectedLabels') ?? true,
       showUnselectedLabels: booleanAttribute('showUnselectedLabels') ?? true,
-      selectedFontSize: doubleAttribute('selectedFontSize') ?? 14.0,
+      selectedFontSize:
+          doubleAttribute('selectedFontSize') ?? (hasSelection ? 14.0 : 12.0),
       unselectedFontSize: doubleAttribute('unselectedFontSize') ?? 12.0,
       landscapeLayout: getBottomNavigationBarLandscapeLayout(
         getAttribute('landscapeLayout'),
