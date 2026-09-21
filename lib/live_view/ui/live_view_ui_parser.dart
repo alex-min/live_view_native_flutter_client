@@ -254,8 +254,23 @@ class LiveViewUiParser {
       var element = state.node as XmlElement;
       // Widgets marked persistent="true" are hoisted into the RootScaffold
       // and kept across page navigation. They must not render in place or
-      // they would be duplicated next to the hoisted copy.
+      // they would be duplicated next to the hoisted copy. The marked node
+      // can live inside dynamic component templates that RootScaffold cannot
+      // see on the static tree, so the hoisted widget is built here, where
+      // the fully resolved node state is available.
       if (element.getAttribute('persistent') == 'true') {
+        // Stale pages kept below the current one in the navigator stack can
+        // re-render; only the current page drives the hoisted chrome.
+        if (state.isOnTheCurrentPage) {
+          var view = state.liveView;
+          view.persistentChromeDeclared = true;
+          if (view.persistentChrome.isEmpty) {
+            view.persistentChrome = LiveViewUiRegistry.instance.buildWidget(
+              element.name.qualified,
+              state,
+            );
+          }
+        }
         return [];
       }
       var componentName = element.name.qualified;

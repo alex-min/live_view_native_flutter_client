@@ -16,11 +16,11 @@ import 'package:liveview_flutter/live_view/ui/components/live_floating_action_bu
 import 'package:liveview_flutter/live_view/ui/components/live_navigation_rail.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_persistent_footer_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
-import 'package:liveview_flutter/live_view/ui/live_view_ui_registry.dart';
 import 'package:liveview_flutter/live_view/ui/loading/reload_widget.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_app_bar.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_bottom_navigation_bar.dart';
+import 'package:liveview_flutter/live_view/ui/root_view/persistent_chrome_layer.dart';
 import 'package:liveview_flutter/live_view/ui/root_view/root_persistent_top_bar.dart';
 import 'package:throttled/throttled.dart';
 import 'package:xml/xml.dart';
@@ -47,13 +47,6 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
   LiveFloatingActionButton? floatingActionButton;
   FloatingActionButtonLocation? floatingActionButtonLocation;
   List<LiveStateWidget> persistentButtons = [];
-  // Widgets marked persistent="true" by the current page, hoisted here so
-  // they survive page navigation like the bottom navigation bar. Presence is
-  // driven by the current page: while any page declares one it stays mounted,
-  // and it is dropped as soon as a page without the declaration is shown.
-  // While present, the first parsed instance is kept as-is so a push never
-  // rebuilds it.
-  List<Widget> persistentChrome = [];
   final key = GlobalKey<ScaffoldState>();
 
   NodeState? rootNode;
@@ -116,35 +109,6 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     return Row(children: [railBar!, Expanded(child: child)]);
   }
 
-  /// Finds the first element marked persistent="true" in the current page,
-  /// keeping only the outermost marked element when widgets are nested.
-  void updatePersistentChrome() {
-    var state = widget.view.router.pages.lastOrNull?.rootState;
-    if (state == null) {
-      persistentChrome = [];
-      return;
-    }
-
-    XmlElement? marked;
-    for (var element in state.node.findAllElements('*')) {
-      if (element.getAttribute('persistent') == 'true') {
-        marked = element;
-        break;
-      }
-    }
-
-    if (marked == null) {
-      persistentChrome = [];
-    } else if (persistentChrome.isEmpty) {
-      // Hoist by building the widget directly from the registry: going
-      // through the parser traversal would skip persistent widgets.
-      persistentChrome = LiveViewUiRegistry.instance.buildWidget(
-        marked.name.qualified,
-        state.copyWith(node: marked),
-      );
-    }
-  }
-
   void bindFloatingActionButtonLocation() {
     rootNode = widget.view.router.pages.last.rootState;
     if (rootNode != null) {
@@ -179,7 +143,6 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
   @override
   Widget build(BuildContext context) {
     bindFloatingActionButtonLocation();
-    updatePersistentChrome();
 
     if (widget.view.router.pages.last.containsGlobalNavigationWidgets) {
       var widgets = List<Widget>.from(widget.view.router.pages.last.widgets);
@@ -239,9 +202,7 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       ],
     );
 
-    if (persistentChrome.isNotEmpty) {
-      child = Stack(children: [child, ...persistentChrome]);
-    }
+    child = Stack(children: [child, PersistentChromeLayer(view: widget.view)]);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

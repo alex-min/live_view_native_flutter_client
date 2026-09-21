@@ -103,6 +103,17 @@ class LiveView {
   EventHub eventHub = EventHub();
   bool isLiveReloading = false;
 
+  // Widgets marked persistent="true" are skipped by the parser and hoisted
+  // here instead; RootScaffold renders them above the page body so they
+  // survive page navigation like the bottom navigation bar. Presence is
+  // driven by the current page: [persistentChromeDeclared] is reset on every
+  // real page change and set by the parser whenever a persistent widget is
+  // rendered, so the chrome is dropped only when a page stops declaring it.
+  // While present, the first parsed instance is kept as-is so a push never
+  // rebuilds it.
+  List<Widget> persistentChrome = [];
+  bool persistentChromeDeclared = false;
+
   String? redirectToUrl;
 
   PhoenixSocket? _socket;

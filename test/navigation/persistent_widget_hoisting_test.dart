@@ -66,6 +66,36 @@ void main() {
     expect(find.byType(LivePositioned), findsNothing);
   });
 
+  testWidgets('a persistent widget inside dynamic content is hoisted too', (
+    tester,
+  ) async {
+    tester.setScreenSize(const Size(400, 800));
+
+    // Mirrors the real server render: the viewBody content lives in a
+    // dynamic template entry (the static tree holds a flutterState
+    // placeholder), which is where the persistent bubble is declared.
+    var view =
+        LiveView()..handleRenderedMessage({
+          's': [
+            '<flutter><viewBody><Stack>[[flutterState key=0]]</Stack></viewBody></flutter>',
+          ],
+          '0': {
+            's': ['<ListView><Text>Home</Text></ListView>${_bubble()}'],
+          },
+        });
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byIcon(Icons.chat_bubble),
+      findsOneWidget,
+      reason:
+          'the bubble must render even though the static page tree '
+          'only holds a flutterState placeholder',
+    );
+  });
+
   testWidgets('a hoisted persistent widget still dispatches live-patch taps', (
     tester,
   ) async {
