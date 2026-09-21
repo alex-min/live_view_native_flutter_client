@@ -251,7 +251,14 @@ class LiveViewUiParser {
     } else if (state.node.nodeType == XmlNodeType.COMMENT) {
       return [const SizedBox.shrink()];
     } else if (state.node.nodeType == XmlNodeType.ELEMENT) {
-      var componentName = (state.node as XmlElement).name.qualified;
+      var element = state.node as XmlElement;
+      // Widgets marked persistent="true" are hoisted into the RootScaffold
+      // and kept across page navigation. They must not render in place or
+      // they would be duplicated next to the hoisted copy.
+      if (element.getAttribute('persistent') == 'true') {
+        return [];
+      }
+      var componentName = element.name.qualified;
       return LiveViewUiRegistry.instance.buildWidget(componentName, state);
     } else {
       reportError('unknown node type ${state.node.nodeType}');
@@ -351,11 +358,22 @@ class LiveViewUiParser {
       ], (state) => [LiveDrawerHeader(state: state, key: Key(uuid.v4()))])
       ..add(
         ['BottomNavigationBar'],
-        (state) => [LiveBottomNavigationBar(state: state, key: Key(uuid.v4()))],
+        (state) => [
+          LiveBottomNavigationBar(
+            state: state,
+            key: const ValueKey('root-bottom-navigation-bar'),
+          ),
+        ],
       )
-      ..add([
-        'BottomAppBar',
-      ], (state) => [LiveBottomAppBar(state: state, key: Key(uuid.v4()))])
+      ..add(
+        ['BottomAppBar'],
+        (state) => [
+          LiveBottomAppBar(
+            state: state,
+            key: const ValueKey('root-bottom-app-bar'),
+          ),
+        ],
+      )
       ..add([
         'DropdownButton',
       ], (state) => [LiveDropdownButton(state: state, key: Key(uuid.v4()))])
