@@ -35,11 +35,14 @@ class _PersistentChromeLayerState extends State<PersistentChromeLayer> {
   }
 
   void onRouteChange() {
-    if (widget.view.router.pages.lastOrNull?.page.name?.startsWith(
+    var isLoading =
+        widget.view.router.pages.lastOrNull?.page.name?.startsWith(
           'loading;',
-        ) !=
-        true) {
+        ) ==
+        true;
+    if (!isLoading) {
       widget.view.persistentChromeDeclared = false;
+      widget.view.persistentChromePageRendered = false;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => sync());
   }
@@ -48,15 +51,18 @@ class _PersistentChromeLayerState extends State<PersistentChromeLayer> {
     if (!mounted) {
       return;
     }
-    var desired =
-        widget.view.persistentChromeDeclared
-            ? widget.view.persistentChrome
-            : const <Widget>[];
+    // The chrome survives until the current page rendered its body without
+    // declaring one; an interrupted navigation leaves the page unrendered
+    // and must not drop it.
+    var keep =
+        widget.view.persistentChromeDeclared ||
+        !widget.view.persistentChromePageRendered;
+    var desired = keep ? widget.view.persistentChrome : const <Widget>[];
     if (desired.length == chrome.length &&
         (desired.isEmpty || identical(desired.first, chrome.first))) {
       return;
     }
-    if (!widget.view.persistentChromeDeclared) {
+    if (!keep) {
       widget.view.persistentChrome = [];
     }
     setState(() => chrome = desired);

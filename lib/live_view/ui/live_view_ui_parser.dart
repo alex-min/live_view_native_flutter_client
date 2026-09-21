@@ -264,6 +264,7 @@ class LiveViewUiParser {
         if (state.isOnTheCurrentPage) {
           var view = state.liveView;
           view.persistentChromeDeclared = true;
+          view.persistentChromePageRendered = true;
           if (view.persistentChrome.isEmpty) {
             view.persistentChrome = LiveViewUiRegistry.instance.buildWidget(
               element.name.qualified,

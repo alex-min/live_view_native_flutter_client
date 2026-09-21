@@ -122,6 +122,69 @@ void main() {
       'redirect': 'http://localhost:9999/support',
     });
   });
+
+  testWidgets('a persistent widget is kept across replace-mode navigation and '
+      'survives a second tap before the arriving page renders', (tester) async {
+    tester.setScreenSize(const Size(400, 800));
+
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [_page('First page', withBubble: true)],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LivePositioned), findsOneWidget);
+    final bubbleState = tester.state(find.byType(LivePositioned));
+
+    // Replace navigation to a second page declaring the bubble,
+    // like the bottom navigation bar items do.
+    unawaited(view.livePatch('/second-page', replace: true));
+    await tester.pump();
+    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleRenderedMessage({
+      's': [_page('Second page', withBubble: true)],
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('Second page'), findsOneWidget);
+    expect(find.byType(LivePositioned), findsOneWidget);
+    expect(
+      tester.state(find.byType(LivePositioned)),
+      same(bubbleState),
+      reason: 'replace navigation must not rebuild the hoisted widget',
+    );
+
+    // Tap again before the arriving page's body renders: the chrome must
+    // survive the interrupted navigation instead of being dropped.
+    unawaited(view.livePatch('/third-page', replace: true));
+    await tester.pump();
+    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleRenderedMessage({
+      's': [_page('Third page', withBubble: true)],
+    });
+    // No pump here: the /third-page body has not rendered yet.
+    unawaited(view.livePatch('/fourth-page', replace: true));
+    await tester.pump();
+    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleRenderedMessage({
+      's': [_page('Fourth page', withBubble: true)],
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fourth page'), findsOneWidget);
+    expect(find.byType(LivePositioned), findsOneWidget);
+    expect(
+      tester.state(find.byType(LivePositioned)),
+      same(bubbleState),
+      reason:
+          'an interrupted replace navigation must not drop or rebuild '
+          'the hoisted widget',
+    );
+  });
 }
 
 String _page(String title, {required bool withBubble}) => '''

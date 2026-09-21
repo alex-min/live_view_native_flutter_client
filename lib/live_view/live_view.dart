@@ -114,6 +114,12 @@ class LiveView {
   List<Widget> persistentChrome = [];
   bool persistentChromeDeclared = false;
 
+  /// Whether the current page's body rendered since it became current. The
+  /// persistent chrome is only dropped when the current page rendered
+  /// without declaring one — an interrupted navigation (a new live-patch
+  /// before the arriving page's first render) must not drop it.
+  bool persistentChromePageRendered = false;
+
   String? redirectToUrl;
 
   PhoenixSocket? _socket;

@@ -19,6 +19,12 @@ class _LiveMainViewState extends StateWidget<LiveViewBody> {
 
   @override
   Widget render(BuildContext context) {
+    // Only the current page's body render counts towards the
+    // persistent-chrome drop decision; stale pages in the navigator stack
+    // can rebuild while hidden.
+    if (widget.state.isOnTheCurrentPage) {
+      widget.state.liveView.persistentChromePageRendered = true;
+    }
     final child = singleChild();
     if (getAttribute('cosmicBackground') != 'true') return child;
 
