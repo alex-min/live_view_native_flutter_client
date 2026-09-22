@@ -232,11 +232,12 @@ Future<void> _waitForUrl(
   for (var i = 0; i < seconds * 2; i++) {
     await tester.pump(const Duration(milliseconds: 500));
     if (view.router.pages.isNotEmpty &&
-        view.router.pages.last.page.name == path) {
+        view.router.pages.last.page.name == path &&
+        view.isCurrentRouteReady) {
       return;
     }
   }
-  fail('Timed out waiting for url $path');
+  fail('Timed out waiting for url $path (got ${view.currentUrl})');
 }
 
 Future<void> _ensureServer() async {
