@@ -10,6 +10,7 @@ import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
 import 'package:liveview_flutter/live_view/live_view_fallback_pages.dart';
 import 'package:liveview_flutter/live_view/plugin.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
@@ -154,6 +155,7 @@ class LiveView {
   bool _isGoingBack = false;
   late LiveRouterDelegate router;
   bool throttleSpammyCalls = true;
+  LiveCacheManifest? cacheManifest;
 
   // Tracks the last phx-trigger-action value per form so that offstage forms
   // (which are rebuilt and lose their local state) don't re-submit when the
