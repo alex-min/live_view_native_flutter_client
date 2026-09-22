@@ -168,6 +168,26 @@ void main() {
     );
   });
 
+  test('bootstrap secrets are never persisted', () async {
+    var cache = await store();
+    var sensitive = LiveCacheSnapshot(
+      namespace: namespace,
+      route: Uri.parse('/accounts'),
+      storedAt: DateTime.utc(2026, 9, 22),
+      rendered: {
+        's': ['<input name="_csrf_token" value="secret">'],
+      },
+    );
+
+    expect(await cache.writeSnapshot(sensitive), isFalse);
+    expect(
+      (await SharedPreferences.getInstance()).getKeys().where(
+        (key) => key.contains('namespace.'),
+      ),
+      isEmpty,
+    );
+  });
+
   test(
     'namespace clearing does not affect another user or app preferences',
     () async {

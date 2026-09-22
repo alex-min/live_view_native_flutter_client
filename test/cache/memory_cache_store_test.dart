@@ -70,15 +70,15 @@ void main() {
     expect(await store.writeSnapshot(accounts), isTrue);
     expect(await store.writeSnapshot(settings), isTrue);
     expect(
-      await store.readSnapshot(namespace, Uri.parse('/accounts')),
-      same(accounts),
+      (await store.readSnapshot(namespace, Uri.parse('/accounts')))?.rendered,
+      accounts.rendered,
     );
 
     await store.removeSnapshot(namespace, Uri.parse('/accounts'));
     expect(await store.readSnapshot(namespace, Uri.parse('/accounts')), isNull);
     expect(
-      await store.readSnapshot(namespace, Uri.parse('/settings')),
-      same(settings),
+      (await store.readSnapshot(namespace, Uri.parse('/settings')))?.rendered,
+      settings.rendered,
     );
 
     await store.clearNamespace(namespace);
@@ -99,6 +99,26 @@ void main() {
     expect(await store.readSnapshot(namespace, Uri.parse('/settings')), isNull);
   });
 
+  test('detaches nested render data before storing it', () async {
+    var store = MemoryLiveViewCacheStore();
+    var dynamicText = <dynamic>['Before'];
+    var original = LiveCacheSnapshot(
+      namespace: namespace,
+      route: Uri.parse('/accounts'),
+      storedAt: DateTime.utc(2026, 9, 22),
+      rendered: {
+        's': ['<Text>', '</Text>'],
+        '0': dynamicText,
+      },
+    );
+    await store.writeSnapshot(original);
+
+    dynamicText[0] = 'After';
+
+    var restored = await store.readSnapshot(namespace, original.route);
+    expect(restored?.rendered['0'], ['Before']);
+  });
+
   test('keeps user namespaces isolated', () async {
     var store = MemoryLiveViewCacheStore();
     var first = snapshot('/accounts', 'First user');
@@ -114,8 +134,8 @@ void main() {
 
     expect(await store.readSnapshot(namespace, first.route), isNull);
     expect(
-      await store.readSnapshot(otherNamespace, second.route),
-      same(second),
+      (await store.readSnapshot(otherNamespace, second.route))?.rendered,
+      second.rendered,
     );
   });
 
@@ -136,6 +156,16 @@ void main() {
     expect(await store.writeSnapshot(unsupported), isFalse);
     expect(await store.readSnapshot(namespace, oversized.route), isNull);
     expect(await store.readSnapshot(namespace, unsupported.route), isNull);
+
+    var sensitive = LiveCacheSnapshot(
+      namespace: namespace,
+      route: Uri.parse('/transactions'),
+      storedAt: DateTime.utc(2026, 9, 22),
+      rendered: {
+        's': ['<div data-phx-session="signed">'],
+      },
+    );
+    expect(await store.writeSnapshot(sensitive), isFalse);
   });
 
   test('evicts the least recently used snapshot to stay bounded', () async {
@@ -156,9 +186,15 @@ void main() {
     await store.readSnapshot(namespace, first.route);
     await store.writeSnapshot(third);
 
-    expect(await store.readSnapshot(namespace, first.route), same(first));
+    expect(
+      (await store.readSnapshot(namespace, first.route))?.rendered,
+      first.rendered,
+    );
     expect(await store.readSnapshot(namespace, second.route), isNull);
-    expect(await store.readSnapshot(namespace, third.route), same(third));
+    expect(
+      (await store.readSnapshot(namespace, third.route))?.rendered,
+      third.rendered,
+    );
   });
 
   test('clear removes both manifests and every namespace', () async {

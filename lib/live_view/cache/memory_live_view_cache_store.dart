@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_snapshot_sanitizer.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_store.dart';
 
 class MemoryLiveViewCacheStore implements LiveViewCacheStore {
@@ -11,6 +12,7 @@ class MemoryLiveViewCacheStore implements LiveViewCacheStore {
 
   final int maximumSnapshotBytes;
   final int maximumNamespaceBytes;
+  final LiveCacheSnapshotSanitizer sanitizer;
 
   final Map<String, StoredLiveCacheManifest> _manifests = {};
   final Map<LiveCacheNamespace, LinkedHashMap<String, _MemorySnapshot>>
@@ -19,6 +21,7 @@ class MemoryLiveViewCacheStore implements LiveViewCacheStore {
   MemoryLiveViewCacheStore({
     this.maximumSnapshotBytes = defaultMaximumSnapshotBytes,
     this.maximumNamespaceBytes = defaultMaximumNamespaceBytes,
+    this.sanitizer = const LiveCacheSnapshotSanitizer(),
   }) : assert(maximumSnapshotBytes > 0),
        assert(maximumNamespaceBytes > 0);
 
@@ -54,7 +57,11 @@ class MemoryLiveViewCacheStore implements LiveViewCacheStore {
 
   @override
   Future<bool> writeSnapshot(LiveCacheSnapshot snapshot) async {
-    var size = _encodedSize(snapshot.rendered);
+    var rendered = sanitizer.sanitize(snapshot.rendered);
+    if (rendered == null) {
+      return false;
+    }
+    var size = _encodedSize(rendered);
     if (size == null ||
         size > maximumSnapshotBytes ||
         size > maximumNamespaceBytes) {
@@ -70,7 +77,15 @@ class MemoryLiveViewCacheStore implements LiveViewCacheStore {
       entries.remove(entries.keys.first);
     }
 
-    entries[routeKey] = _MemorySnapshot(snapshot: snapshot, size: size);
+    entries[routeKey] = _MemorySnapshot(
+      snapshot: LiveCacheSnapshot(
+        namespace: snapshot.namespace,
+        route: snapshot.route,
+        storedAt: snapshot.storedAt,
+        rendered: rendered,
+      ),
+      size: size,
+    );
     return true;
   }
 

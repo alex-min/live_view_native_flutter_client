@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_snapshot_sanitizer.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_store.dart';
 import 'package:liveview_flutter/live_view/cache/memory_live_view_cache_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +17,7 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
   final SharedPreferences preferences;
   final int maximumSnapshotBytes;
   final int maximumNamespaceBytes;
+  final LiveCacheSnapshotSanitizer sanitizer;
 
   PersistentLiveViewCacheStore({
     required this.preferences,
@@ -23,6 +25,7 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
         MemoryLiveViewCacheStore.defaultMaximumSnapshotBytes,
     this.maximumNamespaceBytes =
         MemoryLiveViewCacheStore.defaultMaximumNamespaceBytes,
+    this.sanitizer = const LiveCacheSnapshotSanitizer(),
   }) : assert(maximumSnapshotBytes > 0),
        assert(maximumNamespaceBytes > 0);
 
@@ -106,7 +109,11 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
     if (!_isSafeRelativeRoute(snapshot.route)) {
       return false;
     }
-    var renderedSize = _encodedSize(snapshot.rendered);
+    var rendered = sanitizer.sanitize(snapshot.rendered);
+    if (rendered == null) {
+      return false;
+    }
+    var renderedSize = _encodedSize(rendered);
     if (renderedSize == null ||
         renderedSize > maximumSnapshotBytes ||
         renderedSize > maximumNamespaceBytes) {
@@ -131,7 +138,7 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
       entries.removeAt(0);
     }
 
-    entries.add(_snapshotToJson(snapshot, renderedSize));
+    entries.add(_snapshotToJson(snapshot, rendered, renderedSize));
     await preferences.setString(preferenceKey, jsonEncode(envelope));
     return true;
   }
@@ -325,6 +332,7 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
 
   Map<String, dynamic> _snapshotToJson(
     LiveCacheSnapshot snapshot,
+    Map<String, dynamic> rendered,
     int renderedSize,
   ) {
     var timestamp = DateTime.now().toUtc().toIso8601String();
@@ -333,7 +341,7 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
       'storedAt': snapshot.storedAt.toUtc().toIso8601String(),
       'lastAccessedAt': timestamp,
       'renderedSize': renderedSize,
-      'rendered': snapshot.rendered,
+      'rendered': rendered,
     };
   }
 
