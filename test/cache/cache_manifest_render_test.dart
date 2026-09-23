@@ -106,4 +106,18 @@ void main() {
       '/accounts',
     ]);
   });
+
+  test('render observers see cached and authoritative transitions', () async {
+    var renderedTypes = <ViewType>[];
+    var view = LiveView(onViewTypeRendered: renderedTypes.add);
+
+    await view.handleRenderedMessage(const {
+      's': ['<flutter><Text>Cached</Text></flutter>'],
+    }, viewType: ViewType.cached);
+    await view.handleRenderedMessage(const {
+      's': ['<flutter><Text>Fresh</Text></flutter>'],
+    }, viewType: ViewType.liveView);
+
+    expect(renderedTypes, [ViewType.cached, ViewType.liveView]);
+  });
 }

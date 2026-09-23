@@ -92,12 +92,14 @@ class LiveView {
   static Future<LiveView> withPersistentCache({
     LiveViewFallbackPages fallbackPages = const LiveViewFallbackPages(),
     http.Client Function()? httpClientFactory,
+    void Function(ViewType)? onViewTypeRendered,
   }) async => LiveView(
     fallbackPages: fallbackPages,
     cacheCoordinator: LiveViewCacheCoordinator(
       store: await PersistentLiveViewCacheStore.create(),
     ),
     httpClientFactory: httpClientFactory,
+    onViewTypeRendered: onViewTypeRendered,
   );
 
   final List<Plugin> _installedPlugins = [];
@@ -184,6 +186,7 @@ class LiveView {
   bool throttleSpammyCalls = true;
   LiveCacheManifest? cacheManifest;
   final LiveViewCacheCoordinator? cacheCoordinator;
+  final void Function(ViewType)? onViewTypeRendered;
   int _cacheRenderGeneration = 0;
   Future<int> _cachePrefetchComplete = Future<int>.value(0);
 
@@ -238,6 +241,7 @@ class LiveView {
   LiveView({
     this.fallbackPages = const LiveViewFallbackPages(),
     this.cacheCoordinator,
+    this.onViewTypeRendered,
     http.Client Function()? httpClientFactory,
   }) : _httpClientFactory =
            httpClientFactory ?? http_client_factory.createHttpClient {
@@ -740,6 +744,7 @@ class LiveView {
     }
     _renderedUrl = currentUrl;
     _renderedViewType = viewType;
+    onViewTypeRendered?.call(viewType);
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
     var losesUserPolicy =

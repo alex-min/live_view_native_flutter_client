@@ -23,11 +23,14 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'the authenticated manifest warms and presents all four primary routes',
+    'the authenticated manifest warms, presents and restores primary routes',
     (tester) async {
       await _ensureServer();
       SharedPreferences.setMockInitialValues({});
-      final view = await LiveView.withPersistentCache();
+      final renderedTypes = <ViewType>[];
+      final view = await LiveView.withPersistentCache(
+        onViewTypeRendered: renderedTypes.add,
+      );
       view.catchExceptions = false;
       view.disableAnimations = true;
       view.throttleSpammyCalls = false;
@@ -49,11 +52,70 @@ void main() {
         '/users/settings',
         '/accounts',
       ]) {
-        await _expectCachedThenFresh(tester, view, route);
+        await _expectCachedThenFresh(tester, view, route, renderedTypes);
       }
+
+      final firstCoordinator = view.cacheCoordinator!;
+      final firstNamespace = firstCoordinator.namespace;
+      final persistedDashboard = await firstCoordinator.loadForNavigation(
+        Uri.parse('/dashboard'),
+      );
+      expect(firstNamespace, isNotNull);
+      expect(persistedDashboard, isNotNull);
+
+      await view.disconnect();
+      await tester.pumpWidget(const SizedBox.shrink());
+
+      final restartedRenderedTypes = <ViewType>[];
+      final restartedView = await LiveView.withPersistentCache(
+        onViewTypeRendered: restartedRenderedTypes.add,
+      );
+      restartedView.catchExceptions = false;
+      restartedView.disableAnimations = true;
+      restartedView.throttleSpammyCalls = false;
+      expect(
+        restartedView.cacheCoordinator?.store,
+        isNot(same(firstCoordinator.store)),
+      );
+      expect(
+        await restartedView.cacheCoordinator?.loadForNavigation(
+          Uri.parse('/dashboard'),
+        ),
+        isNull,
+        reason: 'Persisted user data stays hidden before identity confirmation',
+      );
+
+      await tester.pumpWidget(_TestApp(view: restartedView));
+      await restartedView.connect('http://$_serverHost:$_serverPort/accounts');
+      await _waitForUrl(tester, restartedView, '/accounts');
+      await _waitForCachePolicy(tester, restartedView);
+
+      expect(restartedView.cacheCoordinator?.namespace, firstNamespace);
+      final restoredDashboard = await restartedView.cacheCoordinator
+          ?.loadForNavigation(Uri.parse('/dashboard'));
+      expect(restoredDashboard, isNotNull);
+      expect(restoredDashboard?.storedAt, persistedDashboard?.storedAt);
+
+      await _expectCachedThenFresh(
+        tester,
+        restartedView,
+        '/dashboard',
+        restartedRenderedTypes,
+      );
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );
+}
+
+Future<void> _waitForCachePolicy(WidgetTester tester, LiveView view) async {
+  for (var attempt = 0; attempt < 300; attempt++) {
+    await tester.pump();
+    if (view.cacheCoordinator?.namespace != null) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+  throw Exception('Timed out waiting for the cache policy to be confirmed');
 }
 
 Future<void> _waitForCachedRoutes(
@@ -89,23 +151,16 @@ Future<void> _expectCachedThenFresh(
   WidgetTester tester,
   LiveView view,
   String route,
+  List<ViewType> renderedTypes,
 ) async {
+  final firstNewRender = renderedTypes.length;
   await view.livePatch(route);
-  var sawCached = false;
-  for (var attempt = 0; attempt < 300; attempt++) {
-    await tester.pump();
-    if (view.isShowingCachedRender) {
-      sawCached = true;
-      break;
-    }
-    if (view.currentUrl == route && view.isCurrentRouteReady) {
-      break;
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 10));
-  }
-  expect(sawCached, isTrue, reason: '$route should display its snapshot');
-
   await _waitForUrl(tester, view, route);
+  expect(
+    renderedTypes.skip(firstNewRender),
+    contains(ViewType.cached),
+    reason: '$route should display its snapshot',
+  );
   expect(view.isShowingCachedRender, isFalse);
 }
 
