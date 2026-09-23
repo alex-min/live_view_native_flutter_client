@@ -176,9 +176,7 @@ void main() {
         await _waitForUrl(
           tester,
           view,
-          RegExp(
-            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
-          ),
+          RegExp(r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$'),
           seconds: 30,
         );
         await _waitFor(tester, find.textContaining('12.34'), seconds: 30);

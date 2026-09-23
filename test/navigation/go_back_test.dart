@@ -43,8 +43,7 @@ main() async {
     });
 
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(LiveText));
-    await tester.tap(find.byType(LiveText), warnIfMissed: false);
+    await tester.tap(find.byType(LiveText).hitTestable());
 
     await tester.runAsync(() => Future.delayed(const Duration(seconds: 2)));
     expect(server.lastChannelActions, [
@@ -60,6 +59,7 @@ main() async {
       {'url': 'http://localhost:9999/', 'redirect': null},
       {'url': null, 'redirect': 'http://localhost:9999/'},
     ]);
+    expect(view.currentUrl, '/');
 
     view.handleRenderedMessage({
       's': ['<link patch="/second-page"><Text>variable: ', '</Text></link>'],

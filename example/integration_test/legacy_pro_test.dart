@@ -60,8 +60,12 @@ void main() {
 
         // Legacy pro keeps access to custom categories.
         await view.livePatch('/settings/categories/new');
-        await _waitForUrl(tester, view, '/settings/categories/new',
-            seconds: 30);
+        await _waitForUrl(
+          tester,
+          view,
+          '/settings/categories/new',
+          seconds: 30,
+        );
         await _waitFor(tester, find.byType(Form), seconds: 30);
 
         // But automated accounts require the automated_accounts feature,

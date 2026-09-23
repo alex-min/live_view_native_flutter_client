@@ -63,9 +63,7 @@ void main() {
         });
         await _waitFor(tester, amountFieldFinder, seconds: 30);
 
-        final amountField = tester.widget<TextField>(
-          amountFieldFinder.first,
-        );
+        final amountField = tester.widget<TextField>(amountFieldFinder.first);
         expect(
           amountField.decoration?.prefixText?.trim().isNotEmpty,
           isTrue,
@@ -90,11 +88,7 @@ void main() {
         await tester.tap(saveButton.first);
         await tester.pump();
 
-        await _waitFor(
-          tester,
-          find.textContaining('blank'),
-          seconds: 30,
-        );
+        await _waitFor(tester, find.textContaining('blank'), seconds: 30);
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
@@ -131,8 +125,11 @@ void main() {
         // false, so the old currentIndex assertion would fail the test here).
         // The "no selection" look itself is covered by the unit tests at a
         // true mobile width.
-        await _waitFor(tester, find.byType(LiveBottomNavigationBar),
-            seconds: 30);
+        await _waitFor(
+          tester,
+          find.byType(LiveBottomNavigationBar),
+          seconds: 30,
+        );
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

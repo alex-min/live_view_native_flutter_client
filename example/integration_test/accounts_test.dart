@@ -50,12 +50,7 @@ void main() {
         // the accounts screen before asserting the empty state.
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await view.livePatch('/accounts');
-        await _waitForUrl(
-          tester,
-          view,
-          '/accounts',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
 
         // Empty state: no accounts yet, with a create button and no
         // overview figures (the merged overview only shows with accounts).
@@ -120,12 +115,7 @@ void main() {
 
         // Back on the list, the account appears with its balance and the
         // statement total is updated.
-        await _waitForUrl(
-          tester,
-          view,
-          '/accounts',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         expect(find.byIcon(Icons.payments), findsOneWidget);
         final accountsCard = find
@@ -315,7 +305,9 @@ void main() {
           findsOneWidget,
         );
         expect(
-            find.byType(LiveBalanceChart).hitTestable().last, findsOneWidget);
+          find.byType(LiveBalanceChart).hitTestable().last,
+          findsOneWidget,
+        );
         final activityScroll = tester.state<ScrollableState>(
           find
               .descendant(
@@ -329,9 +321,7 @@ void main() {
         await tester.pump();
         expect(find.text('Money activity').hitTestable(), findsOneWidget);
         final compactSearchButton = find
-            .byKey(
-              const ValueKey('balance_chart_search_button'),
-            )
+            .byKey(const ValueKey('balance_chart_search_button'))
             .hitTestable()
             .last;
         expect(compactSearchButton.hitTestable(), findsOneWidget);
@@ -517,7 +507,9 @@ void main() {
         expect(find.byKey(const Key('main_app_bar')), findsNothing);
         expect(find.byType(BottomNavigationBar), findsOneWidget);
         expect(
-            find.byType(LiveBalanceChart).hitTestable().last, findsOneWidget);
+          find.byType(LiveBalanceChart).hitTestable().last,
+          findsOneWidget,
+        );
         expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
 
         final balancePainter = tester

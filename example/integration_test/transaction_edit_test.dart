@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
+import 'package:liveview_flutter/live_view/cache/memory_live_view_cache_store.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,7 +32,11 @@ void main() {
         await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
-        final view = LiveView();
+        final view = LiveView(
+          cacheCoordinator: LiveViewCacheCoordinator(
+            store: MemoryLiveViewCacheStore(),
+          ),
+        );
         view.catchExceptions = false;
         view.disableAnimations = false;
         view.throttleSpammyCalls = false;
@@ -111,6 +117,26 @@ void main() {
           findsNWidgets(2),
           reason: 'The transaction form should contain two text fields',
         );
+        final newTransactionCloseButton =
+            find.byIcon(Icons.close).hitTestable();
+        await tester.tap(newTransactionCloseButton);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('No transactions yet'), seconds: 30);
+
+        await tester.tap(find.byIcon(Icons.add).last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('New transaction'), seconds: 30);
+
         expect(
           tester.getTopLeft(transactionFields.first).dy,
           lessThan(tester.getTopLeft(find.text('Type')).dy),
@@ -151,16 +177,16 @@ void main() {
         await _waitForUrl(
           tester,
           view,
-          RegExp(
-            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
-          ),
+          RegExp(r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$'),
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
-        final createdRow = find.ancestor(
-          of: find.text('Courses'),
-          matching: find.byType(ListTile),
-        );
+        final createdRow = find
+            .ancestor(
+              of: find.text('Courses').hitTestable(),
+              matching: find.byType(ListTile),
+            )
+            .hitTestable();
         expect(
           (tester.getCenter(createdRow).dy -
                   tester.view.physicalSize.height / 2)
@@ -214,7 +240,6 @@ void main() {
           reason: 'The close button should float clear of the screen bottom',
         );
         await tester.tap(closeButton);
-        await tester.tap(closeButton, warnIfMissed: false);
         await _waitForUrl(
           tester,
           view,
@@ -406,9 +431,7 @@ void main() {
         await _waitForUrl(
           tester,
           view,
-          RegExp(
-            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
-          ),
+          RegExp(r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$'),
           seconds: 30,
         );
         await _waitFor(tester, find.text('Integration transfer'), seconds: 30);

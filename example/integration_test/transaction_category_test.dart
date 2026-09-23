@@ -140,12 +140,7 @@ void main() {
         await _waitFor(tester, manageCategories, seconds: 30);
         await tester.ensureVisible(manageCategories.last);
         await tester.tap(manageCategories.last);
-        await _waitForUrl(
-          tester,
-          view,
-          '/settings/categories',
-          seconds: 30,
-        );
+        await _waitForUrl(tester, view, '/settings/categories', seconds: 30);
         await view.livePatch(transactionUrl.toString());
         await _waitForUrl(
           tester,
@@ -225,9 +220,7 @@ void main() {
         await _waitForUrl(
           tester,
           view,
-          RegExp(
-            r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$',
-          ),
+          RegExp(r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$'),
           seconds: 30,
         );
 

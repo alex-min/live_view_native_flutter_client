@@ -123,10 +123,7 @@ void main() {
 
         // Upgrade to Pro using the test harness button.
         const activateProText = 'Activate Pro (test)';
-        final activateButton = find.widgetWithText(
-          TextButton,
-          activateProText,
-        );
+        final activateButton = find.widgetWithText(TextButton, activateProText);
         await _waitFor(tester, activateButton, seconds: 30);
         await tester.ensureVisible(activateButton);
         await tester.pumpAndSettle();

@@ -50,10 +50,7 @@ void main() {
         // The dark Pro card renders with the yearly price by default.
         await _waitFor(tester, find.textContaining('Mavio Pro'), seconds: 30);
         expect(find.textContaining('€3.33'), findsWidgets);
-        expect(
-          find.textContaining('€39.99 billed once a year'),
-          findsWidgets,
-        );
+        expect(find.textContaining('€39.99 billed once a year'), findsWidgets);
         expect(find.textContaining('Upgrade to Pro'), findsWidgets);
 
         // Switching to monthly updates the price and billing note.
@@ -81,8 +78,11 @@ void main() {
         await tester.tap(upgradeButton);
         await tester.pumpAndSettle();
 
-        await _waitFor(tester, find.text('Checkout is coming soon.'),
-            seconds: 30);
+        await _waitFor(
+          tester,
+          find.text('Checkout is coming soon.'),
+          seconds: 30,
+        );
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

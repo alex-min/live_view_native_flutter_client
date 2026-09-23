@@ -105,16 +105,9 @@ void main() {
         restartedRenderedTypes,
       );
 
-      await restartedView.execHrefClick(
-        '/users/log_out',
-        method: 'DELETE',
-      );
+      await restartedView.execHrefClick('/users/log_out', method: 'DELETE');
       await _waitForUrl(tester, restartedView, '/');
-      await _waitForLogoutInvalidation(
-        tester,
-        restartedView,
-        firstNamespace!,
-      );
+      await _waitForLogoutInvalidation(tester, restartedView, firstNamespace!);
 
       expect(restartedView.router.pages, hasLength(1));
       expect(restartedView.router.pages.single.page.name, '/');
@@ -208,9 +201,7 @@ Future<void> _waitForCachedRoutes(
     final coordinator = view.cacheCoordinator;
     if (coordinator != null && coordinator.namespace != null) {
       final snapshots = await Future.wait(
-        routes.map(
-          (route) => coordinator.loadForNavigation(Uri.parse(route)),
-        ),
+        routes.map((route) => coordinator.loadForNavigation(Uri.parse(route))),
       );
       if (snapshots.every((snapshot) => snapshot != null)) {
         return;
@@ -344,7 +335,8 @@ Future<void> _ensureServer() async {
   );
   if (seed.exitCode != 0) {
     throw Exception(
-        'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}');
+      'mix run seeds.exs failed:\n${seed.stderr}\n${seed.stdout}',
+    );
   }
 
   final process = await Process.start(
