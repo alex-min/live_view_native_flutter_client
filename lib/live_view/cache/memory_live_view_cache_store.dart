@@ -38,6 +38,11 @@ class MemoryLiveViewCacheStore implements LiveViewCacheStore {
   }
 
   @override
+  Future<void> removeManifest(String key) async {
+    _manifests.remove(key);
+  }
+
+  @override
   Future<LiveCacheSnapshot?> readSnapshot(
     LiveCacheNamespace namespace,
     Uri route,

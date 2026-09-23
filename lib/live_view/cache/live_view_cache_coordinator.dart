@@ -63,7 +63,16 @@ class LiveViewCacheCoordinator {
       return false;
     }
 
+    var priorNamespace = _namespace;
+    var changesUser = _changesUser(priorNamespace, namespace);
+    if (changesUser) {
+      deactivate();
+    }
     try {
+      if (changesUser) {
+        await store.clearNamespace(priorNamespace!);
+        await store.removeManifest(manifestStorageKey(priorNamespace));
+      }
       await store.writeManifest(
         manifestStorageKey(namespace),
         StoredLiveCacheManifest(manifest: manifest, storedAt: now().toUtc()),
@@ -127,6 +136,7 @@ class LiveViewCacheCoordinator {
         break;
       }
       if (result.stop) {
+        await invalidateActiveUser();
         break;
       }
       var rendered = result.rendered;
@@ -224,6 +234,21 @@ class LiveViewCacheCoordinator {
     _prefetchGeneration += 1;
   }
 
+  Future<bool> invalidateActiveUser() async {
+    var namespace = _namespace;
+    deactivate();
+    if (namespace == null || namespace.scope != LiveCacheScope.user) {
+      return true;
+    }
+    try {
+      await store.clearNamespace(namespace);
+      await store.removeManifest(manifestStorageKey(namespace));
+      return true;
+    } on Object {
+      return false;
+    }
+  }
+
   bool _ownsPrefetch(
     int generation,
     LiveCacheNamespace namespace,
@@ -244,6 +269,12 @@ class LiveViewCacheCoordinator {
       namespace.scope == manifest.scope &&
       namespace.identity == manifest.identity &&
       namespace.manifestVersion == manifest.version;
+
+  bool _changesUser(LiveCacheNamespace? current, LiveCacheNamespace next) =>
+      current != null &&
+      current.scope == LiveCacheScope.user &&
+      next.scope == LiveCacheScope.user &&
+      (current.origin != next.origin || current.identity != next.identity);
 
   bool _validRoutes(List<LiveCacheRoute> routes) {
     if (routes.length > LiveCacheManifest.maximumRouteCount) {

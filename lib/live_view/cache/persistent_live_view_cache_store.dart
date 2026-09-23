@@ -68,6 +68,11 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
   }
 
   @override
+  Future<void> removeManifest(String key) async {
+    await preferences.remove(_manifestKey(key));
+  }
+
+  @override
   Future<LiveCacheSnapshot?> readSnapshot(
     LiveCacheNamespace namespace,
     Uri route,

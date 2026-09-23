@@ -121,6 +121,75 @@ void main() {
     expect(coordinator.manifest, isNull);
   });
 
+  test('switching users clears the previous namespace', () async {
+    var store = MemoryLiveViewCacheStore();
+    var coordinator = LiveViewCacheCoordinator(store: store);
+    await coordinator.acceptManifest(namespace: namespace, manifest: manifest);
+    await store.writeSnapshot(
+      LiveCacheSnapshot(
+        namespace: namespace,
+        route: Uri.parse('/accounts'),
+        storedAt: storedAt,
+        rendered: const {
+          's': ['first user'],
+        },
+      ),
+    );
+    var nextNamespace = LiveCacheNamespace(
+      origin: namespace.origin,
+      scope: namespace.scope,
+      identity: 'opaque-user-b',
+      manifestVersion: namespace.manifestVersion,
+      rendererVersion: namespace.rendererVersion,
+      locale: namespace.locale,
+      theme: namespace.theme,
+    );
+    var nextManifest = LiveCacheManifest(
+      version: manifest.version,
+      scope: manifest.scope,
+      identity: 'opaque-user-b',
+      strategy: manifest.strategy,
+      routes: manifest.routes,
+    );
+
+    expect(
+      await coordinator.acceptManifest(
+        namespace: nextNamespace,
+        manifest: nextManifest,
+      ),
+      isTrue,
+    );
+    expect(await store.readSnapshot(namespace, Uri.parse('/accounts')), isNull);
+    expect(coordinator.namespace, nextNamespace);
+  });
+
+  test('invalidating the active user clears storage and policy', () async {
+    var store = MemoryLiveViewCacheStore();
+    var coordinator = LiveViewCacheCoordinator(store: store);
+    await coordinator.acceptManifest(namespace: namespace, manifest: manifest);
+    await store.writeSnapshot(
+      LiveCacheSnapshot(
+        namespace: namespace,
+        route: Uri.parse('/accounts'),
+        storedAt: storedAt,
+        rendered: const {
+          's': ['accounts'],
+        },
+      ),
+    );
+
+    expect(await coordinator.invalidateActiveUser(), isTrue);
+    expect(coordinator.namespace, isNull);
+    expect(coordinator.manifest, isNull);
+    expect(await store.readSnapshot(namespace, Uri.parse('/accounts')), isNull);
+    expect(
+      await store.readManifest(
+        LiveViewCacheCoordinator.manifestStorageKey(namespace),
+      ),
+      isNull,
+    );
+  });
+
   test('only the latest route and channel ownership can write', () async {
     var store = MemoryLiveViewCacheStore();
     var coordinator = LiveViewCacheCoordinator(
@@ -285,6 +354,12 @@ void main() {
         0,
       );
       expect(calls, [Uri.parse('/accounts')]);
+      expect(coordinator.namespace, isNull);
+
+      await coordinator.acceptManifest(
+        namespace: namespace,
+        manifest: manifest,
+      );
 
       var started = Completer<void>();
       var release = Completer<void>();
@@ -345,6 +420,9 @@ class _ThrowingStore implements LiveViewCacheStore {
   @override
   Future<void> removeSnapshot(LiveCacheNamespace namespace, Uri route) =>
       throw StateError('unavailable');
+
+  @override
+  Future<void> removeManifest(String key) => throw StateError('unavailable');
 
   @override
   Future<void> retainRoutes(LiveCacheNamespace namespace, Set<Uri> routes) =>

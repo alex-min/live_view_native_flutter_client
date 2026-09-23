@@ -17,6 +17,8 @@ abstract interface class LiveViewCacheStore {
 
   Future<void> writeManifest(String key, StoredLiveCacheManifest manifest);
 
+  Future<void> removeManifest(String key);
+
   Future<LiveCacheSnapshot?> readSnapshot(
     LiveCacheNamespace namespace,
     Uri route,

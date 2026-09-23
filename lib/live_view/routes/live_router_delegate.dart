@@ -157,6 +157,21 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     notifyListeners();
   }
 
+  void retainOnlyCurrentPage() {
+    var current = pages.lastOrNull;
+    if (current == null) {
+      history.clear();
+      return;
+    }
+    pages = [current];
+    history = {};
+    var name = current.page.name;
+    if (name != null) {
+      history[name] = current.widgets;
+    }
+    notifyListeners();
+  }
+
   void updatePage({
     required String url,
     required List<Widget> widget,

@@ -700,6 +700,9 @@ class LiveView {
     // A full render replaces whatever diffs were targeting the previous page,
     // so drop stale diff state before the new widgets read it.
     changeNotifier.emptyData();
+    if (viewType != ViewType.cached) {
+      cacheManifest = null;
+    }
     var elements = List<String>.from(rendered['s']);
 
     var render =
@@ -720,7 +723,24 @@ class LiveView {
     _renderedViewType = viewType;
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
-    router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);
+    var losesUserPolicy =
+        viewType != ViewType.cached &&
+        cacheManifest == null &&
+        cacheCoordinator?.namespace?.scope == LiveCacheScope.user;
+    if (losesUserPolicy) {
+      router.replacePages(
+        url: currentUrl,
+        widget: render.$1,
+        rootState: render.$2,
+      );
+      unawaited(cacheCoordinator!.invalidateActiveUser());
+    } else {
+      router.updatePage(
+        url: currentUrl,
+        widget: render.$1,
+        rootState: render.$2,
+      );
+    }
     _storeAuthoritativeRender(
       rendered,
       viewType: viewType,
@@ -764,6 +784,15 @@ class LiveView {
       theme: '${themeSettings.themeName}/$displayedTheme',
     );
     var route = Uri.parse(renderedUrl);
+    var priorNamespace = coordinator.namespace;
+    var changesUser =
+        priorNamespace?.scope == LiveCacheScope.user &&
+        namespace.scope == LiveCacheScope.user &&
+        (priorNamespace?.origin != namespace.origin ||
+            priorNamespace?.identity != namespace.identity);
+    if (changesUser) {
+      router.retainOnlyCurrentPage();
+    }
 
     unawaited(() async {
       var accepted = await coordinator.acceptManifest(
@@ -787,7 +816,16 @@ class LiveView {
             generation == _cacheRenderGeneration &&
             identical(sourceChannel, _channel) &&
             currentUrl == renderedUrl) {
-          _cachePrefetchComplete = coordinator.prefetch(_prefetchRoute);
+          var prefetchedNamespace = coordinator.namespace;
+          _cachePrefetchComplete = coordinator.prefetch(_prefetchRoute).then((
+            count,
+          ) {
+            if (prefetchedNamespace?.scope == LiveCacheScope.user &&
+                coordinator.namespace == null) {
+              router.retainOnlyCurrentPage();
+            }
+            return count;
+          });
         }
       }
     }());
