@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
+import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 enum FormFieldEventType { initField, change, submit, clear }
@@ -170,7 +171,10 @@ class _LiveFormState extends StateWidget<LiveForm> {
           }
           return true;
         },
-        child: singleChild(),
+        child: AbsorbPointer(
+          absorbing: widget.state.viewType == ViewType.cached,
+          child: singleChild(),
+        ),
       ),
     );
   }

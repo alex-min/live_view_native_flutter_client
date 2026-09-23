@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/mapping/input_decoration.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_form.dart';
@@ -207,7 +208,9 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
       enableSuggestions: booleanAttribute('enableSuggestions') ?? true,
       autocorrect: booleanAttribute('autocorrect') ?? false,
       expands: booleanAttribute('expands') ?? false,
-      readOnly: booleanAttribute('readOnly') ?? false,
+      readOnly:
+          widget.state.viewType == ViewType.cached ||
+          (booleanAttribute('readOnly') ?? false),
       keyboardType: textInputTypeAttribute('keyboardType'),
       maxLength: intAttribute('maxLength'),
       minLines: intAttribute('minLines'),

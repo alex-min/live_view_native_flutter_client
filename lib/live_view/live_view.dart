@@ -158,6 +158,8 @@ class LiveView {
       _renderedViewType == ViewType.liveView &&
       redirectToUrl == null;
 
+  bool get isShowingCachedRender => _renderedViewType == ViewType.cached;
+
   // dynamic global state
   late StateNotifier changeNotifier;
   late LiveConnectionNotifier connectionNotifier;
@@ -948,6 +950,9 @@ class LiveView {
   }
 
   Future<void> postForm(Map<String, dynamic> formValues, {String? url}) {
+    if (isShowingCachedRender) {
+      return Future<void>.value();
+    }
     return deadViewPostQuery(url ?? currentUrl, formValues);
   }
 
@@ -1062,6 +1067,9 @@ class LiveView {
     bool waitForConnection = true,
     bool showLoadingPage = true,
   }) async {
+    if (isShowingCachedRender && method.toUpperCase() != 'GET') {
+      return;
+    }
     if (showLoadingPage) {
       router.pushPage(
         url: 'loading;$url',

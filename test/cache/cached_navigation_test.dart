@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
@@ -56,7 +57,10 @@ void main() {
                 'strategy="stale-while-revalidate">'
                 '<live-cache-route href="/accounts" max-age="300" />'
                 '</live-cache-manifest>'
-                '<viewBody><Text>Cached accounts</Text></viewBody></flutter>',
+                '<viewBody><Column><Text>Cached accounts</Text>'
+                '<Form method="post" action="/unsafe">'
+                '<TextField name="memo" />'
+                '</Form></Column></viewBody></flutter>',
           ],
         },
       ),
@@ -72,6 +76,12 @@ void main() {
 
     expect(find.text('Cached accounts'), findsOneWidget);
     expect(view.isCurrentRouteReady, isFalse);
+    var cachedField = tester.widget<TextField>(find.byType(TextField));
+    expect(cachedField.readOnly, isTrue);
+    var requestCount = server.httpRequestsMade.length;
+    await view.postForm({'memo': 'unsafe'}, url: '/unsafe');
+    await view.execHrefClick('/users/log_out', method: 'DELETE');
+    expect(server.httpRequestsMade, hasLength(requestCount));
     expect(
       view.sendEvent(
         ExecLiveEvent(type: 'click', name: 'unsafe', value: const {}),
