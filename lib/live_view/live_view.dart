@@ -919,6 +919,7 @@ class LiveView {
     LiveCacheSnapshot? snapshot;
     var coordinator = cacheCoordinator;
     if (coordinator != null) {
+      coordinator.cancelPrefetch();
       snapshot = await coordinator.loadForNavigation(Uri.parse(url));
       if (navigationGeneration != _navigationGeneration) {
         return;

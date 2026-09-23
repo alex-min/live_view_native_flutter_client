@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
@@ -205,6 +207,105 @@ void main() {
     expect(await coordinator.loadForNavigation(Uri.parse('/accounts')), isNull);
     expect(await store.readSnapshot(namespace, Uri.parse('/accounts')), isNull);
   });
+
+  test(
+    'prefetches missing routes sequentially with high priority first',
+    () async {
+      var store = MemoryLiveViewCacheStore();
+      var coordinator = LiveViewCacheCoordinator(
+        store: store,
+        now: () => storedAt,
+      );
+      var prioritizedManifest = LiveCacheManifest(
+        version: manifest.version,
+        scope: manifest.scope,
+        identity: manifest.identity,
+        strategy: manifest.strategy,
+        routes: [
+          manifest.routes.first,
+          LiveCacheRoute(
+            href: Uri.parse('/dashboard'),
+            maxAge: const Duration(minutes: 5),
+            priority: LiveCachePriority.high,
+          ),
+          manifest.routes.last,
+        ],
+      );
+      await coordinator.acceptManifest(
+        namespace: namespace,
+        manifest: prioritizedManifest,
+      );
+      await store.writeSnapshot(
+        LiveCacheSnapshot(
+          namespace: namespace,
+          route: Uri.parse('/transactions'),
+          storedAt: storedAt,
+          rendered: const {
+            's': ['already fresh'],
+          },
+        ),
+      );
+      var calls = <Uri>[];
+      var active = 0;
+      var maximumActive = 0;
+
+      var stored = await coordinator.prefetch((route) async {
+        calls.add(route);
+        active += 1;
+        maximumActive = maximumActive < active ? active : maximumActive;
+        await Future<void>.delayed(Duration.zero);
+        active -= 1;
+        return LiveCachePrefetchResult.rendered({
+          's': ['prefetched $route'],
+        });
+      });
+
+      expect(calls, [Uri.parse('/dashboard'), Uri.parse('/accounts')]);
+      expect(maximumActive, 1);
+      expect(stored, 2);
+    },
+  );
+
+  test(
+    'prefetch stops on authentication loss and supports cancellation',
+    () async {
+      var store = MemoryLiveViewCacheStore();
+      var coordinator = LiveViewCacheCoordinator(store: store);
+      await coordinator.acceptManifest(
+        namespace: namespace,
+        manifest: manifest,
+      );
+      var calls = <Uri>[];
+
+      expect(
+        await coordinator.prefetch((route) async {
+          calls.add(route);
+          return const LiveCachePrefetchResult.stop();
+        }),
+        0,
+      );
+      expect(calls, [Uri.parse('/accounts')]);
+
+      var started = Completer<void>();
+      var release = Completer<void>();
+      var warming = coordinator.prefetch((route) async {
+        started.complete();
+        await release.future;
+        return const LiveCachePrefetchResult.rendered({
+          's': ['obsolete'],
+        });
+      });
+      await started.future;
+      coordinator.cancelPrefetch();
+      release.complete();
+
+      expect(await warming, 0);
+      expect(
+        await store.readSnapshot(namespace, Uri.parse('/accounts')),
+        isNull,
+      );
+    },
+  );
 
   test(
     'storage errors disable the attempted operation without escaping',

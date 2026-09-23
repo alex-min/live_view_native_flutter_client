@@ -12,6 +12,7 @@ class LiveViewCacheCoordinator {
   LiveCacheNamespace? _namespace;
   LiveCacheManifest? _manifest;
   LiveCacheRenderOwnership? _activeRender;
+  int _prefetchGeneration = 0;
 
   LiveViewCacheCoordinator({required this.store, DateTime Function()? now})
     : now = now ?? DateTime.now;
@@ -78,7 +79,81 @@ class LiveViewCacheCoordinator {
     _namespace = namespace;
     _manifest = manifest;
     _activeRender = null;
+    _prefetchGeneration += 1;
     return true;
+  }
+
+  /// Warms missing or expired declared routes, one at a time. The caller owns
+  /// transport and document extraction so this coordinator remains reusable
+  /// and cannot mutate the active LiveView session.
+  Future<int> prefetch(
+    Future<LiveCachePrefetchResult> Function(Uri route) fetch,
+  ) async {
+    var namespace = _namespace;
+    var manifest = _manifest;
+    if (namespace == null || manifest == null) {
+      return 0;
+    }
+    var generation = ++_prefetchGeneration;
+    var routes = [
+      ...manifest.routes.where(
+        (route) => route.priority == LiveCachePriority.high,
+      ),
+      ...manifest.routes.where(
+        (route) => route.priority == LiveCachePriority.normal,
+      ),
+    ];
+    var storedCount = 0;
+
+    for (var policy in routes) {
+      if (!_ownsPrefetch(generation, namespace, manifest)) {
+        break;
+      }
+      var existing = await loadForNavigation(policy.href);
+      if (!_ownsPrefetch(generation, namespace, manifest)) {
+        break;
+      }
+      if (existing != null) {
+        continue;
+      }
+
+      LiveCachePrefetchResult result;
+      try {
+        result = await fetch(policy.href);
+      } on Object {
+        continue;
+      }
+      if (!_ownsPrefetch(generation, namespace, manifest)) {
+        break;
+      }
+      if (result.stop) {
+        break;
+      }
+      var rendered = result.rendered;
+      if (rendered == null) {
+        continue;
+      }
+      try {
+        var stored = await store.writeSnapshot(
+          LiveCacheSnapshot(
+            namespace: namespace,
+            route: policy.href,
+            storedAt: now().toUtc(),
+            rendered: rendered,
+          ),
+        );
+        if (stored) {
+          storedCount += 1;
+        }
+      } on Object {
+        // Cache warming is best-effort and must never affect live navigation.
+      }
+    }
+    return storedCount;
+  }
+
+  void cancelPrefetch() {
+    _prefetchGeneration += 1;
   }
 
   /// Claims the next full render for one exact channel and canonical route.
@@ -146,7 +221,17 @@ class LiveViewCacheCoordinator {
     _namespace = null;
     _manifest = null;
     _activeRender = null;
+    _prefetchGeneration += 1;
   }
+
+  bool _ownsPrefetch(
+    int generation,
+    LiveCacheNamespace namespace,
+    LiveCacheManifest manifest,
+  ) =>
+      generation == _prefetchGeneration &&
+      _namespace == namespace &&
+      identical(_manifest, manifest);
 
   static String manifestStorageKey(LiveCacheNamespace namespace) => jsonEncode([
     namespace.origin,
@@ -178,6 +263,18 @@ class LiveViewCacheCoordinator {
     }
     return true;
   }
+}
+
+class LiveCachePrefetchResult {
+  final Map<String, dynamic>? rendered;
+  final bool stop;
+
+  const LiveCachePrefetchResult.rendered(Map<String, dynamic> this.rendered)
+    : stop = false;
+
+  const LiveCachePrefetchResult.skip() : rendered = null, stop = false;
+
+  const LiveCachePrefetchResult.stop() : rendered = null, stop = true;
 }
 
 class LiveCacheRenderOwnership {
