@@ -15,6 +15,7 @@ import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_prefetch_document.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
+import 'package:liveview_flutter/live_view/cache/persistent_live_view_cache_store.dart';
 import 'package:liveview_flutter/live_view/live_view_fallback_pages.dart';
 import 'package:liveview_flutter/live_view/plugin.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
@@ -86,6 +87,17 @@ enum ClientType { liveView, httpOnly, webDocs }
 
 class LiveView {
   static const cacheRendererVersion = '1';
+
+  static Future<LiveView> withPersistentCache({
+    LiveViewFallbackPages fallbackPages = const LiveViewFallbackPages(),
+    http.Client Function()? httpClientFactory,
+  }) async => LiveView(
+    fallbackPages: fallbackPages,
+    cacheCoordinator: LiveViewCacheCoordinator(
+      store: await PersistentLiveViewCacheStore.create(),
+    ),
+    httpClientFactory: httpClientFactory,
+  );
 
   final List<Plugin> _installedPlugins = [];
   bool catchExceptions = true;

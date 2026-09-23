@@ -4,20 +4,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(MyApp(view: await LiveView.withPersistentCache()));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final LiveView view;
+
+  const MyApp({super.key, required this.view});
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  final LiveView view = LiveView();
+  LiveView get view => widget.view;
 
   @override
   initState() {
