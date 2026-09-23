@@ -12,6 +12,7 @@ import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_prefetch_document.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
 import 'package:liveview_flutter/live_view/live_view_fallback_pages.dart';
@@ -171,6 +172,9 @@ class LiveView {
   LiveCacheManifest? cacheManifest;
   final LiveViewCacheCoordinator? cacheCoordinator;
   int _cacheRenderGeneration = 0;
+  Future<int> _cachePrefetchComplete = Future<int>.value(0);
+
+  Future<int> get cachePrefetchComplete => _cachePrefetchComplete;
 
   // Tracks the last phx-trigger-action value per form so that offstage forms
   // (which are rebuilt and lose their local state) don't re-submit when the
@@ -778,10 +782,102 @@ class LiveView {
         route: route,
       );
       if (ownership != null) {
-        await coordinator.storeFullRender(ownership, rendered);
+        var stored = await coordinator.storeFullRender(ownership, rendered);
+        if (stored &&
+            generation == _cacheRenderGeneration &&
+            identical(sourceChannel, _channel) &&
+            currentUrl == renderedUrl) {
+          _cachePrefetchComplete = coordinator.prefetch(_prefetchRoute);
+        }
       }
     }());
   }
+
+  Future<LiveCachePrefetchResult> _prefetchRoute(Uri route) async {
+    var namespace = cacheCoordinator?.namespace;
+    if (namespace == null) {
+      return const LiveCachePrefetchResult.stop();
+    }
+    var origin = Uri.parse(namespace.origin);
+    var requestedTarget = origin.resolveUri(route);
+    var target = _withFlutterFormat(requestedTarget);
+    var prefetchClient =
+        identical(httpClient, _initialHttpClient)
+            ? _httpClientFactory()
+            : httpClient;
+    var closePrefetchClient = !identical(prefetchClient, httpClient);
+
+    try {
+      for (var redirectCount = 0; redirectCount <= 5; redirectCount++) {
+        var request =
+            http.Request('GET', target)
+              ..followRedirects = false
+              ..headers.addAll(httpHeaders());
+        var response = await http.Response.fromStream(
+          await prefetchClient.send(request),
+        );
+        if (response.statusCode == 401 || response.statusCode == 403) {
+          return const LiveCachePrefetchResult.stop();
+        }
+        if (response.statusCode == 301 || response.statusCode == 302) {
+          var location = response.headers['location'];
+          if (location == null || redirectCount == 5) {
+            return const LiveCachePrefetchResult.skip();
+          }
+          var redirected = target.resolve(location);
+          if (!_sameOrigin(origin, redirected)) {
+            return const LiveCachePrefetchResult.stop();
+          }
+          target = _withFlutterFormat(redirected);
+          continue;
+        }
+        if (response.statusCode != 200) {
+          return const LiveCachePrefetchResult.skip();
+        }
+
+        var extracted = const LiveCachePrefetchDocument().extract(
+          response.body,
+          namespace: namespace,
+        );
+        if (!extracted.policyConfirmed) {
+          return const LiveCachePrefetchResult.stop();
+        }
+        var finalTarget = _withoutFlutterFormat(target);
+        if (finalTarget.path != requestedTarget.path ||
+            finalTarget.query != requestedTarget.query) {
+          return const LiveCachePrefetchResult.skip();
+        }
+        var presentation = extracted.rendered;
+        return presentation == null
+            ? const LiveCachePrefetchResult.skip()
+            : LiveCachePrefetchResult.rendered(presentation);
+      }
+    } on Object {
+      return const LiveCachePrefetchResult.skip();
+    } finally {
+      if (closePrefetchClient) {
+        prefetchClient.close();
+      }
+    }
+    return const LiveCachePrefetchResult.skip();
+  }
+
+  Uri _withFlutterFormat(Uri uri) {
+    var query = Map<String, dynamic>.from(uri.queryParametersAll);
+    query['_format'] = 'flutter';
+    return uri.replace(queryParameters: query);
+  }
+
+  Uri _withoutFlutterFormat(Uri uri) {
+    var query = Map<String, dynamic>.from(uri.queryParametersAll)
+      ..remove('_format');
+    return uri.replace(queryParameters: query);
+  }
+
+  bool _sameOrigin(Uri expected, Uri candidate) =>
+      expected.scheme == candidate.scheme &&
+      expected.host == candidate.host &&
+      expected.port == candidate.port;
 
   handleDiffMessage(Map<String, dynamic> diff) {
     _handleDiffEvents(diff);

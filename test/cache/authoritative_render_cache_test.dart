@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
 import 'package:liveview_flutter/live_view/cache/memory_live_view_cache_store.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
@@ -60,5 +61,123 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(coordinator.namespace, isNull);
+  });
+
+  test(
+    'prefetches authenticated HTTP presentation without join secrets',
+    () async {
+      var store = MemoryLiveViewCacheStore();
+      var coordinator = LiveViewCacheCoordinator(store: store);
+      var prefetchBody =
+          '<meta name="csrf-token" content="prefetch-secret">'
+          '<div id="prefetch-root" data-phx-main '
+          'data-phx-session="signed" data-phx-static="static">'
+          '<flutter><live-cache-manifest version="finance-v1" scope="user" '
+          'identity="opaque-user" strategy="stale-while-revalidate">'
+          '<live-cache-route href="/accounts" max-age="300" />'
+          '<live-cache-route href="/dashboard" max-age="300" priority="high" />'
+          '</live-cache-manifest><viewBody><Text>Dashboard</Text></viewBody>'
+          '</flutter></div>';
+      var (view, server) = await connect(
+        LiveView(cacheCoordinator: coordinator),
+        url: 'http://localhost:9999/accounts',
+        onRequest:
+            (request) =>
+                request.url.path == '/dashboard'
+                    ? http.Response(prefetchBody, 200)
+                    : null,
+      );
+      var channel = server.lastChannel!;
+      var renderedWithDashboard = {
+        's': [
+          '<flutter><live-cache-manifest version="finance-v1" scope="user" '
+              'identity="opaque-user" strategy="stale-while-revalidate">'
+              '<live-cache-route href="/accounts" max-age="300" />'
+              '<live-cache-route href="/dashboard" max-age="300" priority="high" />'
+              '</live-cache-manifest><Text>Accounts</Text></flutter>',
+        ],
+      };
+
+      view.handleMessage(
+        Message(
+          event: PhoenixChannelEvent('phx_reply'),
+          payload: {
+            'response': {'rendered': renderedWithDashboard},
+          },
+        ),
+        sourceChannel: channel,
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(await view.cachePrefetchComplete, 1);
+
+      var snapshot = await store.readSnapshot(
+        coordinator.namespace!,
+        Uri.parse('/dashboard'),
+      );
+      expect(snapshot, isNotNull);
+      var markup = (snapshot!.rendered['s'] as List).single as String;
+      expect(markup, contains('Dashboard'));
+      expect(markup, isNot(contains('prefetch-secret')));
+      expect(markup, isNot(contains('data-phx-session')));
+      expect(
+        server.httpRequestsMade
+            .where((request) => request.url.path == '/dashboard')
+            .single
+            .headers['cookie'],
+        'live_view=session',
+      );
+    },
+  );
+
+  test('prefetch refuses cross-origin redirects', () async {
+    var store = MemoryLiveViewCacheStore();
+    var coordinator = LiveViewCacheCoordinator(store: store);
+    var (view, server) = await connect(
+      LiveView(cacheCoordinator: coordinator),
+      url: 'http://localhost:9999/accounts',
+      onRequest:
+          (request) =>
+              request.url.path == '/dashboard'
+                  ? http.Response(
+                    '',
+                    302,
+                    headers: {'location': 'https://other.test/'},
+                  )
+                  : null,
+    );
+    var channel = server.lastChannel!;
+    view.handleMessage(
+      Message(
+        event: PhoenixChannelEvent('phx_reply'),
+        payload: {
+          'response': {
+            'rendered': {
+              's': [
+                '<flutter><live-cache-manifest version="finance-v1" '
+                    'scope="user" identity="opaque-user" '
+                    'strategy="stale-while-revalidate">'
+                    '<live-cache-route href="/accounts" max-age="300" />'
+                    '<live-cache-route href="/dashboard" max-age="300" />'
+                    '</live-cache-manifest><Text>Accounts</Text></flutter>',
+              ],
+            },
+          },
+        },
+      ),
+      sourceChannel: channel,
+    );
+    await Future<void>.delayed(Duration.zero);
+    await view.cachePrefetchComplete;
+
+    expect(
+      await store.readSnapshot(coordinator.namespace!, Uri.parse('/dashboard')),
+      isNull,
+    );
+    expect(
+      server.httpRequestsMade.any(
+        (request) => request.url.host == 'other.test',
+      ),
+      isFalse,
+    );
   });
 }
