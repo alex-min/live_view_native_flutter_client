@@ -447,6 +447,7 @@ class LiveView {
     return message.contains('socketexception') ||
         message.contains('failed host lookup') ||
         message.contains('connection refused') ||
+        message.contains('connection closed') ||
         message.contains('connection reset') ||
         message.contains('connection timed out');
   }
@@ -1203,11 +1204,28 @@ class LiveView {
   }
 
   Future<http.Response> deadViewGetQuery(String url) async {
-    var request = http.Request('GET', shortUrlToUri(url));
-    request.followRedirects = false;
-    request.headers.addAll(httpHeaders());
-    var streamedResponse = await httpClient.send(request);
-    var r = await http.Response.fromStream(streamedResponse);
+    Future<http.Response> send(http.Client client) async {
+      var request = http.Request('GET', shortUrlToUri(url));
+      request.followRedirects = false;
+      request.headers.addAll(httpHeaders());
+      return http.Response.fromStream(await client.send(request));
+    }
+
+    late http.Response r;
+    try {
+      r = await send(httpClient);
+    } on Object catch (error) {
+      if (!identical(httpClient, _initialHttpClient) ||
+          !_isConnectionException(error)) {
+        rethrow;
+      }
+      var retryClient = _httpClientFactory();
+      try {
+        r = await send(retryClient);
+      } finally {
+        retryClient.close();
+      }
+    }
 
     if (r.headers['set-cookie'] != null) {
       await _parseAndSaveCookie(r.headers['set-cookie']!);
