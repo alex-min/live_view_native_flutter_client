@@ -11,6 +11,8 @@ import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
+import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
 import 'package:liveview_flutter/live_view/live_view_fallback_pages.dart';
 import 'package:liveview_flutter/live_view/plugin.dart';
 import 'package:liveview_flutter/live_view/reactive/live_connection_notifier.dart';
@@ -81,6 +83,8 @@ class LiveSocket {
 enum ClientType { liveView, httpOnly, webDocs }
 
 class LiveView {
+  static const cacheRendererVersion = '1';
+
   final List<Plugin> _installedPlugins = [];
   bool catchExceptions = true;
   bool disableAnimations = false;
@@ -156,6 +160,8 @@ class LiveView {
   late LiveRouterDelegate router;
   bool throttleSpammyCalls = true;
   LiveCacheManifest? cacheManifest;
+  final LiveViewCacheCoordinator? cacheCoordinator;
+  int _cacheRenderGeneration = 0;
 
   // Tracks the last phx-trigger-action value per form so that offstage forms
   // (which are rebuilt and lose their local state) don't re-submit when the
@@ -203,7 +209,10 @@ class LiveView {
   /// Holds all fallback widgets that will be used in the live view lifecycle
   LiveViewFallbackPages fallbackPages;
 
-  LiveView({this.fallbackPages = const LiveViewFallbackPages()}) {
+  LiveView({
+    this.fallbackPages = const LiveViewFallbackPages(),
+    this.cacheCoordinator,
+  }) {
     currentUrl = '/';
     router = LiveRouterDelegate(this);
     changeNotifier = StateNotifier();
@@ -629,6 +638,7 @@ class LiveView {
       handleRenderedMessage(
         event.payload!['response']!['rendered'],
         viewType: ViewType.liveView,
+        sourceChannel: sourceChannel,
       );
     } else if (event.payload!['response']?.containsKey('diff') ?? false) {
       handleDiffMessage(event.payload!['response']!['diff']);
@@ -652,10 +662,13 @@ class LiveView {
     }
   }
 
-  handleRenderedMessage(
+  Future<void> handleRenderedMessage(
     Map<String, dynamic> rendered, {
     ViewType viewType = ViewType.liveView,
-  }) {
+    PhoenixChannel? sourceChannel,
+  }) async {
+    var cacheGeneration = ++_cacheRenderGeneration;
+    var renderedUrl = currentUrl;
     // A full render replaces whatever diffs were targeting the previous page,
     // so drop stale diff state before the new widgets read it.
     changeNotifier.emptyData();
@@ -679,6 +692,70 @@ class LiveView {
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
     router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);
+    _storeAuthoritativeRender(
+      rendered,
+      viewType: viewType,
+      sourceChannel: sourceChannel,
+      renderedUrl: renderedUrl,
+      generation: cacheGeneration,
+    );
+  }
+
+  void _storeAuthoritativeRender(
+    Map<String, dynamic> rendered, {
+    required ViewType viewType,
+    required PhoenixChannel? sourceChannel,
+    required String renderedUrl,
+    required int generation,
+  }) {
+    var coordinator = cacheCoordinator;
+    var manifest = cacheManifest;
+    if (coordinator == null ||
+        manifest == null ||
+        viewType != ViewType.liveView ||
+        sourceChannel == null ||
+        !identical(sourceChannel, _channel) ||
+        _channelUrl != renderedUrl ||
+        currentUrl != renderedUrl) {
+      return;
+    }
+
+    var locale =
+        WidgetsBinding.instance.platformDispatcher.locales.firstOrNull
+            ?.toLanguageTag() ??
+        'und';
+    var displayedTheme = themeSettings.getDisplayedThemeMode().name;
+    var namespace = LiveCacheNamespace(
+      origin: '$endpointScheme://$host',
+      scope: manifest.scope,
+      identity: manifest.identity,
+      manifestVersion: manifest.version,
+      rendererVersion: cacheRendererVersion,
+      locale: locale,
+      theme: '${themeSettings.themeName}/$displayedTheme',
+    );
+    var route = Uri.parse(renderedUrl);
+
+    unawaited(() async {
+      var accepted = await coordinator.acceptManifest(
+        namespace: namespace,
+        manifest: manifest,
+      );
+      if (!accepted ||
+          generation != _cacheRenderGeneration ||
+          !identical(sourceChannel, _channel) ||
+          _channelUrl != renderedUrl ||
+          currentUrl != renderedUrl) {
+        return;
+      }
+      var ownership = coordinator.claimFullRender(
+        channel: sourceChannel,
+        route: route,
+      );
+      if (ownership != null) {
+        await coordinator.storeFullRender(ownership, rendered);
+      }
+    }());
   }
 
   handleDiffMessage(Map<String, dynamic> diff) {
