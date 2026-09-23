@@ -25,7 +25,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'the authenticated manifest warms, presents and restores primary routes',
+    'the authenticated manifest survives restart and isolates user changes',
     (tester) async {
       await _ensureServer();
       SharedPreferences.setMockInitialValues({});
@@ -118,6 +118,47 @@ void main() {
 
       expect(restartedView.router.pages, hasLength(1));
       expect(restartedView.router.pages.single.page.name, '/');
+
+      final secondUserRenderStart = restartedRenderedTypes.length;
+      await _signUpAndOnboard(tester, restartedView);
+      await _waitForCachedRoutes(tester, restartedView, const [
+        '/dashboard',
+        '/accounts',
+        '/transactions',
+        '/users/settings',
+      ]);
+
+      final secondNamespace = restartedView.cacheCoordinator?.namespace;
+      expect(secondNamespace, isNotNull);
+      expect(secondNamespace, isNot(firstNamespace));
+      expect(
+        restartedRenderedTypes.skip(secondUserRenderStart),
+        isNot(contains(ViewType.cached)),
+        reason: 'A new identity must not render the prior user snapshots',
+      );
+      expect(
+        await restartedView.cacheCoordinator?.store.readSnapshot(
+          firstNamespace,
+          Uri.parse('/dashboard'),
+        ),
+        isNull,
+      );
+      final secondUserManifest =
+          await restartedView.cacheCoordinator?.store.readManifest(
+        LiveViewCacheCoordinator.manifestStorageKey(firstNamespace),
+      );
+      expect(secondUserManifest?.manifest.identity, secondNamespace?.identity);
+      expect(
+        secondUserManifest?.manifest.identity,
+        isNot(firstNamespace.identity),
+      );
+
+      await _expectCachedThenFresh(
+        tester,
+        restartedView,
+        '/dashboard',
+        restartedRenderedTypes,
+      );
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );
