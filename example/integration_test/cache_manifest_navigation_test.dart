@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
+import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -102,9 +104,46 @@ void main() {
         '/dashboard',
         restartedRenderedTypes,
       );
+
+      await restartedView.execHrefClick(
+        '/users/log_out',
+        method: 'DELETE',
+      );
+      await _waitForUrl(tester, restartedView, '/');
+      await _waitForLogoutInvalidation(
+        tester,
+        restartedView,
+        firstNamespace!,
+      );
+
+      expect(restartedView.router.pages, hasLength(1));
+      expect(restartedView.router.pages.single.page.name, '/');
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );
+}
+
+Future<void> _waitForLogoutInvalidation(
+  WidgetTester tester,
+  LiveView view,
+  LiveCacheNamespace namespace,
+) async {
+  final coordinator = view.cacheCoordinator!;
+  for (var attempt = 0; attempt < 300; attempt++) {
+    await tester.pump();
+    final snapshot = await coordinator.store.readSnapshot(
+      namespace,
+      Uri.parse('/dashboard'),
+    );
+    final manifest = await coordinator.store.readManifest(
+      LiveViewCacheCoordinator.manifestStorageKey(namespace),
+    );
+    if (coordinator.namespace == null && snapshot == null && manifest == null) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+  throw Exception('Timed out waiting for logout cache invalidation');
 }
 
 Future<void> _waitForCachePolicy(WidgetTester tester, LiveView view) async {
