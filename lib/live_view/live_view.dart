@@ -12,6 +12,7 @@ import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
 import 'package:liveview_flutter/live_view/live_view_fallback_pages.dart';
 import 'package:liveview_flutter/live_view/plugin.dart';
@@ -49,7 +50,7 @@ import 'web_socket_channel_factory.dart'
     if (dart.library.io) 'web_socket_channel_factory_io.dart'
     as web_socket;
 
-enum ViewType { deadView, liveView }
+enum ViewType { deadView, liveView, cached }
 
 class LiveSocket {
   PhoenixSocket create({
@@ -90,7 +91,9 @@ class LiveView {
   bool disableAnimations = false;
   ClientType clientType = ClientType.liveView;
 
-  http.Client httpClient = http_client_factory.createHttpClient();
+  late http.Client httpClient;
+  late final http.Client _initialHttpClient;
+  final http.Client Function() _httpClientFactory;
   var liveSocket = LiveSocket();
 
   Widget? onErrorWidget;
@@ -134,6 +137,9 @@ class LiveView {
   StreamSubscription<Message>? _channelMessageSubscription;
   String? _channelUrl;
   String? _renderedUrl;
+  ViewType? _renderedViewType;
+  LiveCacheSnapshot? _pendingCachedSnapshot;
+  int _navigationGeneration = 0;
   Push? _pendingLeavePush;
   bool _isJoiningChannel = false;
 
@@ -149,6 +155,7 @@ class LiveView {
       _channel?.state == PhoenixChannelState.joined &&
       _channelUrl == currentUrl &&
       _renderedUrl == currentUrl &&
+      _renderedViewType == ViewType.liveView &&
       redirectToUrl == null;
 
   // dynamic global state
@@ -212,7 +219,11 @@ class LiveView {
   LiveView({
     this.fallbackPages = const LiveViewFallbackPages(),
     this.cacheCoordinator,
-  }) {
+    http.Client Function()? httpClientFactory,
+  }) : _httpClientFactory =
+           httpClientFactory ?? http_client_factory.createHttpClient {
+    _initialHttpClient = _httpClientFactory();
+    httpClient = _initialHttpClient;
     currentUrl = '/';
     router = LiveRouterDelegate(this);
     changeNotifier = StateNotifier();
@@ -561,6 +572,7 @@ class LiveView {
     _channelUrl = null;
 
     if (_channel?.state != PhoenixChannelState.joined) {
+      _pendingCachedSnapshot = null;
       await disconnect();
       await execHrefClick(path);
       return;
@@ -607,6 +619,16 @@ class LiveView {
     if (event.event.value == 'phx_close') {
       if (redirectToUrl != null) {
         currentUrl = redirectToUrl!;
+        var snapshot = _pendingCachedSnapshot;
+        _pendingCachedSnapshot = null;
+        if (snapshot?.route == Uri.parse(currentUrl)) {
+          unawaited(
+            handleRenderedMessage(
+              snapshot!.rendered,
+              viewType: ViewType.cached,
+            ),
+          );
+        }
         _setupPhoenixChannel(redirect: true);
       }
       return;
@@ -689,6 +711,7 @@ class LiveView {
       _formValues.clear();
     }
     _renderedUrl = currentUrl;
+    _renderedViewType = viewType;
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
     router.updatePage(url: currentUrl, widget: render.$1, rootState: render.$2);
@@ -830,7 +853,9 @@ class LiveView {
     // so an old-but-still-joined channel cannot receive the next page's event.
     // Errored, joining and leaving channels also reject pushes.
     if (_channel?.state == PhoenixChannelState.joined &&
-        _channelUrl == currentUrl) {
+        _channelUrl == currentUrl &&
+        _renderedUrl == currentUrl &&
+        _renderedViewType == ViewType.liveView) {
       _channel?.push('event', eventData);
       return true;
     }
@@ -888,6 +913,16 @@ class LiveView {
     if (router.pages.lastOrNull?.page.name == 'loading;$url') {
       return;
     }
+    var navigationGeneration = ++_navigationGeneration;
+    LiveCacheSnapshot? snapshot;
+    var coordinator = cacheCoordinator;
+    if (coordinator != null) {
+      snapshot = await coordinator.loadForNavigation(Uri.parse(url));
+      if (navigationGeneration != _navigationGeneration) {
+        return;
+      }
+    }
+    _pendingCachedSnapshot = snapshot;
     changeNotifier.emptyData();
     if (clientType == ClientType.webDocs) {
       web_html.window.parent?.postMessage({
@@ -936,18 +971,32 @@ class LiveView {
   ) async {
     formValues['_csrf_token'] = _csrf;
 
-    var r = await httpClient.post(
-      shortUrlToUri(url),
-      headers: {
-        ...httpHeaders(),
-        // Dead-view form submissions are infrequent and may follow several
-        // minutes of websocket-only activity. Do not reuse an HTTP socket the
-        // server may have already expired while it was idle.
-        'connection': 'close',
-        'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
-      },
-      body: formValues,
-    );
+    // Dead-view form submissions are infrequent and may follow several
+    // minutes of websocket-only activity. A Connection: close request header
+    // cannot stop the HTTP client from selecting an already-stale pooled
+    // socket, so default clients use a fresh connection for the whole POST.
+    // Keep explicitly injected clients intact for embedders and tests.
+    var postClient =
+        identical(httpClient, _initialHttpClient)
+            ? _httpClientFactory()
+            : httpClient;
+    var closePostClient = !identical(postClient, httpClient);
+    late http.Response r;
+    try {
+      r = await postClient.post(
+        shortUrlToUri(url),
+        headers: {
+          ...httpHeaders(),
+          'connection': 'close',
+          'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
+        },
+        body: formValues,
+      );
+    } finally {
+      if (closePostClient) {
+        postClient.close();
+      }
+    }
     await disconnect();
 
     if (r.headers['set-cookie'] != null) {

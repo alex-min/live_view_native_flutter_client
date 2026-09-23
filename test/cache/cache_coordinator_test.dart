@@ -176,6 +176,36 @@ void main() {
     );
   });
 
+  test('loads only fresh snapshots declared by confirmed policy', () async {
+    var clock = storedAt;
+    var store = MemoryLiveViewCacheStore();
+    var coordinator = LiveViewCacheCoordinator(store: store, now: () => clock);
+    await coordinator.acceptManifest(namespace: namespace, manifest: manifest);
+    await store.writeSnapshot(
+      LiveCacheSnapshot(
+        namespace: namespace,
+        route: Uri.parse('/accounts'),
+        storedAt: storedAt,
+        rendered: const {
+          's': ['accounts'],
+        },
+      ),
+    );
+
+    expect(
+      await coordinator.loadForNavigation(Uri.parse('/accounts')),
+      isNotNull,
+    );
+    expect(
+      await coordinator.loadForNavigation(Uri.parse('/users/settings')),
+      isNull,
+    );
+
+    clock = storedAt.add(const Duration(minutes: 6));
+    expect(await coordinator.loadForNavigation(Uri.parse('/accounts')), isNull);
+    expect(await store.readSnapshot(namespace, Uri.parse('/accounts')), isNull);
+  });
+
   test(
     'storage errors disable the attempted operation without escaping',
     () async {

@@ -19,6 +19,39 @@ class LiveViewCacheCoordinator {
   LiveCacheNamespace? get namespace => _namespace;
   LiveCacheManifest? get manifest => _manifest;
 
+  Future<LiveCacheSnapshot?> loadForNavigation(Uri route) async {
+    var namespace = _namespace;
+    var manifest = _manifest;
+    if (namespace == null || manifest == null) {
+      return null;
+    }
+    LiveCacheRoute? policy;
+    for (var candidate in manifest.routes) {
+      if (candidate.href == route) {
+        policy = candidate;
+        break;
+      }
+    }
+    if (policy == null) {
+      return null;
+    }
+
+    try {
+      var snapshot = await store.readSnapshot(namespace, route);
+      if (snapshot == null) {
+        return null;
+      }
+      var age = now().toUtc().difference(snapshot.storedAt.toUtc());
+      if (age.isNegative || age > policy.maxAge) {
+        await store.removeSnapshot(namespace, route);
+        return null;
+      }
+      return snapshot;
+    } on Object {
+      return null;
+    }
+  }
+
   /// Activates policy only after its namespace and routes have been validated
   /// and persisted. Cache failures leave the prior confirmed policy unchanged.
   Future<bool> acceptManifest({
