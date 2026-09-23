@@ -78,7 +78,6 @@ import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_wrap.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/errors/parsing_error_view.dart';
-import 'package:liveview_flutter/live_view/cache/live_cache_manifest_parser.dart';
 import 'package:liveview_flutter/live_view/ui/live_view_ui_registry.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
@@ -475,14 +474,7 @@ class LiveViewUiParser {
         }
         return ret;
       })
-      ..add(['live-cache-manifest'], (state) {
-        if (state.isOnTheCurrentPage && state.node is XmlElement) {
-          state.liveView.cacheManifest = const LiveCacheManifestParser().parse(
-            state.node as XmlElement,
-          );
-        }
-        return [const SizedBox.shrink()];
-      })
+      ..add(['live-cache-manifest'], (state) => [const SizedBox.shrink()])
       ..add(['live-cache-route'], (state) => [const SizedBox.shrink()])
       ..add([
         'Checkbox',

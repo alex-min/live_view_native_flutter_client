@@ -11,6 +11,7 @@ import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_manifest_parser.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_prefetch_document.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
@@ -715,12 +716,18 @@ class LiveView {
     if (viewType != ViewType.cached) {
       cacheManifest = null;
     }
+    var expandedRendered = expandVariables(rendered);
+    if (viewType != ViewType.cached) {
+      cacheManifest = const LiveCacheManifestParser().parseRendered(
+        expandedRendered,
+      );
+    }
     var elements = List<String>.from(rendered['s']);
 
     var render =
         LiveViewUiParser(
           html: elements,
-          htmlVariables: expandVariables(rendered),
+          htmlVariables: expandedRendered,
           liveView: this,
           urlPath: currentUrl,
           viewType: viewType,

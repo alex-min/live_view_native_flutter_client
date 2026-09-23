@@ -4,6 +4,41 @@ import 'package:xml/xml.dart';
 class LiveCacheManifestParser {
   const LiveCacheManifestParser();
 
+  LiveCacheManifest? parseRendered(Map<String, dynamic> rendered) {
+    try {
+      var candidates = <Map>[];
+      _collectManifestCandidates(rendered, candidates);
+      if (candidates.length != 1) {
+        return null;
+      }
+      var document = XmlDocument.parse(_renderValue(candidates.single));
+      var manifests = document.findAllElements('live-cache-manifest').toList();
+      if (manifests.length != 1) return null;
+      return parse(manifests.single);
+    } on Object {
+      return null;
+    }
+  }
+
+  void _collectManifestCandidates(dynamic value, List<Map> candidates) {
+    if (value is Map) {
+      var staticParts = value['s'];
+      if (staticParts is List &&
+          staticParts.whereType<String>().any(
+            (part) => part.contains('<live-cache-manifest'),
+          )) {
+        candidates.add(value);
+      }
+      for (var child in value.values) {
+        _collectManifestCandidates(child, candidates);
+      }
+    } else if (value is List) {
+      for (var child in value) {
+        _collectManifestCandidates(child, candidates);
+      }
+    }
+  }
+
   LiveCacheManifest? parse(XmlElement element) {
     if (element.name.local != 'live-cache-manifest') {
       return null;
@@ -98,5 +133,42 @@ class LiveCacheManifestParser {
         !href.hasAuthority &&
         !href.hasFragment &&
         href.path.startsWith('/');
+  }
+
+  String _renderValue(dynamic value) {
+    if (value is String) {
+      return value;
+    }
+    if (value is List) {
+      return value.map(_renderValue).join();
+    }
+    if (value is! Map) {
+      return '';
+    }
+
+    var staticParts = value['s'];
+    if (staticParts is! List || !staticParts.every((part) => part is String)) {
+      return '';
+    }
+    var parts = staticParts.cast<String>();
+    var rows = value['d'];
+    if (rows is List) {
+      return List.generate(
+        rows.length,
+        (index) => _renderTemplate(parts, value[index.toString()]),
+      ).join();
+    }
+    return _renderTemplate(parts, value);
+  }
+
+  String _renderTemplate(List<String> parts, dynamic variables) {
+    var buffer = StringBuffer();
+    for (var index = 0; index < parts.length; index++) {
+      buffer.write(parts[index]);
+      if (index < parts.length - 1 && variables is Map) {
+        buffer.write(_renderValue(variables[index.toString()]));
+      }
+    }
+    return buffer.toString();
   }
 }
