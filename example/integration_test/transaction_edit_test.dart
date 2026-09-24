@@ -212,22 +212,11 @@ void main() {
         );
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
 
-        // Mavio's edit screen replaces the normal navigation with one centered
-        // close button docked above an empty, tap-transparent bottom bar (the
-        // bar keeps the close button at the same height as the + on the
-        // account screen). Closing returns to the same transaction-list route.
+        // Mavio's edit screen replaces the complete bottom navigation with one
+        // centered floating close button. Closing returns to the same
+        // transaction-list route.
         expect(find.byType(BottomNavigationBar), findsNothing);
-        final closeBar = find.byType(BottomAppBar);
-        expect(closeBar, findsOneWidget);
-        final ignoringPointers = find
-            .ancestor(of: closeBar, matching: find.byType(IgnorePointer))
-            .evaluate()
-            .map((e) => e.widget as IgnorePointer);
-        expect(
-          ignoringPointers.where((w) => w.ignoring).length,
-          1,
-          reason: 'The empty bar must not intercept taps on the form',
-        );
+        expect(find.byType(BottomAppBar), findsNothing);
         final closeButton = find.byIcon(Icons.close).hitTestable();
         expect(closeButton, findsOneWidget);
         final closeFab = find.ancestor(
