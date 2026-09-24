@@ -168,7 +168,14 @@ void main() {
     });
     // No pump here: the /third-page body has not rendered yet.
     unawaited(view.livePatch('/fourth-page', replace: true));
-    await tester.pump();
+    for (
+      var attempt = 0;
+      attempt < 100 && view.redirectToUrl != '/fourth-page';
+      attempt++
+    ) {
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+    expect(view.redirectToUrl, '/fourth-page');
     view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
     view.handleRenderedMessage({
       's': [_page('Fourth page', withBubble: true)],

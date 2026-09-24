@@ -1105,8 +1105,23 @@ class LiveView {
     if (router.pages.lastOrNull?.page.name == 'loading;$url') {
       return;
     }
-    _cachedRenderEvents.clear();
     var navigationGeneration = ++_navigationGeneration;
+    while ((redirectToUrl != null ||
+            _isJoiningChannel ||
+            _channel?.state == PhoenixChannelState.joining ||
+            _channel?.state == PhoenixChannelState.leaving) &&
+        navigationGeneration == _navigationGeneration) {
+      // A cached route becomes visible before its replacement channel has
+      // finished joining. Keep that snapshot on screen and defer a subsequent
+      // tab transition instead of clearing the next snapshot and falling back
+      // to a dead HTTP navigation.
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    if (navigationGeneration != _navigationGeneration) {
+      return;
+    }
+
+    _cachedRenderEvents.clear();
     LiveCacheSnapshot? snapshot;
     var coordinator = cacheCoordinator;
     if (coordinator != null) {
