@@ -199,4 +199,71 @@ void main() {
     expect(find.text('Cached accounts'), findsNothing);
     expect(view.isCurrentRouteReady, isTrue);
   });
+
+  testWidgets(
+    'cache routes keep the current page while the snapshot is absent',
+    (tester) async {
+      var store = MemoryLiveViewCacheStore();
+      var coordinator = LiveViewCacheCoordinator(store: store);
+      var view = LiveView(cacheCoordinator: coordinator);
+      var (_, server) = await connect(
+        view,
+        rendered: {
+          's': ['<viewBody><Text>Current page</Text></viewBody>'],
+        },
+      );
+      await tester.runLiveView(view);
+
+      var route = Uri.parse('/accounts');
+      var namespace = const LiveCacheNamespace(
+        origin: 'http://localhost:9999',
+        scope: LiveCacheScope.user,
+        identity: 'opaque-user',
+        manifestVersion: 'finance-v1',
+        rendererVersion: LiveView.cacheRendererVersion,
+        locale: 'en',
+        theme: 'cosmic/light',
+      );
+      await coordinator.acceptManifest(
+        namespace: namespace,
+        manifest: LiveCacheManifest(
+          version: 'finance-v1',
+          scope: LiveCacheScope.user,
+          identity: 'opaque-user',
+          strategy: LiveCacheStrategy.staleWhileRevalidate,
+          routes: [
+            LiveCacheRoute(
+              href: route,
+              maxAge: const Duration(minutes: 5),
+              priority: LiveCachePriority.normal,
+            ),
+          ],
+        ),
+      );
+
+      var observedRoutes = <String?>[];
+      view.router.addListener(() {
+        observedRoutes.add(view.router.pages.lastOrNull?.page.name);
+      });
+      await view.livePatch(route.toString());
+
+      expect(observedRoutes, isNot(contains('loading;/accounts')));
+      expect(view.router.pages.last.page.name, '/');
+
+      var oldChannel = server.lastChannel!;
+      view.handleMessage(
+        Message(event: PhoenixChannelEvent('phx_close')),
+        sourceChannel: oldChannel,
+      );
+      await tester.pump();
+      var newChannel = server.lastChannel!;
+      view.handleRenderedMessage({
+        's': ['<viewBody><Text>Fresh accounts</Text></viewBody>'],
+      }, sourceChannel: newChannel);
+      await tester.pumpAndSettle();
+
+      expect(view.currentUrl, '/accounts');
+      expect(find.text('Fresh accounts'), findsOneWidget);
+    },
+  );
 }

@@ -20,6 +20,9 @@ class LiveViewCacheCoordinator {
   LiveCacheNamespace? get namespace => _namespace;
   LiveCacheManifest? get manifest => _manifest;
 
+  bool hasRoute(Uri route) =>
+      _manifest?.routes.any((candidate) => candidate.href == route) ?? false;
+
   Future<LiveCacheSnapshot?> loadForNavigation(Uri route) =>
       _loadSnapshot(route, allowStale: true);
 

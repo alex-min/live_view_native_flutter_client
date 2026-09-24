@@ -171,16 +171,15 @@ Future<void> _expectRapidCachedTabSwitching(
   view.router.addListener(observeRoute);
   try {
     for (final route in const [
-      '/users/settings',
       '/accounts',
+      '/transactions',
       '/users/settings',
-      '/accounts',
-      '/users/settings',
+      '/dashboard',
     ]) {
       unawaited(view.livePatch(route));
-      await _waitForDisplayedRoute(tester, view, route);
+      await tester.pump();
     }
-    await _waitForUrl(tester, view, '/users/settings');
+    await _waitForUrl(tester, view, '/dashboard');
   } finally {
     view.router.removeListener(observeRoute);
   }
@@ -192,21 +191,6 @@ Future<void> _expectRapidCachedTabSwitching(
     isEmpty,
     reason: 'cached bottom-bar routes must never fall back to a loader',
   );
-}
-
-Future<void> _waitForDisplayedRoute(
-  WidgetTester tester,
-  LiveView view,
-  String route,
-) async {
-  for (var attempt = 0; attempt < 300; attempt++) {
-    await tester.pump();
-    if (view.currentUrl == route) {
-      return;
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 10));
-  }
-  throw Exception('Timed out waiting to display $route');
 }
 
 Future<void> _waitForLogoutInvalidation(

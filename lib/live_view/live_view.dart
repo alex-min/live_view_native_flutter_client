@@ -1124,6 +1124,7 @@ class LiveView {
     _cachedRenderEvents.clear();
     LiveCacheSnapshot? snapshot;
     var coordinator = cacheCoordinator;
+    var cacheRoute = coordinator?.hasRoute(Uri.parse(url)) ?? false;
     if (coordinator != null) {
       snapshot = await coordinator.loadForNavigation(Uri.parse(url));
       if (navigationGeneration != _navigationGeneration) {
@@ -1143,13 +1144,13 @@ class LiveView {
     if (snapshot != null) {
       // Keep the current page visible until the cached target is ready. The
       // channel close handler swaps the snapshot in without flashing a loader.
-    } else if (replace) {
+    } else if (!cacheRoute && replace) {
       router.replacePages(
         url: 'loading;$url',
         widget: loadingWidget(url),
         rootState: rootState,
       );
-    } else {
+    } else if (!cacheRoute) {
       router.pushPage(
         url: 'loading;$url',
         widget: loadingWidget(url),
