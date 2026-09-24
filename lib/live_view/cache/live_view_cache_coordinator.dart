@@ -20,7 +20,13 @@ class LiveViewCacheCoordinator {
   LiveCacheNamespace? get namespace => _namespace;
   LiveCacheManifest? get manifest => _manifest;
 
-  Future<LiveCacheSnapshot?> loadForNavigation(Uri route) async {
+  Future<LiveCacheSnapshot?> loadForNavigation(Uri route) =>
+      _loadSnapshot(route, allowStale: true);
+
+  Future<LiveCacheSnapshot?> _loadSnapshot(
+    Uri route, {
+    required bool allowStale,
+  }) async {
     var namespace = _namespace;
     var manifest = _manifest;
     if (namespace == null || manifest == null) {
@@ -43,8 +49,11 @@ class LiveViewCacheCoordinator {
         return null;
       }
       var age = now().toUtc().difference(snapshot.storedAt.toUtc());
-      if (age.isNegative || age > policy.maxAge) {
+      if (age.isNegative) {
         await store.removeSnapshot(namespace, route);
+        return null;
+      }
+      if (!allowStale && age > policy.maxAge) {
         return null;
       }
       return snapshot;
@@ -92,9 +101,11 @@ class LiveViewCacheCoordinator {
     return true;
   }
 
-  /// Warms missing or expired declared routes, one at a time. The caller owns
-  /// transport and document extraction so this coordinator remains reusable
-  /// and cannot mutate the active LiveView session.
+  /// Warms missing or expired declared routes by priority tier. Routes within
+  /// a tier run together so a frequently interrupted warm-up cannot starve
+  /// routes near the end of the manifest. The caller owns transport and
+  /// document extraction so this coordinator remains reusable and cannot
+  /// mutate the active LiveView session.
   Future<int> prefetch(
     Future<LiveCachePrefetchResult> Function(Uri route) fetch,
   ) async {
@@ -104,62 +115,74 @@ class LiveViewCacheCoordinator {
       return 0;
     }
     var generation = ++_prefetchGeneration;
-    var routes = [
-      ...manifest.routes.where(
-        (route) => route.priority == LiveCachePriority.high,
-      ),
-      ...manifest.routes.where(
-        (route) => route.priority == LiveCachePriority.normal,
-      ),
-    ];
     var storedCount = 0;
 
-    for (var policy in routes) {
-      if (!_ownsPrefetch(generation, namespace, manifest)) {
-        break;
-      }
-      var existing = await loadForNavigation(policy.href);
-      if (!_ownsPrefetch(generation, namespace, manifest)) {
-        break;
-      }
-      if (existing != null) {
-        continue;
-      }
-
-      LiveCachePrefetchResult result;
-      try {
-        result = await fetch(policy.href);
-      } on Object {
-        continue;
-      }
-      if (!_ownsPrefetch(generation, namespace, manifest)) {
-        break;
-      }
-      if (result.stop) {
-        await invalidateActiveUser();
-        break;
-      }
-      var rendered = result.rendered;
-      if (rendered == null) {
-        continue;
-      }
-      try {
-        var stored = await store.writeSnapshot(
-          LiveCacheSnapshot(
+    for (var priority in [LiveCachePriority.high, LiveCachePriority.normal]) {
+      var routes = manifest.routes.where((route) => route.priority == priority);
+      var results = await Future.wait(
+        routes.map(
+          (policy) => _prefetchRoute(
+            policy,
+            generation: generation,
             namespace: namespace,
-            route: policy.href,
-            storedAt: now().toUtc(),
-            rendered: rendered,
+            manifest: manifest,
+            fetch: fetch,
           ),
-        );
-        if (stored) {
-          storedCount += 1;
-        }
-      } on Object {
-        // Cache warming is best-effort and must never affect live navigation.
+        ),
+      );
+      storedCount += results.where((result) => result).length;
+      if (!_ownsPrefetch(generation, namespace, manifest)) {
+        break;
       }
     }
     return storedCount;
+  }
+
+  Future<bool> _prefetchRoute(
+    LiveCacheRoute policy, {
+    required int generation,
+    required LiveCacheNamespace namespace,
+    required LiveCacheManifest manifest,
+    required Future<LiveCachePrefetchResult> Function(Uri route) fetch,
+  }) async {
+    if (!_ownsPrefetch(generation, namespace, manifest)) {
+      return false;
+    }
+    var existing = await _loadSnapshot(policy.href, allowStale: false);
+    if (!_ownsPrefetch(generation, namespace, manifest) || existing != null) {
+      return false;
+    }
+
+    LiveCachePrefetchResult result;
+    try {
+      result = await fetch(policy.href);
+    } on Object {
+      return false;
+    }
+    if (!_ownsPrefetch(generation, namespace, manifest)) {
+      return false;
+    }
+    if (result.stop) {
+      await invalidateActiveUser();
+      return false;
+    }
+    var rendered = result.rendered;
+    if (rendered == null) {
+      return false;
+    }
+    try {
+      return await store.writeSnapshot(
+        LiveCacheSnapshot(
+          namespace: namespace,
+          route: policy.href,
+          storedAt: now().toUtc(),
+          rendered: rendered,
+        ),
+      );
+    } on Object {
+      // Cache warming is best-effort and must never affect live navigation.
+      return false;
+    }
   }
 
   void cancelPrefetch() {

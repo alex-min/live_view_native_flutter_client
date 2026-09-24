@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/exec/exec_live_event.dart';
@@ -12,6 +14,58 @@ import 'package:phoenix_socket/phoenix_socket.dart';
 import '../test_helpers.dart';
 
 void main() {
+  testWidgets('navigation does not starve other route prefetches', (
+    tester,
+  ) async {
+    var store = MemoryLiveViewCacheStore();
+    var coordinator = LiveViewCacheCoordinator(store: store);
+    var view = LiveView(cacheCoordinator: coordinator);
+    await connect(view);
+    await tester.runLiveView(view);
+
+    var settings = Uri.parse('/users/settings');
+    var manifest = LiveCacheManifest(
+      version: 'finance-v1',
+      scope: LiveCacheScope.user,
+      identity: 'opaque-user',
+      strategy: LiveCacheStrategy.staleWhileRevalidate,
+      routes: [
+        LiveCacheRoute(
+          href: settings,
+          maxAge: const Duration(hours: 1),
+          priority: LiveCachePriority.normal,
+        ),
+      ],
+    );
+    var namespace = const LiveCacheNamespace(
+      origin: 'http://localhost:9999',
+      scope: LiveCacheScope.user,
+      identity: 'opaque-user',
+      manifestVersion: 'finance-v1',
+      rendererVersion: LiveView.cacheRendererVersion,
+      locale: 'en',
+      theme: 'cosmic/light',
+    );
+    await coordinator.acceptManifest(namespace: namespace, manifest: manifest);
+
+    var started = Completer<void>();
+    var release = Completer<void>();
+    var warming = coordinator.prefetch((route) async {
+      started.complete();
+      await release.future;
+      return const LiveCachePrefetchResult.rendered({
+        's': ['settings'],
+      });
+    });
+    await started.future;
+
+    await view.livePatch('/dashboard');
+    release.complete();
+
+    expect(await warming, 1);
+    expect(await coordinator.loadForNavigation(settings), isNotNull);
+  });
+
   testWidgets('shows a fresh snapshot until the target channel renders', (
     tester,
   ) async {

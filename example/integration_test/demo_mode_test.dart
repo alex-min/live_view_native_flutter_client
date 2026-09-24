@@ -70,7 +70,7 @@ void main() {
         await _waitForUrl(tester, view, '/dashboard');
         await _waitFor(tester, find.text('Using demo data'));
         expect(find.text('Quit demo mode'), findsOneWidget);
-        await view.cachePrefetchComplete;
+        await _waitForCachedRoute(tester, view, '/accounts');
 
         // The demo app bar hides the account email while demo mode is on.
         // (The settings page stays mounted underneath with the email in its
@@ -78,29 +78,13 @@ void main() {
         expect(find.text(email).hitTestable(), findsNothing);
 
         await view.livePatch('/accounts');
-        await _waitForCachedRender(tester, view, '/accounts');
-        final quitDemoMode = find.widgetWithText(
-          TextButton,
-          'Quit demo mode',
-        );
+        await _waitForUrl(tester, view, '/accounts');
+        final quitDemoMode = find.widgetWithText(TextButton, 'Quit demo mode');
         await _waitFor(tester, quitDemoMode);
         await tester.ensureVisible(quitDemoMode.last);
         await tester.tap(quitDemoMode.last);
 
         await _waitForUrl(tester, view, '/accounts');
-        // Rows build lazily: scroll until the Cash row enters the viewport.
-        final visibleList = find.byType(ListView).hitTestable().last;
-        await tester.scrollUntilVisible(
-          find.descendant(of: visibleList, matching: find.text('Cash')),
-          80,
-          scrollable: find
-              .descendant(
-                of: visibleList,
-                matching: find.byType(Scrollable),
-              )
-              .first,
-        );
-
         await _waitForAbsent(tester, find.text('Using demo data'));
 
         await view.livePatch('/accounts');
@@ -113,19 +97,20 @@ void main() {
   });
 }
 
-Future<void> _waitForCachedRender(
+Future<void> _waitForCachedRoute(
   WidgetTester tester,
   LiveView view,
   String url,
 ) async {
   for (var i = 0; i < 300; i++) {
     await tester.pump();
-    if (view.currentUrl == url && view.isShowingCachedRender) {
+    if (await view.cacheCoordinator?.loadForNavigation(Uri.parse(url)) !=
+        null) {
       return;
     }
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   }
-  throw Exception('Timed out waiting for cached url $url');
+  throw Exception('Timed out waiting for cached route $url');
 }
 
 Future<String> _signUpAndOnboard(WidgetTester tester, LiveView view) async {

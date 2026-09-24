@@ -247,7 +247,7 @@ void main() {
     );
   });
 
-  test('loads only fresh snapshots declared by confirmed policy', () async {
+  test('serves stale snapshots while prefetch revalidates them', () async {
     var clock = storedAt;
     var store = MemoryLiveViewCacheStore();
     var coordinator = LiveViewCacheCoordinator(store: store, now: () => clock);
@@ -273,12 +273,34 @@ void main() {
     );
 
     clock = storedAt.add(const Duration(minutes: 6));
-    expect(await coordinator.loadForNavigation(Uri.parse('/accounts')), isNull);
-    expect(await store.readSnapshot(namespace, Uri.parse('/accounts')), isNull);
+    expect(
+      await coordinator.loadForNavigation(Uri.parse('/accounts')),
+      isNotNull,
+      reason: 'stale-while-revalidate keeps navigation instant',
+    );
+
+    var calls = <Uri>[];
+    expect(
+      await coordinator.prefetch((route) async {
+        calls.add(route);
+        return LiveCachePrefetchResult.rendered({
+          's': ['refreshed $route'],
+        });
+      }),
+      2,
+    );
+    expect(calls, contains(Uri.parse('/accounts')));
+    expect(
+      (await store.readSnapshot(
+        namespace,
+        Uri.parse('/accounts'),
+      ))?.rendered['s'],
+      ['refreshed /accounts'],
+    );
   });
 
   test(
-    'prefetches missing routes sequentially with high priority first',
+    'prefetches high priority first and normal routes concurrently',
     () async {
       var store = MemoryLiveViewCacheStore();
       var coordinator = LiveViewCacheCoordinator(
@@ -298,6 +320,11 @@ void main() {
             priority: LiveCachePriority.high,
           ),
           manifest.routes.last,
+          LiveCacheRoute(
+            href: Uri.parse('/users/settings'),
+            maxAge: const Duration(hours: 1),
+            priority: LiveCachePriority.normal,
+          ),
         ],
       );
       await coordinator.acceptManifest(
@@ -329,9 +356,13 @@ void main() {
         });
       });
 
-      expect(calls, [Uri.parse('/dashboard'), Uri.parse('/accounts')]);
-      expect(maximumActive, 1);
-      expect(stored, 2);
+      expect(calls.first, Uri.parse('/dashboard'));
+      expect(
+        calls.skip(1),
+        containsAll([Uri.parse('/accounts'), Uri.parse('/users/settings')]),
+      );
+      expect(maximumActive, 2);
+      expect(stored, 3);
     },
   );
 
@@ -353,7 +384,10 @@ void main() {
         }),
         0,
       );
-      expect(calls, [Uri.parse('/accounts')]);
+      expect(
+        calls,
+        containsAll([Uri.parse('/accounts'), Uri.parse('/transactions')]),
+      );
       expect(coordinator.namespace, isNull);
 
       await coordinator.acceptManifest(
@@ -364,7 +398,9 @@ void main() {
       var started = Completer<void>();
       var release = Completer<void>();
       var warming = coordinator.prefetch((route) async {
-        started.complete();
+        if (!started.isCompleted) {
+          started.complete();
+        }
         await release.future;
         return const LiveCachePrefetchResult.rendered({
           's': ['obsolete'],
