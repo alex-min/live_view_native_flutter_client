@@ -155,6 +155,7 @@ class LiveView {
   String? _renderedUrl;
   ViewType? _renderedViewType;
   LiveCacheSnapshot? _pendingCachedSnapshot;
+  bool _replaceWithPendingCachedSnapshot = false;
   int _navigationGeneration = 0;
   Push? _pendingLeavePush;
   bool _isJoiningChannel = false;
@@ -597,6 +598,7 @@ class LiveView {
 
     if (_channel?.state != PhoenixChannelState.joined) {
       _pendingCachedSnapshot = null;
+      _replaceWithPendingCachedSnapshot = false;
       await disconnect();
       await execHrefClick(path);
       return;
@@ -644,12 +646,15 @@ class LiveView {
       if (redirectToUrl != null) {
         currentUrl = redirectToUrl!;
         var snapshot = _pendingCachedSnapshot;
+        var replaceWithSnapshot = _replaceWithPendingCachedSnapshot;
         _pendingCachedSnapshot = null;
+        _replaceWithPendingCachedSnapshot = false;
         if (snapshot?.route == Uri.parse(currentUrl)) {
           unawaited(
             handleRenderedMessage(
               snapshot!.rendered,
               viewType: ViewType.cached,
+              replacePage: replaceWithSnapshot,
             ),
           );
         }
@@ -712,6 +717,7 @@ class LiveView {
     Map<String, dynamic> rendered, {
     ViewType viewType = ViewType.liveView,
     PhoenixChannel? sourceChannel,
+    bool replacePage = false,
   }) async {
     var cacheGeneration = ++_cacheRenderGeneration;
     var renderedUrl = currentUrl;
@@ -752,7 +758,7 @@ class LiveView {
         viewType != ViewType.cached &&
         cacheManifest == null &&
         cacheCoordinator?.namespace?.scope == LiveCacheScope.user;
-    if (losesUserPolicy) {
+    if (losesUserPolicy || replacePage) {
       router.replacePages(
         url: currentUrl,
         widget: render.$1,
@@ -1085,6 +1091,7 @@ class LiveView {
       }
     }
     _pendingCachedSnapshot = snapshot;
+    _replaceWithPendingCachedSnapshot = snapshot != null && replace;
     changeNotifier.emptyData();
     if (clientType == ClientType.webDocs) {
       web_html.window.parent?.postMessage({
@@ -1093,7 +1100,10 @@ class LiveView {
       }, "*");
     }
     final rootState = router.pages.lastOrNull?.rootState;
-    if (replace) {
+    if (snapshot != null) {
+      // Keep the current page visible until the cached target is ready. The
+      // channel close handler swaps the snapshot in without flashing a loader.
+    } else if (replace) {
       router.replacePages(
         url: 'loading;$url',
         widget: loadingWidget(url),

@@ -118,12 +118,13 @@ void main() {
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Integration account'), seconds: 30);
         expect(find.byIcon(Icons.payments), findsOneWidget);
-        final accountsCard = find
-            .ancestor(
-              of: find.text('Your accounts'),
-              matching: find.byType(Card),
-            )
-            .hitTestable();
+        final accountsCard =
+            find
+                .ancestor(
+                  of: find.text('Your accounts'),
+                  matching: find.byType(Card),
+                )
+                .hitTestable();
         expect(accountsCard, findsOneWidget);
         final accountsRect = tester.getRect(accountsCard);
         final scaffoldWidth = tester.getSize(find.byType(Scaffold).first).width;
@@ -271,12 +272,13 @@ void main() {
         );
         await tester.enterText(loanFields.at(0), '12.50');
         await tester.pump();
-        final saveButton = find
-            .descendant(
-              of: find.byType(Form),
-              matching: find.byType(ElevatedButton),
-            )
-            .first;
+        final saveButton =
+            find
+                .descendant(
+                  of: find.byType(Form),
+                  matching: find.byType(ElevatedButton),
+                )
+                .first;
         // The docked close bar can overlap the button at small window
         // heights; scroll it fully into view before tapping.
         await tester.ensureVisible(saveButton);
@@ -320,10 +322,11 @@ void main() {
         activityScroll.position.jumpTo(600);
         await tester.pump();
         expect(find.text('Money activity').hitTestable(), findsOneWidget);
-        final compactSearchButton = find
-            .byKey(const ValueKey('balance_chart_search_button'))
-            .hitTestable()
-            .last;
+        final compactSearchButton =
+            find
+                .byKey(const ValueKey('balance_chart_search_button'))
+                .hitTestable()
+                .last;
         expect(compactSearchButton.hitTestable(), findsOneWidget);
         await tester.tap(compactSearchButton);
         await tester.pumpAndSettle();
@@ -375,12 +378,13 @@ void main() {
         );
         await tester.enterText(borrowingFields.at(0), '20');
         await tester.pump();
-        final loanSaveButton = find
-            .descendant(
-              of: find.byType(Form),
-              matching: find.byType(ElevatedButton),
-            )
-            .first;
+        final loanSaveButton =
+            find
+                .descendant(
+                  of: find.byType(Form),
+                  matching: find.byType(ElevatedButton),
+                )
+                .first;
         // The docked close bar can overlap the button at small window
         // heights; scroll it fully into view before tapping.
         await tester.ensureVisible(loanSaveButton);
@@ -483,9 +487,10 @@ void main() {
           await tester.drag(visibleList, const Offset(0, -200));
           await tester.pump();
         }
-        final visibleCashAccount = find
-            .descendant(of: visibleList, matching: find.text('Cash'))
-            .hitTestable();
+        final visibleCashAccount =
+            find
+                .descendant(of: visibleList, matching: find.text('Cash'))
+                .hitTestable();
         await _waitFor(tester, visibleCashAccount, seconds: 30);
         await tester.tap(visibleCashAccount);
         await _waitForUrl(
@@ -512,15 +517,17 @@ void main() {
         );
         expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
 
-        final balancePainter = tester
-            .widget<CustomPaint>(
-              find.byWidgetPredicate(
-                (widget) =>
-                    widget is CustomPaint &&
-                    widget.painter is BalanceHistoryPainter,
-              ),
-            )
-            .painter! as BalanceHistoryPainter;
+        final balancePainter =
+            tester
+                    .widget<CustomPaint>(
+                      find.byWidgetPredicate(
+                        (widget) =>
+                            widget is CustomPaint &&
+                            widget.painter is BalanceHistoryPainter,
+                      ),
+                    )
+                    .painter!
+                as BalanceHistoryPainter;
         expect(balancePainter.points.length, greaterThan(1));
         expect(balancePainter.directions.last, 'current');
         expect(balancePainter.labels.last, contains('\n'));
@@ -566,9 +573,10 @@ void main() {
         expect(
           find.descendant(
             of: find.byType(LiveBalanceChart).hitTestable().last,
-            matching: find
-                .byKey(const ValueKey('balance_chart_search_button'))
-                .hitTestable(),
+            matching:
+                find
+                    .byKey(const ValueKey('balance_chart_search_button'))
+                    .hitTestable(),
           ),
           findsOneWidget,
         );
@@ -586,15 +594,17 @@ void main() {
         FocusManager.instance.primaryFocus?.unfocus();
         await tester.pumpAndSettle();
         expect(find.byType(TextField), findsNothing);
-        final scrolledBalancePainter = tester
-            .widget<CustomPaint>(
-              find.byWidgetPredicate(
-                (widget) =>
-                    widget is CustomPaint &&
-                    widget.painter is BalanceHistoryPainter,
-              ),
-            )
-            .painter! as BalanceHistoryPainter;
+        final scrolledBalancePainter =
+            tester
+                    .widget<CustomPaint>(
+                      find.byWidgetPredicate(
+                        (widget) =>
+                            widget is CustomPaint &&
+                            widget.painter is BalanceHistoryPainter,
+                      ),
+                    )
+                    .painter!
+                as BalanceHistoryPainter;
         expect(scrolledBalancePainter.selectedIndex, initialSelectedPoint);
         expect(
           tester.getSize(
@@ -623,15 +633,17 @@ void main() {
           expect(transactionRows.evaluate().length, inInclusiveRange(1, 20));
           expect(scrollable.position.maxScrollExtent, closeTo(fullExtent, 1));
           expect(scrollable.position.pixels, closeTo(target, 1));
-          final deepPainter = tester
-              .widget<CustomPaint>(
-                find.byWidgetPredicate(
-                  (widget) =>
-                      widget is CustomPaint &&
-                      widget.painter is BalanceHistoryPainter,
-                ),
-              )
-              .painter! as BalanceHistoryPainter;
+          final deepPainter =
+              tester
+                      .widget<CustomPaint>(
+                        find.byWidgetPredicate(
+                          (widget) =>
+                              widget is CustomPaint &&
+                              widget.painter is BalanceHistoryPainter,
+                        ),
+                      )
+                      .painter!
+                  as BalanceHistoryPainter;
           expect(deepPainter.points.length, lessThanOrEqualTo(80));
           expect(deepPainter.selectedIndex, inInclusiveRange(10, 70));
           deepChartWindows.add(deepPainter.points.join(','));
@@ -659,16 +671,17 @@ void main() {
         await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
         expect(find.byType(LiveInfiniteList), findsWidgets);
 
-        final listAfterClose = find
-            .descendant(
-              of: find.byType(CustomScrollView),
-              matching: find.byWidgetPredicate(
-                (widget) =>
-                    widget is Scrollable &&
-                    widget.axisDirection == AxisDirection.down,
-              ),
-            )
-            .hitTestable();
+        final listAfterClose =
+            find
+                .descendant(
+                  of: find.byType(CustomScrollView),
+                  matching: find.byWidgetPredicate(
+                    (widget) =>
+                        widget is Scrollable &&
+                        widget.axisDirection == AxisDirection.down,
+                  ),
+                )
+                .hitTestable();
         expect(listAfterClose, findsOneWidget);
         final scrollableAfterClose = tester.state<ScrollableState>(
           listAfterClose,
@@ -717,13 +730,14 @@ void main() {
           );
           await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
 
-          final restoredList = find
-              .descendant(
-                of: find.byType(LiveInfiniteList),
-                matching: find.byType(Scrollable),
-              )
-              .hitTestable()
-              .first;
+          final restoredList =
+              find
+                  .descendant(
+                    of: find.byType(LiveInfiniteList),
+                    matching: find.byType(Scrollable),
+                  )
+                  .hitTestable()
+                  .first;
           final restoredScrollable = tester.state<ScrollableState>(
             restoredList,
           );
@@ -738,13 +752,14 @@ void main() {
               of: find.byType(LiveInfiniteList),
               matching: find.byType(ListTile),
             );
-            final returnedList = find
-                .descendant(
-                  of: find.byType(LiveInfiniteList),
-                  matching: find.byType(Scrollable),
-                )
-                .hitTestable()
-                .first;
+            final returnedList =
+                find
+                    .descendant(
+                      of: find.byType(LiveInfiniteList),
+                      matching: find.byType(Scrollable),
+                    )
+                    .hitTestable()
+                    .first;
             final returnedScrollable = tester.state<ScrollableState>(
               returnedList,
             );
@@ -827,12 +842,13 @@ void main() {
         await tester.scrollUntilVisible(
           find.text('Stock picks').last,
           120,
-          scrollable: find
-              .descendant(
-                of: find.byType(ListView).hitTestable().last,
-                matching: find.byType(Scrollable),
-              )
-              .first,
+          scrollable:
+              find
+                  .descendant(
+                    of: find.byType(ListView).hitTestable().last,
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
         );
         expect(
           find.text('Stock picks').hitTestable(),

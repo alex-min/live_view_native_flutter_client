@@ -67,7 +67,20 @@ void main() {
     );
 
     var oldChannel = server.lastChannel!;
+    var initialRoute = view.router.pages.last.page.name;
+    var observedRoutes = <String?>[];
+    view.router.addListener(() {
+      observedRoutes.add(view.router.pages.lastOrNull?.page.name);
+    });
     await view.livePatch('/accounts');
+
+    expect(
+      observedRoutes,
+      isNot(contains('loading;/accounts')),
+      reason: 'a cached destination must not flash a loading route',
+    );
+    expect(view.router.pages.last.page.name, initialRoute);
+
     view.handleMessage(
       Message(event: PhoenixChannelEvent('phx_close')),
       sourceChannel: oldChannel,

@@ -19,10 +19,11 @@ void main() {
       await _ensureServer();
       SharedPreferences.setMockInitialValues({});
 
-      var view = LiveView()
-        ..catchExceptions = false
-        ..disableAnimations = true
-        ..throttleSpammyCalls = false;
+      var view =
+          LiveView()
+            ..catchExceptions = false
+            ..disableAnimations = true
+            ..throttleSpammyCalls = false;
 
       await tester.pumpWidget(_TestApp(view));
       await view.connect('http://$_serverHost:$_serverPort/users/log_in');

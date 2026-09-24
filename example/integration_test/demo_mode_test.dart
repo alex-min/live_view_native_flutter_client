@@ -55,12 +55,13 @@ void main() {
         await tester.scrollUntilVisible(
           find.text('Try the app').hitTestable(),
           80,
-          scrollable: find
-              .descendant(
-                of: settingsList,
-                matching: find.byType(Scrollable),
-              )
-              .first,
+          scrollable:
+              find
+                  .descendant(
+                    of: settingsList,
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
         );
         expect(find.text('Demo the app with fake data'), findsWidgets);
 
@@ -83,12 +84,13 @@ void main() {
         await tester.scrollUntilVisible(
           find.descendant(of: visibleList, matching: find.text('Cash')),
           80,
-          scrollable: find
-              .descendant(
-                of: visibleList,
-                matching: find.byType(Scrollable),
-              )
-              .first,
+          scrollable:
+              find
+                  .descendant(
+                    of: visibleList,
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
         );
 
         final quitDemoMode = find.widgetWithText(TextButton, 'Quit demo mode');

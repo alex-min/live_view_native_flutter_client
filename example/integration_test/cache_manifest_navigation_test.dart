@@ -136,10 +136,10 @@ void main() {
         ),
         isNull,
       );
-      final secondUserManifest =
-          await restartedView.cacheCoordinator?.store.readManifest(
-        LiveViewCacheCoordinator.manifestStorageKey(firstNamespace),
-      );
+      final secondUserManifest = await restartedView.cacheCoordinator?.store
+          .readManifest(
+            LiveViewCacheCoordinator.manifestStorageKey(firstNamespace),
+          );
       expect(secondUserManifest?.manifest.identity, secondNamespace?.identity);
       expect(
         secondUserManifest?.manifest.identity,
@@ -225,8 +225,23 @@ Future<void> _expectCachedThenFresh(
   List<ViewType> renderedTypes,
 ) async {
   final firstNewRender = renderedTypes.length;
-  await view.livePatch(route);
-  await _waitForUrl(tester, view, route);
+  final observedRoutes = <String?>[];
+  void observeRoute() {
+    observedRoutes.add(view.router.pages.lastOrNull?.page.name);
+  }
+
+  view.router.addListener(observeRoute);
+  try {
+    await view.livePatch(route);
+    await _waitForUrl(tester, view, route);
+  } finally {
+    view.router.removeListener(observeRoute);
+  }
+  expect(
+    observedRoutes,
+    isNot(contains('loading;$route')),
+    reason: '$route should not show a loader when its snapshot is available',
+  );
   expect(
     renderedTypes.skip(firstNewRender),
     contains(ViewType.cached),

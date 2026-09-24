@@ -161,12 +161,13 @@ void main() {
         await tester.enterText(transactionFields.at(1), 'Courses');
         await tester.pump();
 
-        final createSaveButton = find
-            .descendant(
-              of: find.byType(Form),
-              matching: find.byType(ElevatedButton),
-            )
-            .first;
+        final createSaveButton =
+            find
+                .descendant(
+                  of: find.byType(Form),
+                  matching: find.byType(ElevatedButton),
+                )
+                .first;
         // The docked close bar can overlap the button at small window
         // heights; scroll it fully into view before tapping.
         await tester.ensureVisible(createSaveButton);
@@ -181,12 +182,13 @@ void main() {
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
-        final createdRow = find
-            .ancestor(
-              of: find.text('Courses').hitTestable(),
-              matching: find.byType(ListTile),
-            )
-            .hitTestable();
+        final createdRow =
+            find
+                .ancestor(
+                  of: find.text('Courses').hitTestable(),
+                  matching: find.byType(ListTile),
+                )
+                .hitTestable();
         expect(
           (tester.getCenter(createdRow).dy -
                   tester.view.physicalSize.height / 2)
@@ -395,12 +397,13 @@ void main() {
         await tester.pumpAndSettle();
         await _waitFor(tester, find.byType(Form), seconds: 30);
 
-        final dropdowns = find
-            .descendant(
-              of: find.byType(Form),
-              matching: find.byType(DropdownButton<String>),
-            )
-            .hitTestable();
+        final dropdowns =
+            find
+                .descendant(
+                  of: find.byType(Form),
+                  matching: find.byType(DropdownButton<String>),
+                )
+                .hitTestable();
         expect(dropdowns, findsNWidgets(2));
 
         // The newest account (Savings) is selected as the source. Choose
