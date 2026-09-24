@@ -2,12 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/routes/live_custom_page.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_link.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
 
 main() async {
+  testWidgets('cached pages have a truly zero-duration transition', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    final context = tester.element(find.byType(SizedBox));
+
+    final cachedRoute =
+        const LiveCustomPage(
+              child: SizedBox(),
+              noTransition: true,
+            ).createRoute(context)
+            as TransitionRoute<dynamic>;
+    final liveRoute =
+        const LiveCustomPage(child: SizedBox()).createRoute(context)
+            as TransitionRoute<dynamic>;
+
+    expect(cachedRoute.transitionDuration, Duration.zero);
+    expect(cachedRoute.reverseTransitionDuration, Duration.zero);
+    expect(liveRoute.transitionDuration, const Duration(milliseconds: 300));
+  });
+
   testGoldens('transitions', (tester) async {
     loadAppFonts();
     var (view, _) = await connect(

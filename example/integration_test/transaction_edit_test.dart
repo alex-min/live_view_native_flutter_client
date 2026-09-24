@@ -94,6 +94,14 @@ void main() {
         await _waitFor(tester, find.text('No transactions yet'), seconds: 30);
 
         // Add a transaction through the app bar add button.
+        final addFab = find
+            .ancestor(
+              of: find.byIcon(Icons.add),
+              matching: find.byType(FloatingActionButton),
+            )
+            .hitTestable();
+        expect(addFab, findsOneWidget);
+        final addFabCenter = tester.getCenter(addFab);
         await tester.tap(find.byIcon(Icons.add).last);
         await _waitForUrl(
           tester,
@@ -119,6 +127,15 @@ void main() {
         );
         final newTransactionCloseButton =
             find.byIcon(Icons.close).hitTestable();
+        final newTransactionCloseFab = find.ancestor(
+          of: newTransactionCloseButton,
+          matching: find.byType(FloatingActionButton),
+        );
+        expect(
+          tester.getCenter(newTransactionCloseFab).dy,
+          closeTo(addFabCenter.dy, 0.1),
+          reason: 'The X and + buttons should stay at the same height',
+        );
         await tester.tap(newTransactionCloseButton);
         await _waitForUrl(
           tester,

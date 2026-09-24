@@ -19,6 +19,10 @@ class LiveCustomPage extends MaterialPage {
   Route createRoute(BuildContext context) {
     return PageRouteBuilder(
       settings: this,
+      transitionDuration:
+          noTransition ? Duration.zero : const Duration(milliseconds: 300),
+      reverseTransitionDuration:
+          noTransition ? Duration.zero : const Duration(milliseconds: 300),
       pageBuilder: (
         BuildContext context,
         Animation<double> animation,
