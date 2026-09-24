@@ -16,6 +16,6 @@ class ExecLiveEvent extends ExecConfirmable {
 
   @override
   void handler(BuildContext context, StateWidget widget) {
-    widget.liveView.sendEvent(this);
+    widget.liveView.dispatchEvent(this);
   }
 }

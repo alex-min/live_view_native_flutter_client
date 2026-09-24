@@ -156,6 +156,7 @@ class LiveView {
   ViewType? _renderedViewType;
   LiveCacheSnapshot? _pendingCachedSnapshot;
   bool _replaceWithPendingCachedSnapshot = false;
+  final List<(String, ExecLiveEvent)> _cachedRenderEvents = [];
   int _navigationGeneration = 0;
   Push? _pendingLeavePush;
   bool _isJoiningChannel = false;
@@ -779,6 +780,30 @@ class LiveView {
       renderedUrl: renderedUrl,
       generation: cacheGeneration,
     );
+    if (viewType == ViewType.liveView) {
+      _flushCachedRenderEvents(renderedUrl);
+    }
+  }
+
+  void dispatchEvent(ExecLiveEvent event) {
+    if (sendEvent(event)) {
+      return;
+    }
+    if (isShowingCachedRender && _renderedUrl == currentUrl) {
+      _cachedRenderEvents.add((currentUrl, event));
+    }
+  }
+
+  void _flushCachedRenderEvents(String renderedUrl) {
+    var events =
+        _cachedRenderEvents
+            .where((pending) => pending.$1 == renderedUrl)
+            .map((pending) => pending.$2)
+            .toList();
+    _cachedRenderEvents.clear();
+    for (var event in events) {
+      sendEvent(event);
+    }
   }
 
   void _storeAuthoritativeRender(
@@ -1080,6 +1105,7 @@ class LiveView {
     if (router.pages.lastOrNull?.page.name == 'loading;$url') {
       return;
     }
+    _cachedRenderEvents.clear();
     var navigationGeneration = ++_navigationGeneration;
     LiveCacheSnapshot? snapshot;
     var coordinator = cacheCoordinator;

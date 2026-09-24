@@ -58,6 +58,8 @@ void main() {
                 '<live-cache-route href="/accounts" max-age="300" />'
                 '</live-cache-manifest>'
                 '<viewBody><Column><Text>Cached accounts</Text>'
+                '<TextButton phx-click="quit_demo_mode">'
+                '<Text>Quit demo mode</Text></TextButton>'
                 '<Form method="post" action="/unsafe">'
                 '<TextField name="memo" />'
                 '</Form></Column></viewBody></flutter>',
@@ -103,6 +105,13 @@ void main() {
     );
 
     var newChannel = server.lastChannel!;
+    await tester.tap(find.widgetWithText(TextButton, 'Quit demo mode'));
+    expect(
+      newChannel.actions.where((action) => action.eventName == 'event'),
+      isEmpty,
+      reason: 'cached actions wait for the authoritative channel render',
+    );
+
     view.handleMessage(
       Message(
         event: PhoenixChannelEvent('phx_reply'),
@@ -120,6 +129,17 @@ void main() {
       sourceChannel: newChannel,
     );
     await tester.pumpAndSettle();
+
+    expect(
+      newChannel.actions,
+      contains(
+        const EventSent('event', {
+          'type': 'phx-click',
+          'event': 'quit_demo_mode',
+          'value': <String, dynamic>{},
+        }),
+      ),
+    );
 
     expect(find.text('Fresh accounts'), findsOneWidget);
     expect(find.text('Cached accounts'), findsNothing);

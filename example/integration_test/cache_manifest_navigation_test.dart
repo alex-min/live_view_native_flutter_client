@@ -136,10 +136,10 @@ void main() {
         ),
         isNull,
       );
-      final secondUserManifest = await restartedView.cacheCoordinator?.store
-          .readManifest(
-            LiveViewCacheCoordinator.manifestStorageKey(firstNamespace),
-          );
+      final secondUserManifest =
+          await restartedView.cacheCoordinator?.store.readManifest(
+        LiveViewCacheCoordinator.manifestStorageKey(firstNamespace),
+      );
       expect(secondUserManifest?.manifest.identity, secondNamespace?.identity);
       expect(
         secondUserManifest?.manifest.identity,

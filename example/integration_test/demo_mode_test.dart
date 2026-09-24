@@ -31,7 +31,7 @@ void main() {
         // Wide enough to keep the whole settings menu on screen.
         await tester.binding.setSurfaceSize(const Size(1200, 900));
 
-        final view = LiveView();
+        final view = await LiveView.withPersistentCache();
         view.catchExceptions = false;
         view.disableAnimations = true;
         view.throttleSpammyCalls = false;
@@ -55,13 +55,12 @@ void main() {
         await tester.scrollUntilVisible(
           find.text('Try the app').hitTestable(),
           80,
-          scrollable:
-              find
-                  .descendant(
-                    of: settingsList,
-                    matching: find.byType(Scrollable),
-                  )
-                  .first,
+          scrollable: find
+              .descendant(
+                of: settingsList,
+                matching: find.byType(Scrollable),
+              )
+              .first,
         );
         expect(find.text('Demo the app with fake data'), findsWidgets);
 
@@ -71,6 +70,7 @@ void main() {
         await _waitForUrl(tester, view, '/dashboard');
         await _waitFor(tester, find.text('Using demo data'));
         expect(find.text('Quit demo mode'), findsOneWidget);
+        await view.cachePrefetchComplete;
 
         // The demo app bar hides the account email while demo mode is on.
         // (The settings page stays mounted underneath with the email in its
@@ -78,26 +78,29 @@ void main() {
         expect(find.text(email).hitTestable(), findsNothing);
 
         await view.livePatch('/accounts');
+        await _waitForCachedRender(tester, view, '/accounts');
+        final quitDemoMode = find.widgetWithText(
+          TextButton,
+          'Quit demo mode',
+        );
+        await _waitFor(tester, quitDemoMode);
+        await tester.ensureVisible(quitDemoMode.last);
+        await tester.tap(quitDemoMode.last);
+
         await _waitForUrl(tester, view, '/accounts');
         // Rows build lazily: scroll until the Cash row enters the viewport.
         final visibleList = find.byType(ListView).hitTestable().last;
         await tester.scrollUntilVisible(
           find.descendant(of: visibleList, matching: find.text('Cash')),
           80,
-          scrollable:
-              find
-                  .descendant(
-                    of: visibleList,
-                    matching: find.byType(Scrollable),
-                  )
-                  .first,
+          scrollable: find
+              .descendant(
+                of: visibleList,
+                matching: find.byType(Scrollable),
+              )
+              .first,
         );
 
-        final quitDemoMode = find.widgetWithText(TextButton, 'Quit demo mode');
-        await _waitFor(tester, quitDemoMode);
-        await tester.ensureVisible(quitDemoMode.last);
-        await tester.tap(quitDemoMode.last);
-        await _waitForUrl(tester, view, '/accounts');
         await _waitForAbsent(tester, find.text('Using demo data'));
 
         await view.livePatch('/accounts');
@@ -108,6 +111,21 @@ void main() {
       timeout: const Timeout(Duration(minutes: 3)),
     );
   });
+}
+
+Future<void> _waitForCachedRender(
+  WidgetTester tester,
+  LiveView view,
+  String url,
+) async {
+  for (var i = 0; i < 300; i++) {
+    await tester.pump();
+    if (view.currentUrl == url && view.isShowingCachedRender) {
+      return;
+    }
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+  throw Exception('Timed out waiting for cached url $url');
 }
 
 Future<String> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
