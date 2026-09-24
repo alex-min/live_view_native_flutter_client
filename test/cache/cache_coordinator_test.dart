@@ -7,6 +7,8 @@ import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_store.dart';
 import 'package:liveview_flutter/live_view/cache/memory_live_view_cache_store.dart';
+import 'package:liveview_flutter/live_view/cache/persistent_live_view_cache_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   const namespace = LiveCacheNamespace(
@@ -417,6 +419,52 @@ void main() {
       );
     },
   );
+
+  test('serializes concurrent persistent snapshot writes', () async {
+    SharedPreferences.setMockInitialValues({});
+    var store = PersistentLiveViewCacheStore(
+      preferences: await SharedPreferences.getInstance(),
+    );
+    var coordinator = LiveViewCacheCoordinator(store: store);
+    var routes = [
+      Uri.parse('/accounts'),
+      Uri.parse('/transactions'),
+      Uri.parse('/users/settings'),
+    ];
+    var persistentManifest = LiveCacheManifest(
+      version: manifest.version,
+      scope: manifest.scope,
+      identity: manifest.identity,
+      strategy: manifest.strategy,
+      routes:
+          routes
+              .map(
+                (route) => LiveCacheRoute(
+                  href: route,
+                  maxAge: const Duration(minutes: 5),
+                  priority: LiveCachePriority.normal,
+                ),
+              )
+              .toList(),
+    );
+    await coordinator.acceptManifest(
+      namespace: namespace,
+      manifest: persistentManifest,
+    );
+
+    expect(
+      await coordinator.prefetch((route) async {
+        await Future<void>.delayed(Duration.zero);
+        return LiveCachePrefetchResult.rendered({
+          's': ['cached $route'],
+        });
+      }),
+      routes.length,
+    );
+    for (var route in routes) {
+      expect(await coordinator.loadForNavigation(route), isNotNull);
+    }
+  });
 
   test(
     'storage errors disable the attempted operation without escaping',

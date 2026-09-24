@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
@@ -18,6 +19,7 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
   final int maximumSnapshotBytes;
   final int maximumNamespaceBytes;
   final LiveCacheSnapshotSanitizer sanitizer;
+  Future<void> _operationTail = Future<void>.value();
 
   PersistentLiveViewCacheStore({
     required this.preferences,
@@ -76,7 +78,7 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
   Future<LiveCacheSnapshot?> readSnapshot(
     LiveCacheNamespace namespace,
     Uri route,
-  ) async {
+  ) => _serialize(() async {
     var preferenceKey = _namespaceKey(namespace);
     var envelope = await _readNamespace(preferenceKey, namespace);
     if (envelope == null) {
@@ -107,84 +109,85 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
       await _writeOrRemoveNamespace(preferenceKey, envelope);
       return null;
     }
-  }
+  });
 
   @override
-  Future<bool> writeSnapshot(LiveCacheSnapshot snapshot) async {
-    if (!_isSafeRelativeRoute(snapshot.route)) {
-      return false;
-    }
-    var rendered = sanitizer.sanitize(snapshot.rendered);
-    if (rendered == null) {
-      return false;
-    }
-    var renderedSize = _encodedSize(rendered);
-    if (renderedSize == null ||
-        renderedSize > maximumSnapshotBytes ||
-        renderedSize > maximumNamespaceBytes) {
-      return false;
-    }
+  Future<bool> writeSnapshot(LiveCacheSnapshot snapshot) =>
+      _serialize(() async {
+        if (!_isSafeRelativeRoute(snapshot.route)) {
+          return false;
+        }
+        var rendered = sanitizer.sanitize(snapshot.rendered);
+        if (rendered == null) {
+          return false;
+        }
+        var renderedSize = _encodedSize(rendered);
+        if (renderedSize == null ||
+            renderedSize > maximumSnapshotBytes ||
+            renderedSize > maximumNamespaceBytes) {
+          return false;
+        }
 
-    var preferenceKey = _namespaceKey(snapshot.namespace);
-    var envelope = await _readNamespace(preferenceKey, snapshot.namespace);
-    envelope ??= <String, dynamic>{
-      'version': _envelopeVersion,
-      'namespace': _namespaceToJson(snapshot.namespace),
-      'entries': <dynamic>[],
-    };
-    var entries = _requireList(envelope['entries']);
-    entries.removeWhere(
-      (value) => _routeFromEntry(value) == snapshot.route.toString(),
-    );
+        var preferenceKey = _namespaceKey(snapshot.namespace);
+        var envelope = await _readNamespace(preferenceKey, snapshot.namespace);
+        envelope ??= <String, dynamic>{
+          'version': _envelopeVersion,
+          'namespace': _namespaceToJson(snapshot.namespace),
+          'entries': <dynamic>[],
+        };
+        var entries = _requireList(envelope['entries']);
+        entries.removeWhere(
+          (value) => _routeFromEntry(value) == snapshot.route.toString(),
+        );
 
-    while (entries.isNotEmpty &&
-        _entriesSize(entries) + renderedSize > maximumNamespaceBytes) {
-      entries.sort(_compareLastAccessed);
-      entries.removeAt(0);
-    }
+        while (entries.isNotEmpty &&
+            _entriesSize(entries) + renderedSize > maximumNamespaceBytes) {
+          entries.sort(_compareLastAccessed);
+          entries.removeAt(0);
+        }
 
-    entries.add(_snapshotToJson(snapshot, rendered, renderedSize));
-    await preferences.setString(preferenceKey, jsonEncode(envelope));
-    return true;
-  }
-
-  @override
-  Future<void> removeSnapshot(LiveCacheNamespace namespace, Uri route) async {
-    var preferenceKey = _namespaceKey(namespace);
-    var envelope = await _readNamespace(preferenceKey, namespace);
-    if (envelope == null) {
-      return;
-    }
-    _requireList(
-      envelope['entries'],
-    ).removeWhere((value) => _routeFromEntry(value) == route.toString());
-    await _writeOrRemoveNamespace(preferenceKey, envelope);
-  }
+        entries.add(_snapshotToJson(snapshot, rendered, renderedSize));
+        await preferences.setString(preferenceKey, jsonEncode(envelope));
+        return true;
+      });
 
   @override
-  Future<void> retainRoutes(
-    LiveCacheNamespace namespace,
-    Set<Uri> routes,
-  ) async {
-    var preferenceKey = _namespaceKey(namespace);
-    var envelope = await _readNamespace(preferenceKey, namespace);
-    if (envelope == null) {
-      return;
-    }
-    var routeKeys = routes.map((route) => route.toString()).toSet();
-    _requireList(
-      envelope['entries'],
-    ).removeWhere((value) => !routeKeys.contains(_routeFromEntry(value)));
-    await _writeOrRemoveNamespace(preferenceKey, envelope);
-  }
+  Future<void> removeSnapshot(LiveCacheNamespace namespace, Uri route) =>
+      _serialize(() async {
+        var preferenceKey = _namespaceKey(namespace);
+        var envelope = await _readNamespace(preferenceKey, namespace);
+        if (envelope == null) {
+          return;
+        }
+        _requireList(
+          envelope['entries'],
+        ).removeWhere((value) => _routeFromEntry(value) == route.toString());
+        await _writeOrRemoveNamespace(preferenceKey, envelope);
+      });
 
   @override
-  Future<void> clearNamespace(LiveCacheNamespace namespace) async {
-    await preferences.remove(_namespaceKey(namespace));
-  }
+  Future<void> retainRoutes(LiveCacheNamespace namespace, Set<Uri> routes) =>
+      _serialize(() async {
+        var preferenceKey = _namespaceKey(namespace);
+        var envelope = await _readNamespace(preferenceKey, namespace);
+        if (envelope == null) {
+          return;
+        }
+        var routeKeys = routes.map((route) => route.toString()).toSet();
+        _requireList(
+          envelope['entries'],
+        ).removeWhere((value) => !routeKeys.contains(_routeFromEntry(value)));
+        await _writeOrRemoveNamespace(preferenceKey, envelope);
+      });
 
   @override
-  Future<void> clear() async {
+  Future<void> clearNamespace(LiveCacheNamespace namespace) =>
+      _serialize(() async {
+        await preferences.remove(_namespaceKey(namespace));
+      });
+
+  @override
+  Future<void> clear() => _serialize(() async {
     var keys =
         preferences
             .getKeys()
@@ -192,6 +195,22 @@ class PersistentLiveViewCacheStore implements LiveViewCacheStore {
             .toList();
     for (var key in keys) {
       await preferences.remove(key);
+    }
+  });
+
+  Future<T> _serialize<T>(Future<T> Function() operation) async {
+    var previous = _operationTail;
+    var completed = Completer<void>();
+    _operationTail = completed.future;
+    try {
+      try {
+        await previous;
+      } on Object {
+        // A failed operation must not strand later cache operations.
+      }
+      return await operation();
+    } finally {
+      completed.complete();
     }
   }
 
