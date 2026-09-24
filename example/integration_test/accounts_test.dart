@@ -298,10 +298,12 @@ void main() {
         expect(find.text('Net activity this month'), findsOneWidget);
         expect(find.text('Income minus expenses'), findsOneWidget);
         expect(find.text('Search transactions'), findsOneWidget);
+        final chartSearchButton = find
+            .byKey(const ValueKey('balance_chart_search_button'))
+            .hitTestable();
+        await _waitFor(tester, chartSearchButton, seconds: 30);
         expect(
-          find
-              .byKey(const ValueKey('balance_chart_search_button'))
-              .hitTestable(),
+          chartSearchButton,
           findsOneWidget,
         );
         expect(
@@ -717,12 +719,14 @@ void main() {
           );
           await _waitFor(tester, find.byType(LiveInfiniteList), seconds: 30);
 
+          final visibleLists = find.byType(CustomScrollView).hitTestable();
+          await _waitFor(tester, visibleLists, seconds: 30);
+          final visibleList = visibleLists.last;
           final restoredList = find
               .descendant(
-                of: find.byType(LiveInfiniteList),
+                of: visibleList,
                 matching: find.byType(Scrollable),
               )
-              .hitTestable()
               .first;
           final restoredScrollable = tester.state<ScrollableState>(
             restoredList,
@@ -735,18 +739,11 @@ void main() {
 
           if (deletion == 0) {
             final returnedRows = find.descendant(
-              of: find.byType(LiveInfiniteList),
+              of: visibleList,
               matching: find.byType(ListTile),
             );
-            final returnedList = find
-                .descendant(
-                  of: find.byType(LiveInfiniteList),
-                  matching: find.byType(Scrollable),
-                )
-                .hitTestable()
-                .first;
             final returnedScrollable = tester.state<ScrollableState>(
-              returnedList,
+              restoredList,
             );
             final returnedExtent = returnedScrollable.position.maxScrollExtent;
 

@@ -7,6 +7,36 @@ import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart
 import '../test_helpers.dart';
 
 void main() {
+  testWidgets('keeps chart controls below the system top inset', (
+    tester,
+  ) async {
+    addTearDown(tester.view.reset);
+    tester.view.padding = const FakeViewPadding(top: 24);
+
+    final (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '<flutter extendBodyBehindAppBar="true"><viewBody>'
+              '<BalanceChart points="80,90,100" height="160" '
+              'compacttitle="QWNjb3VudA" searchlabel="U2VhcmNo" />'
+              '</viewBody></flutter>',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    final searchButton = find.byKey(
+      const ValueKey('balance_chart_search_button'),
+    );
+    expect(searchButton.hitTestable(), findsOneWidget);
+    final safeTop = MediaQuery.paddingOf(tester.element(searchButton)).top;
+    expect(safeTop, greaterThan(0));
+    expect(tester.getTopLeft(searchButton).dy, greaterThanOrEqualTo(safeTop));
+  });
+
   test('keeps the collapsed chart tooltip below controls and inside edges', () {
     final rect = positionBalanceTooltip(
       size: const Size(400, 120),

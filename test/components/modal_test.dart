@@ -124,4 +124,46 @@ main() async {
     await tester.pumpAndSettle();
     expect(server.lastChannelAction, liveEvents.event('cancel_delete'));
   });
+
+  testWidgets('dialog is dismissed when its owning route is replaced', (
+    tester,
+  ) async {
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '''
+          <flutter>
+            <viewBody>
+              <modal presentation="dialog" close-event="cancel_delete">
+                <title><Text>Delete transaction</Text></title>
+              </modal>
+            </viewBody>
+          </flutter>
+          ''',
+        ],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    view.currentUrl = '/transactions';
+    await view.handleRenderedMessage({
+      's': [
+        '<flutter><viewBody><Text>Transactions</Text></viewBody></flutter>',
+      ],
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Transactions'), findsOneWidget);
+    expect(
+      (server.lastChannelActions ?? []).where(
+        (action) => action == liveEvents.event('cancel_delete'),
+      ),
+      isEmpty,
+    );
+  });
 }

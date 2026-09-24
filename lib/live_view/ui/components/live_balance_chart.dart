@@ -133,6 +133,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
     final compactTitle = _decodeAttribute('compacttitle');
     final searchLabel = _decodeAttribute('searchlabel');
     final searchValue = _decodeAttribute('searchvalue');
+    final safeTop = MediaQuery.paddingOf(context).top;
     final showSearch = _searchExpanded || searchValue.isNotEmpty;
     if (!_searchController.selection.isValid &&
         _searchController.text != searchValue) {
@@ -164,14 +165,14 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                   tooltipColor: Theme.of(context).colorScheme.inverseSurface,
                   tooltipTextColor:
                       Theme.of(context).colorScheme.onInverseSurface,
-                  topInset: 12 + 52 * compactOpacity,
+                  topInset: safeTop + 12 + 52 * compactOpacity,
                   horizontalInset: 8 * (1 - collapseProgress),
                   bottomInset: 10 * (1 - collapseProgress),
                 ),
               ),
               if (compactTitle.isNotEmpty || searchLabel.isNotEmpty)
                 Positioned(
-                  top: 6,
+                  top: safeTop + 6,
                   left: 12,
                   right: 12,
                   child: IgnorePointer(

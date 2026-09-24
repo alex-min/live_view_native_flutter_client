@@ -22,6 +22,7 @@ class _LiveModalState extends StateWidget<LiveModal> {
   void initState() {
     super.initState();
     rootNavigator = Navigator.of(context, rootNavigator: true);
+    widget.state.liveView.router.addListener(_handleRouteChange);
     Future.microtask(showModal);
   }
 
@@ -37,9 +38,17 @@ class _LiveModalState extends StateWidget<LiveModal> {
 
   @override
   void dispose() {
+    widget.state.liveView.router.removeListener(_handleRouteChange);
     closingProgrammatically = true;
     Future.microtask(hideModal);
     super.dispose();
+  }
+
+  void _handleRouteChange() {
+    if (!widget.state.isOnTheCurrentPage) {
+      closingProgrammatically = true;
+      hideModal();
+    }
   }
 
   void hideModal() {

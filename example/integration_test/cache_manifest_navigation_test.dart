@@ -65,6 +65,7 @@ void main() {
         Uri.parse('/dashboard'),
       );
       expect(firstNamespace, isNotNull);
+      expect(firstNamespace?.manifestVersion, 'finance-v2');
       expect(persistedDashboard, isNotNull);
 
       await view.disconnect();
@@ -178,6 +179,14 @@ Future<void> _expectRapidCachedTabSwitching(
     ]) {
       unawaited(view.livePatch(route));
       await tester.pump();
+      expect(
+        find.ancestor(
+          of: find.byType(Router),
+          matching: find.byType(SafeArea),
+        ),
+        findsNothing,
+        reason: '$route must not gain a transient root SafeArea',
+      );
     }
     await _waitForUrl(tester, view, '/dashboard');
   } finally {
