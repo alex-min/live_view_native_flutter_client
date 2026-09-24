@@ -722,6 +722,7 @@ class LiveView {
   }) async {
     var cacheGeneration = ++_cacheRenderGeneration;
     var renderedUrl = currentUrl;
+    var wasCached = isShowingCachedRender;
     // A full render replaces whatever diffs were targeting the previous page,
     // so drop stale diff state before the new widgets read it.
     changeNotifier.emptyData();
@@ -759,11 +760,16 @@ class LiveView {
         viewType != ViewType.cached &&
         cacheManifest == null &&
         cacheCoordinator?.namespace?.scope == LiveCacheScope.user;
+    var noTransition =
+        viewType == ViewType.cached ||
+        wasCached ||
+        cacheCoordinator?.hasRoute(Uri.parse(currentUrl)) == true;
     if (losesUserPolicy || replacePage) {
       router.replacePages(
         url: currentUrl,
         widget: render.$1,
         rootState: render.$2,
+        noTransition: noTransition,
       );
       unawaited(cacheCoordinator!.invalidateActiveUser());
     } else {
@@ -771,6 +777,7 @@ class LiveView {
         url: currentUrl,
         widget: render.$1,
         rootState: render.$2,
+        noTransition: noTransition,
       );
     }
     _storeAuthoritativeRender(

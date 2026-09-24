@@ -138,7 +138,11 @@ void main() {
         final transactionUrl = Uri.parse(view.currentUrl);
         final manageCategories = find.byTooltip('Custom categories');
         await _waitFor(tester, manageCategories, seconds: 30);
-        await tester.ensureVisible(manageCategories.last);
+        await Scrollable.ensureVisible(
+          manageCategories.last.evaluate().single,
+          alignment: 0.5,
+        );
+        await tester.pumpAndSettle();
         await tester.tap(manageCategories.last);
         await _waitForUrl(tester, view, '/settings/categories', seconds: 30);
         await view.livePatch(transactionUrl.toString());

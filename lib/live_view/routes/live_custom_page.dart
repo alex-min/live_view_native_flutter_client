@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 class LiveCustomPage extends MaterialPage {
+  final bool noTransition;
+
   const LiveCustomPage({
     required super.child,
+    this.noTransition = false,
     super.maintainState = true,
     super.fullscreenDialog = false,
     super.allowSnapshotting = true,
@@ -21,7 +24,9 @@ class LiveCustomPage extends MaterialPage {
         Animation<double> animation,
         Animation<double> secondaryAnimation,
       ) {
-        return FadeTransition(opacity: animation, child: child);
+        return noTransition
+            ? child
+            : FadeTransition(opacity: animation, child: child);
       },
     );
   }

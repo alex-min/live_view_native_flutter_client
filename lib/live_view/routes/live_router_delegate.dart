@@ -129,6 +129,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     required String url,
     required List<Widget> widget,
     required NodeState? rootState,
+    bool noTransition = false,
   }) {
     history[url] = widget;
     pages.add(
@@ -136,6 +137,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
         RouteSettings(name: url),
         List<Widget>.from(widget),
         rootState,
+        noTransition: noTransition,
       ),
     );
     notifyListeners();
@@ -145,6 +147,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     required String url,
     required List<Widget> widget,
     required NodeState? rootState,
+    bool noTransition = false,
   }) {
     history[url] = widget;
     pages = [
@@ -152,6 +155,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
         RouteSettings(name: url),
         List<Widget>.from(widget),
         rootState,
+        noTransition: noTransition,
       ),
     ];
     notifyListeners();
@@ -176,6 +180,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     required String url,
     required List<Widget> widget,
     required NodeState? rootState,
+    bool noTransition = false,
   }) {
     history[url] = widget;
     if (pages.lastOrNull?.page.name == url ||
@@ -184,6 +189,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
         RouteSettings(name: url),
         widget,
         rootState,
+        noTransition: noTransition,
       );
       notifyListeners();
       return;
@@ -198,7 +204,14 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
       pages.elementAtOrNull(pageIndex)!.junk = true;
       pageIndex--;
     }
-    pages.add(_createPage(RouteSettings(name: url), widget, rootState));
+    pages.add(
+      _createPage(
+        RouteSettings(name: url),
+        widget,
+        rootState,
+        noTransition: noTransition,
+      ),
+    );
     notifyListeners();
   }
 
@@ -209,8 +222,9 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
   LivePage _createPage(
     RouteSettings routeSettings,
     List<Widget> widgets,
-    NodeState? rootState,
-  ) {
+    NodeState? rootState, {
+    bool noTransition = false,
+  }) {
     var content = Builder(
       builder: (context) {
         if (widgets.length == 1) {
@@ -264,6 +278,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
           routeSettings.name?.startsWith('/') == true
               ? LiveCustomPage(
                 child: content,
+                noTransition: noTransition,
                 key: UniqueKey(),
                 name: routeSettings.name,
                 arguments: routeSettings.arguments,

@@ -9,6 +9,7 @@ import 'package:liveview_flutter/live_view/cache/live_cache_snapshot.dart';
 import 'package:liveview_flutter/live_view/cache/live_view_cache_coordinator.dart';
 import 'package:liveview_flutter/live_view/cache/memory_live_view_cache_store.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
+import 'package:liveview_flutter/live_view/routes/live_custom_page.dart';
 import 'package:phoenix_socket/phoenix_socket.dart';
 
 import '../test_helpers.dart';
@@ -198,6 +199,10 @@ void main() {
     expect(find.text('Fresh accounts'), findsOneWidget);
     expect(find.text('Cached accounts'), findsNothing);
     expect(view.isCurrentRouteReady, isTrue);
+    expect(
+      (view.router.pages.last.page as LiveCustomPage).noTransition,
+      isTrue,
+    );
   });
 
   testWidgets(
@@ -264,6 +269,10 @@ void main() {
 
       expect(view.currentUrl, '/accounts');
       expect(find.text('Fresh accounts'), findsOneWidget);
+      expect(
+        (view.router.pages.last.page as LiveCustomPage).noTransition,
+        isTrue,
+      );
     },
   );
 }
