@@ -6,6 +6,53 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets(
+    'a compact app bar does not reserve the status bar inset while navigation chrome loads',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final view = LiveView();
+      view.catchExceptions = false;
+      view.throttleSpammyCalls = false;
+      await tester.pumpWidget(view.rootView);
+
+      const body = '''
+<flutter extendBodyBehindAppBar="true">
+  <AppBar toolbarHeight="[[flutterState key=0]]" primary="false" />
+  <viewBody><Text>Cached page</Text></viewBody>
+</flutter>
+''';
+
+      final (widgets, rootState) =
+          LiveViewUiParser(
+            html: [body],
+            htmlVariables: {'0': '0'},
+            liveView: view,
+            urlPath: '/accounts',
+            viewType: ViewType.cached,
+          ).parse();
+
+      view.router.updatePage(
+        url: '/accounts',
+        widget: widgets,
+        rootState: rootState,
+      );
+
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(500, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.padding = const FakeViewPadding(top: 24);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('main_app_bar')), findsNothing);
+      expect(tester.getTopLeft(find.text('Cached page')).dy, 0);
+
+      tester.view.physicalSize = const Size(800, 1000);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('main_app_bar')), findsNothing);
+      expect(tester.getTopLeft(find.text('Cached page')).dy, 0);
+    },
+  );
+
+  testWidgets(
     'the top bar is hidden on small screens when a bottom navigation bar is shown',
     (tester) async {
       SharedPreferences.setMockInitialValues({});

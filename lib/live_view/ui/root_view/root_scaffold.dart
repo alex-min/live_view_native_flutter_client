@@ -185,9 +185,10 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     // the top bar is hidden with the same condition, like a native app.
     var hideAppBar =
         hasAppBar &&
-        hasMobileBottomNavigationBar &&
-        MediaQuery.of(context).size.width <
-            LiveBottomNavigationBar.mobileBreakpoint;
+        (widgetsContainCompactAppBar(widget.view.router.pages.last.widgets) ||
+            (hasMobileBottomNavigationBar &&
+                MediaQuery.of(context).size.width <
+                    LiveBottomNavigationBar.mobileBreakpoint));
 
     var router = Router(
       routerDelegate: widget.view.router,
@@ -260,6 +261,12 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       floatingActionButton: floatingActionButton,
       persistentFooterButtons:
           persistentButtons.isEmpty ? null : persistentButtons,
+    );
+  }
+
+  bool widgetsContainCompactAppBar(List<Widget> widgets) {
+    return widgets.whereType<LiveAppBar>().any(
+      (appBar) => appBar.preferredSize.height == 0,
     );
   }
 }

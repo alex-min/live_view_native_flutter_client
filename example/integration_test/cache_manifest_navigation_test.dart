@@ -187,6 +187,11 @@ Future<void> _expectRapidCachedTabSwitching(
         findsNothing,
         reason: '$route must not gain a transient root SafeArea',
       );
+      expect(
+        find.byKey(const Key('main_app_bar')).hitTestable(),
+        findsNothing,
+        reason: '$route must not gain a transient root app bar',
+      );
     }
     await _waitForUrl(tester, view, '/dashboard');
   } finally {

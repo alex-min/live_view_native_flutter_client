@@ -85,6 +85,7 @@ void main() {
     view.router.updatePage(url: '/', widget: widgets, rootState: rootState);
     await tester.pumpAndSettle();
 
-    expect(tester.getSize(find.byKey(const Key('main_app_bar'))).height, 0);
+    expect(find.byKey(const Key('main_app_bar')), findsNothing);
+    expect(tester.getTopLeft(find.text('Compact page')).dy, 0);
   });
 }
