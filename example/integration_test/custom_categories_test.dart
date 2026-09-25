@@ -21,11 +21,11 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   testWidgets(
     'a Pro user creates a custom category from settings',
     (tester) async {
-      await _ensureServer();
       SharedPreferences.setMockInitialValues({});
 
       final view = LiveView();
@@ -44,7 +44,7 @@ void main() {
       await tester.tap(find.widgetWithText(OutlinedButton, 'Sign up'));
       await _waitForUrl(tester, view, '/users/register');
       await tester.pumpAndSettle();
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 200));
       await tester.pumpAndSettle();
       await _waitFor(tester, find.byType(TextField));
 
@@ -55,7 +55,7 @@ void main() {
       await tester.pump();
       await tester.enterText(fields.at(2), password);
       await tester.pump();
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 200));
       await tester.pump();
       await tester.enterText(fields.at(0), email);
       await tester.pump();
@@ -110,7 +110,7 @@ void main() {
       await _waitFor(tester, find.text('Coffee runs'));
       expect(find.text('Coffee runs'), findsOneWidget);
     },
-    timeout: const Timeout(Duration(minutes: 3)),
+    timeout: const Timeout(Duration(seconds: 20)),
   );
 }
 
@@ -122,7 +122,7 @@ Future<void> _waitFor(
   for (var i = 0; i < seconds; i++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) return;
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder');
 }
@@ -137,7 +137,7 @@ Future<void> _waitForUrl(
     await tester.pump();
     final currentPath = Uri.tryParse(view.currentUrl)?.path ?? '';
     if (currentPath == url && view.isCurrentRouteReady) return;
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for url $url (got ${view.currentUrl})');
 }
@@ -167,7 +167,7 @@ Future<void> _ensureServer() async {
 
   for (var i = 0; i < 60; i++) {
     if (await _serverReady()) return;
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('StartupKit server did not start');
 }

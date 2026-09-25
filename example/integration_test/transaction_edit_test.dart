@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -24,12 +23,12 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Transaction editing', () {
     testWidgets(
       'tapping a transaction opens the pre-filled edit form and saves',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView(
@@ -66,7 +65,7 @@ void main() {
         await tester.enterText(accountFields.at(1), 'Edit account');
         await tester.pump();
 
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pump();
         await tester.enterText(accountFields.at(0), '100');
         await tester.pump();
@@ -171,7 +170,7 @@ void main() {
         await tester.tap(find.text('OK'));
         await tester.pumpAndSettle();
 
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pump();
         await tester.enterText(transactionFields.at(0), '12.34');
         await tester.pump();
@@ -255,7 +254,7 @@ void main() {
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
-        expect(find.text('Edit transaction'), findsNothing);
+        await _waitForAbsent(tester, find.text('Edit transaction'));
         expect(view.router.pages.last.page.name, view.currentUrl);
         expect(find.text('Courses').hitTestable(), findsOneWidget);
 
@@ -282,7 +281,7 @@ void main() {
           seconds: 30,
         );
         await _waitFor(tester, find.text('Courses'), seconds: 30);
-        expect(find.text('Edit transaction'), findsNothing);
+        await _waitForAbsent(tester, find.text('Edit transaction'));
         expect(view.router.pages.last.page.name, view.currentUrl);
         expect(find.text('Courses').hitTestable(), findsOneWidget);
 
@@ -328,7 +327,7 @@ void main() {
         await tester.enterText(editFields.at(1), 'Courses modifiées');
         await tester.pump();
 
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pump();
 
         await tester.tap(
@@ -354,13 +353,12 @@ void main() {
           reason: 'The updated amount should appear in the row',
         );
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
       'creates an account transfer and updates both balances',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -450,7 +448,7 @@ void main() {
         expect(find.textContaining('225'), findsWidgets);
         expect(find.textContaining('250'), findsWidgets);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
@@ -474,7 +472,7 @@ Future<void> _createAccount(
   await tester.enterText(fields.at(1), name);
   await tester.pump();
 
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pump();
   await tester.enterText(fields.at(0), balance);
   await tester.pump();
@@ -502,7 +500,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   // Wait for the cross-live_session fallback and the websocket join to
   // settle before interacting with the form.
   await tester.pumpAndSettle();
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pumpAndSettle();
 
   await _waitFor(tester, find.byType(TextField));
@@ -525,7 +523,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.enterText(fields.at(2), password);
   await tester.pump();
 
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pump();
 
   await tester.enterText(fields.at(0), email);
@@ -559,8 +557,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.pumpAndSettle();
 }
 
-/// Waits up to [seconds] for [finder] to match at least one widget,
-/// pumping the tester each second.
+/// Polls [finder] up to [seconds] times at 200 ms intervals.
 Future<void> _waitFor(
   WidgetTester tester,
   Finder finder, {
@@ -571,9 +568,18 @@ Future<void> _waitFor(
     if (finder.evaluate().isNotEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder');
+}
+
+Future<void> _waitForAbsent(WidgetTester tester, Finder finder) async {
+  for (var attempt = 0; attempt < 30; attempt++) {
+    await tester.pump();
+    if (finder.evaluate().isEmpty) return;
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+  }
+  throw Exception('Timed out waiting for $finder to disappear');
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url] (a plain
@@ -591,7 +597,7 @@ Future<void> _waitForUrl(
     if (matches && view.isCurrentRouteReady) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for url $url (got ${view.currentUrl})');
 }
@@ -641,7 +647,7 @@ Future<void> _ensureServer() async {
     if (await _serverReady()) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
 
   throw Exception(

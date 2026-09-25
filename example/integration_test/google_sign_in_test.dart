@@ -12,11 +12,11 @@ const _serverPort = 4000;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   testWidgets(
     'Google sign-in is available on the native login page',
     (tester) async {
-      await _ensureServer();
       SharedPreferences.setMockInitialValues({});
 
       var view = LiveView()
@@ -35,7 +35,7 @@ void main() {
       expect(find.byType(LiveGoogleSignInButton), findsOneWidget);
       expect(find.text('Continue with Google'), findsOneWidget);
     },
-    timeout: const Timeout(Duration(minutes: 2)),
+    timeout: const Timeout(Duration(seconds: 20)),
   );
 }
 

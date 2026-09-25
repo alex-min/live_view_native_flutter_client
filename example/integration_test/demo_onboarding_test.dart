@@ -22,12 +22,12 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Demo account onboarding', () {
     testWidgets(
       'try the demo, pick a currency and claim the account by email',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -137,7 +137,7 @@ void main() {
         await tester.pump();
 
         // The validation diff must not replace the active field.
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pump();
         expect(
           tester
@@ -169,13 +169,12 @@ void main() {
           seconds: 30,
         );
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
 
-/// Waits up to [seconds] for [finder] to match at least one widget,
-/// pumping the tester each second.
+/// Polls [finder] up to [seconds] times at 200 ms intervals.
 Future<void> _waitFor(
   WidgetTester tester,
   Finder finder, {
@@ -186,7 +185,7 @@ Future<void> _waitFor(
     if (finder.evaluate().isNotEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder');
 }
@@ -203,7 +202,7 @@ Future<void> _waitForUrl(
     if (view.currentUrl == url && view.isCurrentRouteReady) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for url $url (got ${view.currentUrl})');
 }
@@ -253,7 +252,7 @@ Future<void> _ensureServer() async {
     if (await _serverReady()) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
 
   throw Exception(

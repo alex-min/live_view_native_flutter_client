@@ -21,12 +21,12 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Demo mode settings', () {
     testWidgets(
       'enters demo mode from settings and restores personal data on quit',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
         // Wide enough to keep the whole settings menu on screen.
         await tester.binding.setSurfaceSize(const Size(1200, 900));
@@ -43,7 +43,7 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/users/settings');
         await _waitForUrl(tester, view, '/users/settings');
         await tester.pumpAndSettle();
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pumpAndSettle();
 
         // The More group lists the demo mode row; tapping it enters demo
@@ -92,7 +92,7 @@ void main() {
         await _waitFor(tester, find.text('No accounts yet'));
         await _waitForAbsent(tester, find.text('Cash'));
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
@@ -120,7 +120,7 @@ Future<String> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await _waitForUrl(tester, view, '/users/register');
 
   await tester.pumpAndSettle();
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pumpAndSettle();
   await _waitFor(tester, find.byType(TextField));
 
@@ -137,7 +137,7 @@ Future<String> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.enterText(fields.at(2), password);
   await tester.pump();
 
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pump();
   await tester.enterText(fields.at(0), email);
   await tester.pump();
@@ -179,7 +179,7 @@ Future<void> _waitFor(
     if (finder.evaluate().isNotEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder');
 }
@@ -194,7 +194,7 @@ Future<void> _waitForAbsent(
     if (finder.evaluate().isEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder to disappear');
 }
@@ -210,7 +210,7 @@ Future<void> _waitForUrl(
     if (view.currentUrl == url && view.isCurrentRouteReady) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for url $url (got ${view.currentUrl})');
 }
@@ -255,7 +255,7 @@ Future<void> _ensureServer() async {
     if (await _serverReady()) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
 
   throw Exception(

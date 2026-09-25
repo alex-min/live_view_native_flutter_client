@@ -22,12 +22,12 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Currency picker', () {
     testWidgets(
       'lists currencies, filters by search and selects a currency',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
         // Wide enough for the desktop app bar actions (window_width >= 900).
         await tester.binding.setSurfaceSize(const Size(1200, 900));
@@ -73,13 +73,12 @@ void main() {
         await tester.pump();
         await _waitFor(tester, find.text('Euro'), seconds: 30);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
 
-/// Waits up to [seconds] for [finder] to match at least one widget,
-/// pumping the tester each second.
+/// Polls [finder] up to [seconds] times at 200 ms intervals.
 Future<void> _waitFor(
   WidgetTester tester,
   Finder finder, {
@@ -90,7 +89,7 @@ Future<void> _waitFor(
     if (finder.evaluate().isNotEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder');
 }
@@ -140,7 +139,7 @@ Future<void> _ensureServer() async {
     if (await _serverReady()) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
 
   throw Exception(

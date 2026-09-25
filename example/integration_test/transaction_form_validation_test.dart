@@ -23,12 +23,12 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Transaction form validation', () {
     testWidgets(
       'the hero amount input shows server validation errors on save',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -90,13 +90,12 @@ void main() {
 
         await _waitFor(tester, find.textContaining('blank'), seconds: 30);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
       'the statistics screen renders the bottom bar without selection',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -131,7 +130,7 @@ void main() {
           seconds: 30,
         );
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
@@ -145,7 +144,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   // Wait for the cross-live_session fallback and the websocket join to
   // settle before interacting with the form.
   await tester.pumpAndSettle();
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pumpAndSettle();
 
   await _waitFor(tester, find.byType(TextField));
@@ -168,7 +167,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.enterText(fields.at(2), password);
   await tester.pump();
 
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pump();
 
   await tester.enterText(fields.at(0), email);
@@ -248,7 +247,7 @@ Future<void> _ensureServer() async {
       await socket.close();
       return;
     } catch (_) {
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 200));
     }
   }
   fail(

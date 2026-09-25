@@ -22,12 +22,12 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Support chat', () {
     testWidgets(
       'an anonymous visitor taps the bubble, sends a message and sees it',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -73,13 +73,12 @@ void main() {
         await _waitForUrl(tester, view, '/', seconds: 30);
         expect(find.text('Welcome to Mavio'), findsOneWidget);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
       'an authenticated visitor returns from chat with its back button',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -114,7 +113,7 @@ void main() {
         await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
@@ -166,7 +165,7 @@ Future<void> _ensureServer() async {
       await socket.close();
       return;
     } catch (_) {
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 200));
     }
   }
   fail(

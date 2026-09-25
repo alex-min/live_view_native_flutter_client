@@ -23,11 +23,11 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   testWidgets(
     'the authenticated manifest survives restart and isolates user changes',
     (tester) async {
-      await _ensureServer();
       SharedPreferences.setMockInitialValues({});
       final renderedTypes = <ViewType>[];
       final view = await LiveView.withPersistentCache(

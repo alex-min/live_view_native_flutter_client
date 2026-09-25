@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.
 import 'package:liveview_flutter/live_view/ui/components/live_floating_action_button.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_infinite_list.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_month_picker_drawer.dart';
-import 'package:liveview_flutter/live_view/ui/components/live_segmented_progress_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -28,12 +26,15 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Accounts', () {
+    late LiveView accountFlowView;
+    late LiveView pagedAccountView;
+
     testWidgets(
-      'shows the empty state, creates an account and marks it inactive',
+      'creates an account and shows its statistics and dashboard',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
         final view = LiveView();
         view.catchExceptions = false;
@@ -97,7 +98,7 @@ void main() {
         // The server sends validate diffs that can reset field controllers,
         // so refill right before submitting (same workaround as the
         // registration form in the onboarding flow test).
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pump();
         await tester.enterText(fields.at(0), '42.50');
         await tester.pump();
@@ -201,6 +202,18 @@ void main() {
         await tester.drag(find.byType(ListView).last, const Offset(0, -300));
         await tester.pump();
         expect(find.text('No expenses yet'), findsOneWidget);
+
+        accountFlowView = view;
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'creates a contact and searches a lending transaction',
+      (tester) async {
+        final view = accountFlowView;
+        await tester.pumpWidget(_TestApp(view: view));
+        await tester.pump();
 
         // Contacts use the same server-backed CRUD flow on Flutter.
         await view.livePatch('/contacts');
@@ -348,6 +361,16 @@ void main() {
         await _waitForUrl(tester, view, '/contacts', seconds: 30);
         await _waitFor(tester, find.text('Owes you'), seconds: 30);
         expect(find.text('€12.50'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'updates contact debt and marks the account inactive',
+      (tester) async {
+        final view = accountFlowView;
+        await tester.pumpWidget(_TestApp(view: view));
+        await tester.pump();
 
         // Borrowing is the opposite ledger direction. Borrowing €20 after
         // lending €12.50 leaves a net €7.50 owed to the contact.
@@ -430,13 +453,12 @@ void main() {
         // the inactive row like the web view.
         await _waitFor(tester, find.text('Mark as active'), seconds: 30);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
-      'loads arbitrary transaction chunks and survives repeated deletes',
+      'loads arbitrary transaction chunks with a bounded chart',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
         final view = LiveView();
         view.catchExceptions = false;
@@ -640,7 +662,40 @@ void main() {
         }
         expect(deepChartWindows.length, greaterThan(1));
 
-        var positionBeforeEdit = scrollable.position.pixels;
+        pagedAccountView = view;
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'preserves list position while editing and deleting transactions',
+      (tester) async {
+        final view = pagedAccountView;
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+        await tester.pumpWidget(_TestApp(view: view));
+        await tester.pump();
+
+        final transactionRows = find.descendant(
+          of: find.byType(LiveInfiniteList),
+          matching: find.byType(ListTile),
+        );
+        final collapsibleScroll = tester.state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable),
+              )
+              .hitTestable()
+              .first,
+        );
+        final fullExtent = collapsibleScroll.position.maxScrollExtent;
+
+        var positionBeforeEdit = collapsibleScroll.position.pixels;
         await tester.tap(transactionRows.hitTestable().first);
         await _waitForUrl(
           tester,
@@ -766,13 +821,12 @@ void main() {
           }
         }
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
       'scrolls the account list like the mobile web page',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
         final view = LiveView();
         view.catchExceptions = false;
@@ -845,13 +899,12 @@ void main() {
           reason: 'Scrolling back to the top should restore the overview',
         );
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
       'creates an investment account with an investment kind',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
         final view = LiveView();
         view.catchExceptions = false;
@@ -901,7 +954,7 @@ void main() {
         // The server sends validate diffs that can reset field controllers,
         // so refill right before submitting (same workaround as the manual
         // account creation test above).
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pump();
         await tester.enterText(fields.at(0), '1.25');
         await tester.pump();
@@ -920,7 +973,7 @@ void main() {
         await _waitFor(tester, find.text('Bitcoin vault'), seconds: 30);
         expect(find.text('Crypto'), findsWidgets);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
@@ -936,7 +989,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   // Wait for the cross-live_session fallback and the websocket join to
   // settle before interacting with the form.
   await tester.pumpAndSettle();
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pumpAndSettle();
 
   await _waitFor(tester, find.byType(TextField));
@@ -959,7 +1012,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.enterText(fields.at(2), password);
   await tester.pump();
 
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pump();
 
   await tester.enterText(fields.at(0), email);
@@ -993,8 +1046,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.pumpAndSettle();
 }
 
-/// Waits up to [seconds] for [finder] to match at least one widget,
-/// pumping the tester each second.
+/// Polls [finder] up to [seconds] times at 200 ms intervals.
 Future<void> _waitFor(
   WidgetTester tester,
   Finder finder, {
@@ -1011,7 +1063,7 @@ Future<void> _waitFor(
     if (finder.evaluate().isNotEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder. ${_visibleText()}');
 }
@@ -1037,7 +1089,7 @@ Future<void> _waitForAbsent(
     if (finder.evaluate().isEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder to disappear');
 }
@@ -1056,7 +1108,7 @@ Future<void> _waitForUrl(
             (url is RegExp && url.hasMatch(view.currentUrl)))) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for url $url (got ${view.currentUrl})');
 }
@@ -1106,7 +1158,7 @@ Future<void> _ensureServer() async {
     if (await _serverReady()) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
 
   throw Exception(

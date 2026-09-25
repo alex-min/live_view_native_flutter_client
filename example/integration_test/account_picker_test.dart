@@ -23,12 +23,12 @@ class _TestApp extends StatelessWidget {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
 
   group('Account picker', () {
     testWidgets(
       'closing the account picker with the back arrow keeps the current account',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -97,13 +97,12 @@ void main() {
         expect(find.textContaining('<Form'), findsNothing);
         expect(find.text('Account B'), findsWidgets);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
       'selecting an account in the picker saves the transaction to that account',
       (tester) async {
-        await _ensureServer();
         SharedPreferences.setMockInitialValues({});
 
         final view = LiveView();
@@ -161,7 +160,7 @@ void main() {
         await tester.enterText(amountField.at(0), '12.34');
         await tester.pump();
 
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 200));
         await tester.pump();
         await tester.enterText(amountField.at(0), '12.34');
         await tester.pump();
@@ -181,7 +180,7 @@ void main() {
         );
         await _waitFor(tester, find.textContaining('12.34'), seconds: 30);
       },
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
@@ -208,7 +207,7 @@ Future<void> _createAccount(
   await tester.enterText(accountFields.at(1), name);
   await tester.pump();
 
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pump();
   await tester.enterText(accountFields.at(0), balance);
   await tester.pump();
@@ -234,7 +233,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await _waitForUrl(tester, view, '/users/register', seconds: 30);
 
   await tester.pumpAndSettle();
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pumpAndSettle();
 
   await _waitFor(tester, find.byType(TextField));
@@ -257,7 +256,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.enterText(fields.at(2), password);
   await tester.pump();
 
-  await Future.delayed(const Duration(seconds: 1));
+  await Future.delayed(const Duration(milliseconds: 200));
   await tester.pump();
 
   await tester.enterText(fields.at(0), email);
@@ -289,8 +288,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.pumpAndSettle();
 }
 
-/// Waits up to [seconds] for [finder] to match at least one widget,
-/// pumping the tester each second.
+/// Polls [finder] up to [seconds] times at 200 ms intervals.
 Future<void> _waitFor(
   WidgetTester tester,
   Finder finder, {
@@ -301,7 +299,7 @@ Future<void> _waitFor(
     if (finder.evaluate().isNotEmpty) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder');
 }
@@ -321,7 +319,7 @@ Future<void> _waitForUrl(
     if (matches && view.isCurrentRouteReady) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for url $url (got ${view.currentUrl})');
 }
@@ -367,7 +365,7 @@ Future<void> _ensureServer() async {
     if (await _serverReady()) {
       return;
     }
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 200));
   }
 
   throw Exception(
