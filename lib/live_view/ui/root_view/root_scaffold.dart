@@ -177,15 +177,23 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       persistentButtons = [];
     }
 
+    final hasCompactAppBar = widgetsContainCompactAppBar(
+      widget.view.router.pages.last.widgets,
+    );
+    // Compact app bars are the native bottom-tab layout: they intentionally
+    // contribute no toolbar or status-bar inset. Keep the route edge-to-edge
+    // even during the frame where the root attribute is still catching up to
+    // the newly selected tab; otherwise SafeArea briefly paints a top strip.
     var extendBodyBehindAppBar =
-        getBoolean(getRootAttribute('extendBodyBehindAppBar')) ?? false;
+        getBoolean(getRootAttribute('extendBodyBehindAppBar')) ??
+        hasCompactAppBar;
     var extendBody = getBoolean(getRootAttribute('extendBody')) ?? false;
 
     // The bottom navigation bar only appears under the mobile breakpoint;
     // the top bar is hidden with the same condition, like a native app.
     var hideAppBar =
         hasAppBar &&
-        (widgetsContainCompactAppBar(widget.view.router.pages.last.widgets) ||
+        (hasCompactAppBar ||
             (hasMobileBottomNavigationBar &&
                 MediaQuery.of(context).size.width <
                     LiveBottomNavigationBar.mobileBreakpoint));

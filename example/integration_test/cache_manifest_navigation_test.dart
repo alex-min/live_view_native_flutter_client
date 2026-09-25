@@ -38,7 +38,10 @@ void main() {
       view.throttleSpammyCalls = false;
 
       await tester.pumpWidget(_TestApp(view: view));
-      await view.connect('http://$_serverHost:$_serverPort/');
+      await _failFast(
+        view.connect('http://$_serverHost:$_serverPort/'),
+        'initial connection',
+      );
       await _signUpAndOnboard(tester, view);
 
       await _waitForCachedRoutes(tester, view, const [
@@ -68,7 +71,7 @@ void main() {
       expect(firstNamespace?.manifestVersion, 'finance-v2');
       expect(persistedDashboard, isNotNull);
 
-      await view.disconnect();
+      await _failFast(view.disconnect(), 'disconnect before restart');
       await tester.pumpWidget(const SizedBox.shrink());
 
       final restartedRenderedTypes = <ViewType>[];
@@ -91,7 +94,10 @@ void main() {
       );
 
       await tester.pumpWidget(_TestApp(view: restartedView));
-      await restartedView.connect('http://$_serverHost:$_serverPort/accounts');
+      await _failFast(
+        restartedView.connect('http://$_serverHost:$_serverPort/accounts'),
+        'connection after restart',
+      );
       await _waitForUrl(tester, restartedView, '/accounts');
       await _waitForCachePolicy(tester, restartedView);
 
@@ -108,7 +114,10 @@ void main() {
         restartedRenderedTypes,
       );
 
-      await restartedView.execHrefClick('/users/log_out', method: 'DELETE');
+      await _failFast(
+        restartedView.execHrefClick('/users/log_out', method: 'DELETE'),
+        'logout navigation',
+      );
       await _waitForUrl(tester, restartedView, '/');
       await _waitForLogoutInvalidation(tester, restartedView, firstNamespace!);
       await _waitForSinglePage(tester, restartedView, '/');
@@ -157,9 +166,14 @@ void main() {
         restartedRenderedTypes,
       );
     },
-    timeout: const Timeout(Duration(minutes: 3)),
+    timeout: const Timeout(Duration(seconds: 20)),
   );
 }
+
+Future<T> _failFast<T>(Future<T> operation, String stage) => operation.timeout(
+      const Duration(seconds: 15),
+      onTimeout: () => throw TimeoutException('Timed out during $stage'),
+    );
 
 Future<void> _waitForSinglePage(
   WidgetTester tester,
@@ -302,7 +316,7 @@ Future<void> _expectCachedThenFresh(
 
   view.router.addListener(observeRoute);
   try {
-    await view.livePatch(route);
+    await _failFast(view.livePatch(route), 'live patch to $route');
     await _waitForUrl(tester, view, route);
   } finally {
     view.router.removeListener(observeRoute);

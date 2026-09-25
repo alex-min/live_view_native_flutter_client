@@ -6,6 +6,44 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets(
+    'a compact app bar keeps the route edge-to-edge while root attributes settle',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final view = LiveView();
+      view.catchExceptions = false;
+      view.throttleSpammyCalls = false;
+      await tester.pumpWidget(view.rootView);
+
+      final (widgets, rootState) =
+          LiveViewUiParser(
+            html: [
+              '<flutter><AppBar toolbarHeight="0" primary="false" />'
+                  '<viewBody><Text>Tab page</Text></viewBody></flutter>',
+            ],
+            htmlVariables: const {},
+            liveView: view,
+            urlPath: '/dashboard',
+            viewType: ViewType.cached,
+          ).parse();
+
+      view.router.updatePage(
+        url: '/dashboard',
+        widget: widgets,
+        rootState: rootState,
+      );
+
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(500, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.padding = const FakeViewPadding(top: 24);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SafeArea), findsNothing);
+      expect(tester.getTopLeft(find.text('Tab page')).dy, 0);
+    },
+  );
+
+  testWidgets(
     'a compact app bar does not reserve the status bar inset while navigation chrome loads',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
