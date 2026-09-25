@@ -11,13 +11,43 @@ class LiveCacheManifestParser {
       if (candidates.length != 1) {
         return null;
       }
-      var document = XmlDocument.parse(_renderValue(candidates.single));
+      // A dead HTTP render may place the manifest next to other top-level
+      // layout elements. XML still needs one document root for parsing.
+      var document = XmlDocument.parse(
+        '<cache-root>${_renderValue(candidates.single)}</cache-root>',
+      );
       var manifests = document.findAllElements('live-cache-manifest').toList();
-      if (manifests.length != 1) return null;
-      return parse(manifests.single);
+      if (manifests.isEmpty) return null;
+      final policy = parse(manifests.first);
+      if (policy == null) return null;
+      for (final element in manifests.skip(1)) {
+        final duplicate = parse(element);
+        if (duplicate == null || !_samePolicy(policy, duplicate)) return null;
+      }
+      return policy;
     } on Object {
       return null;
     }
+  }
+
+  bool _samePolicy(LiveCacheManifest first, LiveCacheManifest second) {
+    if (first.version != second.version ||
+        first.scope != second.scope ||
+        first.identity != second.identity ||
+        first.strategy != second.strategy ||
+        first.routes.length != second.routes.length) {
+      return false;
+    }
+    for (var i = 0; i < first.routes.length; i++) {
+      final a = first.routes[i];
+      final b = second.routes[i];
+      if (a.href != b.href ||
+          a.maxAge != b.maxAge ||
+          a.priority != b.priority) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void _collectManifestCandidates(dynamic value, List<Map> candidates) {

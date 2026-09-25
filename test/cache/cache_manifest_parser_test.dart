@@ -9,6 +9,48 @@ void main() {
   XmlElement manifestElement(String source) =>
       XmlDocument.parse(source).rootElement;
 
+  test('extracts a manifest beside other top-level layout elements', () {
+    var manifest = parser.parseRendered({
+      's': [
+        '<csrf-token value="token" />'
+            '<flutter><live-cache-manifest version="finance-v1" '
+            'scope="user" identity="opaque-user" '
+            'strategy="stale-while-revalidate">'
+            '<live-cache-route href="/accounts" max-age="300" />'
+            '</live-cache-manifest><viewBody /></flutter>',
+      ],
+    });
+
+    expect(manifest?.identity, 'opaque-user');
+    expect(manifest?.routes.single.href.toString(), '/accounts');
+  });
+
+  test('accepts matching root and page manifests in one HTTP render', () {
+    var manifest = parser.parseRendered({
+      's': [
+        '<live-cache-manifest version="finance-v1" scope="public" '
+            'strategy="stale-while-revalidate" />'
+            '<flutter><live-cache-manifest version="finance-v1" '
+            'scope="public" strategy="stale-while-revalidate" /></flutter>',
+      ],
+    });
+
+    expect(manifest?.scope, LiveCacheScope.public);
+  });
+
+  test('rejects conflicting root and page manifests', () {
+    var manifest = parser.parseRendered({
+      's': [
+        '<live-cache-manifest version="finance-v1" scope="public" '
+            'strategy="stale-while-revalidate" />'
+            '<flutter><live-cache-manifest version="finance-v2" '
+            'scope="public" strategy="stale-while-revalidate" /></flutter>',
+      ],
+    });
+
+    expect(manifest, isNull);
+  });
+
   test('parses a user-scoped stale-while-revalidate manifest', () {
     var manifest = parser.parse(
       manifestElement('''

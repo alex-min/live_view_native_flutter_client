@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -81,7 +82,7 @@ void main() {
       (tester) async {
         SharedPreferences.setMockInitialValues({});
 
-        final view = LiveView();
+        final view = await LiveView.withPersistentCache();
         view.catchExceptions = false;
         view.disableAnimations = true;
         view.throttleSpammyCalls = false;
@@ -105,10 +106,16 @@ void main() {
         await _waitFor(tester, nextButton, seconds: 30);
         await tester.tap(nextButton.last);
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUserCache(tester, view);
 
         await _waitFor(tester, find.byIcon(Icons.chat_bubble), seconds: 30);
         await tester.tap(find.byIcon(Icons.chat_bubble).hitTestable());
         await _waitForUrl(tester, view, '/support', seconds: 30);
+        expect(
+          view.router.pages.any((page) => page.page.name == '/accounts'),
+          isTrue,
+          reason: 'The full-page chat must keep its previous route',
+        );
 
         await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
@@ -152,6 +159,15 @@ Future<void> _waitForUrl(
     }
   }
   fail('Timed out waiting for url $path (got ${view.currentUrl})');
+}
+
+Future<void> _waitForUserCache(WidgetTester tester, LiveView view) async {
+  for (var attempt = 0; attempt < 50; attempt++) {
+    await tester.pump();
+    if (view.cacheCoordinator?.namespace?.scope == LiveCacheScope.user) return;
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+  fail('Timed out waiting for the authenticated cache policy');
 }
 
 Future<void> _ensureServer() async {
