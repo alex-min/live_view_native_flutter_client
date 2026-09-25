@@ -413,7 +413,9 @@ void main() {
         // Checking in the destination dropdown.
         await tester.tap(dropdowns.at(1));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Checking').last);
+        final checkingOption = find.text('Checking');
+        await _waitFor(tester, checkingOption, seconds: 30);
+        await tester.tap(checkingOption.last);
         await tester.pumpAndSettle();
 
         final fields = find.descendant(

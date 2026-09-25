@@ -60,6 +60,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   var unamedInput = const Uuid().v4();
   List<FormError> errors = [];
   TextEditingController? _controller;
+  final FocusNode _focusNode = FocusNode();
   StreamSubscription? _clearComposerSubscription;
 
   /// The controller backing the field. Owning it (instead of letting
@@ -78,6 +79,16 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
       sendInitialState();
     });
     super.initState();
+    _focusNode.addListener(_rememberFocus);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          liveView.shouldRestoreFormFieldFocus(
+            widget.state.urlPath,
+            fieldName,
+          )) {
+        _focusNode.requestFocus();
+      }
+    });
     _clearComposerSubscription = liveView.eventHub.on('clear-composer', (data) {
       var field = data is Map ? data['field'] : null;
       if (field == fieldName && mounted && widget.state.isOnTheCurrentPage) {
@@ -95,8 +106,18 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
   @override
   void dispose() {
     _clearComposerSubscription?.cancel();
+    _focusNode.removeListener(_rememberFocus);
+    _focusNode.dispose();
     _controller?.dispose();
     super.dispose();
+  }
+
+  void _rememberFocus() {
+    if (_focusNode.hasFocus) {
+      liveView.rememberFocusedFormField(widget.state.urlPath, fieldName);
+    } else {
+      liveView.forgetFocusedFormField(widget.state.urlPath, fieldName);
+    }
   }
 
   @override
@@ -239,6 +260,7 @@ class _LiveTextFieldState extends StateWidget<LiveTextField> {
               ? (_) => _dispatchSubmit()
               : null,
       controller: _effectiveController,
+      focusNode: _focusNode,
       onChanged: (value) {
         FormFieldEvent(
           name: fieldName,

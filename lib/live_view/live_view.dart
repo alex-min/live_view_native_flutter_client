@@ -208,6 +208,7 @@ class LiveView {
   /// survive the widget rebuilds server diffs trigger (each rebuild
   /// re-parses the form subtree into fresh widget instances).
   final Map<String, Map<String, dynamic>> _formValues = {};
+  final Map<String, String> _focusedFormFields = {};
 
   Map<String, dynamic>? formValuesFor(String urlPath) => _formValues[urlPath];
 
@@ -222,6 +223,19 @@ class LiveView {
   void forgetFormValues(String urlPath) {
     _formValues.remove(urlPath);
   }
+
+  void rememberFocusedFormField(String urlPath, String name) {
+    _focusedFormFields[urlPath] = name;
+  }
+
+  void forgetFocusedFormField(String urlPath, String name) {
+    if (_focusedFormFields[urlPath] == name) {
+      _focusedFormFields.remove(urlPath);
+    }
+  }
+
+  bool shouldRestoreFormFieldFocus(String urlPath, String name) =>
+      _focusedFormFields[urlPath] == name;
 
   String _scrollOffsetKey(String urlPath, String restorationId) =>
       '$urlPath|$restorationId';
@@ -750,6 +764,7 @@ class LiveView {
       // Navigated to another page: form values from the previous page must
       // not leak into same-named fields.
       _formValues.clear();
+      _focusedFormFields.clear();
     }
     _renderedUrl = currentUrl;
     _renderedViewType = viewType;

@@ -111,6 +111,7 @@ void main() {
       await restartedView.execHrefClick('/users/log_out', method: 'DELETE');
       await _waitForUrl(tester, restartedView, '/');
       await _waitForLogoutInvalidation(tester, restartedView, firstNamespace!);
+      await _waitForSinglePage(tester, restartedView, '/');
 
       expect(restartedView.router.pages, hasLength(1));
       expect(restartedView.router.pages.single.page.name, '/');
@@ -157,6 +158,25 @@ void main() {
       );
     },
     timeout: const Timeout(Duration(minutes: 3)),
+  );
+}
+
+Future<void> _waitForSinglePage(
+  WidgetTester tester,
+  LiveView view,
+  String route,
+) async {
+  for (var attempt = 0; attempt < 300; attempt++) {
+    await tester.pump();
+    if (view.router.pages.length == 1 &&
+        view.router.pages.single.page.name == route) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+  throw Exception(
+    'Timed out waiting for a single $route page '
+    '(pages=${view.router.pages.map((page) => page.page.name).toList()})',
   );
 }
 

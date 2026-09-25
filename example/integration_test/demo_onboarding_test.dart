@@ -115,15 +115,37 @@ void main() {
         await _waitForUrl(tester, view, '/users/claim', seconds: 30);
         await tester.pumpAndSettle();
 
+        expect(find.byType(AppBar), findsNothing);
+        final claimBackButton = find.ancestor(
+          of: find.byIcon(Icons.arrow_back),
+          matching: find.byType(IconButton),
+        );
+        await _waitFor(tester, claimBackButton, seconds: 30);
+        await tester.tap(claimBackButton);
+        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+
+        await _waitFor(tester, claimButton, seconds: 30);
+        await tester.ensureVisible(claimButton.last);
+        await tester.tap(claimButton.last);
+        await _waitForUrl(tester, view, '/users/claim', seconds: 30);
+        await tester.pumpAndSettle();
+
         final emailField = find.widgetWithText(TextField, 'Email');
         await _waitFor(tester, emailField, seconds: 30);
-        await tester.enterText(emailField, newEmail);
+        await tester.tap(emailField);
+        await tester.enterText(emailField, 'd');
         await tester.pump();
 
-        // phx-change can replace the field controller. Refill after that
-        // diff settles, then submit.
+        // The validation diff must not replace the active field.
         await Future.delayed(const Duration(seconds: 1));
         await tester.pump();
+        expect(
+          tester
+              .widget<EditableText>(find.byType(EditableText))
+              .focusNode
+              .hasFocus,
+          isTrue,
+        );
         await tester.enterText(emailField, newEmail);
         await tester.pump();
 
