@@ -17,7 +17,8 @@ class LiveCustomPage extends MaterialPage {
 
   @override
   Route createRoute(BuildContext context) {
-    return PageRouteBuilder(
+    late PageRouteBuilder<dynamic> route;
+    route = PageRouteBuilder<dynamic>(
       settings: this,
       transitionDuration:
           noTransition ? Duration.zero : const Duration(milliseconds: 300),
@@ -28,10 +29,12 @@ class LiveCustomPage extends MaterialPage {
         Animation<double> animation,
         Animation<double> secondaryAnimation,
       ) {
-        return noTransition
-            ? child
-            : FadeTransition(opacity: animation, child: child);
+        final page = route.settings as LiveCustomPage;
+        return page.noTransition
+            ? page.child
+            : FadeTransition(opacity: animation, child: page.child);
       },
     );
+    return route;
   }
 }

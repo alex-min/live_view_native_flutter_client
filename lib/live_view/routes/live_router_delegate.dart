@@ -185,11 +185,16 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     history[url] = widget;
     if (pages.lastOrNull?.page.name == url ||
         pages.lastOrNull?.page.name == 'loading;$url') {
+      final currentPage = pages.last;
       pages[pages.length - 1] = _createPage(
         RouteSettings(name: url),
         widget,
         rootState,
         noTransition: noTransition,
+        // A cached page followed by its authoritative render is still the
+        // same route. Keeping its key lets Navigator update the route in
+        // place instead of tearing down and recreating the whole surface.
+        pageKey: currentPage.page.name == url ? currentPage.page.key : null,
       );
       notifyListeners();
       return;
@@ -224,6 +229,7 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
     List<Widget> widgets,
     NodeState? rootState, {
     bool noTransition = false,
+    LocalKey? pageKey,
   }) {
     var content = Builder(
       builder: (context) {
@@ -279,13 +285,13 @@ class LiveRouterDelegate extends RouterDelegate<List<RouteSettings>>
               ? LiveCustomPage(
                 child: content,
                 noTransition: noTransition,
-                key: UniqueKey(),
+                key: pageKey ?? UniqueKey(),
                 name: routeSettings.name,
                 arguments: routeSettings.arguments,
               )
               : NoTransitionPage(
                 child: content,
-                key: UniqueKey(),
+                key: pageKey ?? UniqueKey(),
                 name: routeSettings.name,
                 arguments: routeSettings.arguments,
               ),

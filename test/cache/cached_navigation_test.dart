@@ -145,6 +145,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Cached accounts'), findsOneWidget);
+    final cachedRouteKey = view.router.pages.last.page.key;
     expect(view.isCurrentRouteReady, isFalse);
     var cachedField = tester.widget<TextField>(find.byType(TextField));
     expect(cachedField.readOnly, isTrue);
@@ -174,7 +175,12 @@ void main() {
           'response': {
             'rendered': {
               's': [
-                '<flutter><viewBody><Text>Fresh accounts</Text></viewBody>'
+                '<flutter><live-cache-manifest version="finance-v1" '
+                    'scope="user" identity="opaque-user" '
+                    'strategy="stale-while-revalidate">'
+                    '<live-cache-route href="/accounts" max-age="300" />'
+                    '</live-cache-manifest>'
+                    '<viewBody><Text>Fresh accounts</Text></viewBody>'
                     '</flutter>',
               ],
             },
@@ -198,6 +204,11 @@ void main() {
 
     expect(find.text('Fresh accounts'), findsOneWidget);
     expect(find.text('Cached accounts'), findsNothing);
+    expect(
+      view.router.pages.last.page.key,
+      same(cachedRouteKey),
+      reason: 'the authoritative refresh must update the cached route in place',
+    );
     expect(view.isCurrentRouteReady, isTrue);
     expect(
       (view.router.pages.last.page as LiveCustomPage).noTransition,
