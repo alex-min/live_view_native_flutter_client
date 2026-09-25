@@ -44,6 +44,14 @@ void main() {
         await tester.tap(find.byIcon(Icons.chat_bubble));
         await _waitForUrl(tester, view, '/support', seconds: 30);
 
+        expect(find.byType(AppBar), findsNothing);
+        expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+        expect(
+          view.router.pages.where((page) => page.page.name == '/').length,
+          1,
+          reason: 'Opening support must preserve the previous route',
+        );
+
         // The composer renders with the multiline body field.
         await _waitFor(tester, find.byType(TextField), seconds: 30);
         const message = 'Hello, I need help with my account';
@@ -60,6 +68,10 @@ void main() {
         await _waitFor(tester, find.text(message), seconds: 30);
         final field = tester.widget<TextField>(find.byType(TextField).first);
         expect(field.controller?.text ?? '', isEmpty);
+
+        await view.router.popRoute();
+        await _waitForUrl(tester, view, '/', seconds: 30);
+        expect(find.text('Welcome to Mavio'), findsOneWidget);
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

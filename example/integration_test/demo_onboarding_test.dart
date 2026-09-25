@@ -41,6 +41,7 @@ void main() {
         // Cookieless visitors are bounced to the /welcome start screen.
         await _waitForUrl(tester, view, '/', seconds: 30);
         await _waitFor(tester, find.text('Welcome to Mavio'), seconds: 30);
+        expect(find.byType(AppBar), findsNothing);
         final tryTheDemo = find.widgetWithText(ElevatedButton, 'Try the demo');
         await _waitFor(tester, tryTheDemo, seconds: 30);
 
@@ -58,6 +59,7 @@ void main() {
           '/users/onboarding/currency',
           seconds: 30,
         );
+        expect(find.byType(AppBar), findsNothing);
         await _waitFor(tester, find.textContaining('EUR (€)'), seconds: 30);
 
         final nextButton = find.descendant(

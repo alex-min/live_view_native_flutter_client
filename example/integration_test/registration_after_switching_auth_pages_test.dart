@@ -39,6 +39,8 @@ void main() {
         await tester.pumpWidget(_TestApp(view: view));
         await view.connect('http://$_serverHost:$_serverPort/users/register');
         await _waitForUrl(tester, view, '/users/register', seconds: 30);
+        expect(find.byType(AppBar), findsNothing);
+        expect(find.byIcon(Icons.arrow_back).hitTestable(), findsOneWidget);
 
         await tester.pumpAndSettle();
         await Future.delayed(const Duration(seconds: 1));
@@ -51,6 +53,8 @@ void main() {
         await _waitFor(tester, signInLink, seconds: 30);
         await tester.tap(signInLink);
         await _waitForUrl(tester, view, '/users/log_in', seconds: 30);
+        expect(find.byType(AppBar), findsNothing);
+        expect(find.byIcon(Icons.arrow_back).hitTestable(), findsOneWidget);
 
         await tester.pumpAndSettle();
         await Future.delayed(const Duration(seconds: 1));
