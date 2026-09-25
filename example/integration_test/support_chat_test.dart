@@ -69,9 +69,50 @@ void main() {
         final field = tester.widget<TextField>(find.byType(TextField).first);
         expect(field.controller?.text ?? '', isEmpty);
 
-        await view.router.popRoute();
+        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
         await _waitForUrl(tester, view, '/', seconds: 30);
         expect(find.text('Welcome to Mavio'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
+
+    testWidgets(
+      'an authenticated visitor returns from chat with its back button',
+      (tester) async {
+        await _ensureServer();
+        SharedPreferences.setMockInitialValues({});
+
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+        await _waitFor(tester, find.text('Welcome to Mavio'), seconds: 30);
+        await tester.tap(
+          find.widgetWithText(ElevatedButton, 'Try the demo').hitTestable(),
+        );
+        await _waitForUrl(
+          tester,
+          view,
+          '/users/onboarding/currency',
+          seconds: 30,
+        );
+        final nextButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.widgetWithText(ElevatedButton, 'Next'),
+        );
+        await _waitFor(tester, nextButton, seconds: 30);
+        await tester.tap(nextButton.last);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+
+        await _waitFor(tester, find.byIcon(Icons.chat_bubble), seconds: 30);
+        await tester.tap(find.byIcon(Icons.chat_bubble).hitTestable());
+        await _waitForUrl(tester, view, '/support', seconds: 30);
+
+        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );
