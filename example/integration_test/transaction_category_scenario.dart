@@ -152,6 +152,13 @@ void main() {
           RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
           seconds: 30,
         );
+        final amountField = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(TextField),
+        );
+        await _waitFor(tester, amountField, seconds: 30);
+        await tester.enterText(amountField.at(0), '12.34');
+        await tester.pump();
         await _waitFor(tester, categoryField, seconds: 30);
         await tester.tap(categoryField.hitTestable().last);
         await _waitFor(tester, find.text('Select category'), seconds: 30);
@@ -174,6 +181,8 @@ void main() {
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
         expect(find.text('Select category'), findsNothing);
         expect(find.textContaining('<Form'), findsNothing);
+        expect(tester.widget<TextField>(amountField.at(0)).controller?.text,
+            '12.34');
 
         await _waitFor(tester, categoryField, seconds: 30);
         await tester.ensureVisible(categoryField.last);
@@ -199,19 +208,10 @@ void main() {
         await _waitFor(tester, find.text('New transaction'), seconds: 30);
         expect(find.text('Bonus'), findsWidgets);
 
-        // Fill the amount and submit (no description: the category name
-        // becomes the row label).
-        final amountField = find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(TextField),
-        );
-        await tester.enterText(amountField.at(0), '12.34');
-        await tester.pump();
-
-        await Future.delayed(const Duration(milliseconds: 200));
-        await tester.pump();
-        await tester.enterText(amountField.at(0), '12.34');
-        await tester.pump();
+        // The amount entered before opening the picker must survive selection
+        // and be submitted without retyping it.
+        expect(tester.widget<TextField>(amountField.at(0)).controller?.text,
+            '12.34');
 
         final transactionSave = find.descendant(
           of: find.byType(Form),

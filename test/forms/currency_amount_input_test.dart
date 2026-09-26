@@ -215,6 +215,49 @@ main() async {
       );
     });
 
+    for (var entered in ['12.34', '']) {
+      testWidgets('restores "$entered" after a picker replaces the form', (
+        tester,
+      ) async {
+        const form =
+            '<Form phx-submit="save"><CurrencyAmountInput name="amount" initialValue="7" decimalSeparator="." /><ElevatedButton type="submit">Save</ElevatedButton></Form>';
+        var (view, server) = await connect(
+          LiveView(),
+          rendered: {
+            's': ['<flutter><viewBody>', '</viewBody></flutter>'],
+            '0': {
+              's': [form],
+            },
+          },
+        );
+        await tester.runLiveView(view);
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), entered);
+        await tester.pumpAndSettle();
+
+        view.handleDiffMessage({
+          '0': {
+            's': ['<Text>Category picker</Text>'],
+          },
+        });
+        await tester.pumpAndSettle();
+        expect(find.byType(TextField), findsNothing);
+        view.handleDiffMessage({
+          '0': {
+            's': [form],
+          },
+        });
+        await tester.pumpAndSettle();
+        expect(fieldValue(), entered);
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(
+          server.lastChannelAction.toString(),
+          contains('event: save, value: amount=$entered'),
+        );
+      });
+    }
+
     testWidgets('submits the masked value like any other form field', (
       tester,
     ) async {

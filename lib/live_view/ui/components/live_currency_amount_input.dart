@@ -258,6 +258,11 @@ class _LiveCurrencyAmountInputState
   String get fieldName =>
       getAttribute('name') ?? 'unamed-amount-input-$unamedInput';
 
+  // A picker can temporarily remove the form. Restore its local draft when
+  // this field mounts again, including an intentionally cleared amount.
+  String? get storedValue =>
+      liveView.formValuesFor(widget.state.urlPath)?[fieldName]?.toString();
+
   bool get isHero => getAttribute('appearance') == 'hero';
 
   @override
@@ -307,7 +312,7 @@ class _LiveCurrencyAmountInputState
     reloadAttributes(node, attributes);
     FormFieldEvent(
       name: fieldName,
-      data: getAttribute('initialValue') ?? '',
+      data: storedValue ?? getAttribute('initialValue') ?? '',
       type: FormFieldEventType.initField,
     ).dispatch(context);
   }
@@ -328,7 +333,7 @@ class _LiveCurrencyAmountInputState
           decimalSeparator: getAttribute('decimalSeparator') ?? '.',
         ),
       ],
-      initialValue: getAttribute('initialValue'),
+      initialValue: storedValue ?? getAttribute('initialValue'),
       style:
           isHero
               ? const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)
