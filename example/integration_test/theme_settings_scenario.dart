@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
@@ -33,7 +34,7 @@ void main() {
     testWidgets(
       'going back from the mobile theme picker without selecting keeps the current theme',
       (tester) async {
-        final view = await _openMobileThemePicker(tester);
+        final view = await _openMobileSettingsPage(tester);
         final initialTheme = view.themeSettings.themeName;
 
         // Tapping the back arrow closes the picker without changing the theme.
@@ -53,15 +54,36 @@ void main() {
       timeout: const Timeout(Duration(seconds: 20)),
     );
   });
+  group('Language settings', () {
+    testWidgets('language background reaches the top without a white inset',
+        (tester) async {
+      final view = await _openMobileSettingsPage(tester,
+          path: '/users/settings/language');
+      tester.view.padding = const FakeViewPadding(top: 32);
+      addTearDown(tester.view.resetPadding);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppBar), findsNothing);
+      final background = find.byType(LiveCosmicBackground).last;
+      expect(tester.getTopLeft(background).dy, 0);
+      expect(find.text('English'), findsOneWidget);
+      expect(find.text('Français'), findsOneWidget);
+
+      await tester.tap(find.text('Français'));
+      await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+      await _waitFor(tester, find.text('Langue'), seconds: 30);
+    }, timeout: const Timeout(Duration(seconds: 20)));
+  });
 }
 
 /// Signs up, completes onboarding, switches to a mobile viewport, opens the
-/// settings page and taps the Appearance row to reach the full-page theme
-/// picker.
-Future<LiveView> _openMobileThemePicker(WidgetTester tester) async {
+/// settings page and opens the requested full-page settings picker.
+Future<LiveView> _openMobileSettingsPage(WidgetTester tester,
+    {String path = '/users/settings/theme'}) async {
   SharedPreferences.setMockInitialValues({});
 
   final view = LiveView();
+  addTearDown(view.disconnect);
   view.catchExceptions = false;
   view.disableAnimations = true;
   view.throttleSpammyCalls = false;
@@ -89,9 +111,11 @@ Future<LiveView> _openMobileThemePicker(WidgetTester tester) async {
   // has a previous route to return to.
   await view.livePatch('/users/settings');
   await _waitForUrl(tester, view, '/users/settings', seconds: 30);
-  await view.livePatch('/users/settings/theme');
-  await _waitForUrl(tester, view, '/users/settings/theme', seconds: 30);
-  await _waitFor(tester, find.text('Ocean'), seconds: 30);
+  await view.livePatch(path);
+  await _waitForUrl(tester, view, path, seconds: 30);
+  await _waitFor(
+      tester, find.text(path.endsWith('/theme') ? 'Ocean' : 'English'),
+      seconds: 30);
 
   return view;
 }
