@@ -163,6 +163,51 @@ void main() {
           reason: 'Sudo mode should be unlocked after password confirmation',
         );
 
+        // Phone validation must preserve a cursor positioned in the middle.
+        await view.livePatch('/users/settings/phone');
+        await _waitForUrl(tester, view, '/users/settings/phone', seconds: 30);
+        await tester.pumpAndSettle();
+        final phoneField = find.widgetWithText(TextField, 'Phone number');
+        await _waitFor(tester, phoneField, seconds: 30);
+        await tester.tap(phoneField);
+        await _editAndWaitForValidation(
+            tester,
+            view,
+            const TextEditingValue(
+                text: '1111', selection: TextSelection.collapsed(offset: 4)));
+        final phoneController =
+            tester.widget<TextField>(phoneField).controller!;
+        final phoneFocus = tester.widget<TextField>(phoneField).focusNode!;
+        var phoneFocusChanges = 0;
+        void onPhoneFocusChanged() => phoneFocusChanges++;
+        phoneFocus.addListener(onPhoneFocusChanged);
+        tester.widget<TextField>(phoneField).controller!.selection =
+            const TextSelection.collapsed(offset: 1);
+        for (var i = 0; i < 2; i++) {
+          final value = tester.widget<TextField>(phoneField).controller!.value;
+          await _editAndWaitForValidation(
+              tester,
+              view,
+              value.copyWith(
+                text: value.text.replaceRange(
+                    value.selection.start, value.selection.end, '2'),
+                selection:
+                    TextSelection.collapsed(offset: value.selection.start + 1),
+              ));
+          expect(tester.widget<TextField>(phoneField).controller!.selection,
+              TextSelection.collapsed(offset: 2 + i));
+        }
+        expect(tester.widget<TextField>(phoneField).controller,
+            same(phoneController));
+        expect(
+            tester.widget<TextField>(phoneField).focusNode, same(phoneFocus));
+        expect(phoneFocusChanges, 0);
+        phoneFocus.removeListener(onPhoneFocusChanged);
+        expect(phoneController.text, '122111');
+        await view.livePatch('/users/settings');
+        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+        await tester.pumpAndSettle();
+
         // Open the email settings sub-page from the menu.
         final emailRow = find.text('Email').hitTestable().last;
         await _waitFor(tester, emailRow, seconds: 30);
@@ -326,5 +371,26 @@ Future<bool> _serverReady() async {
     return true;
   } on Object {
     return false;
+  }
+}
+
+Future<void> _editAndWaitForValidation(
+    WidgetTester tester, LiveView view, TextEditingValue value) async {
+  var received = false;
+  void onDiff() {
+    received = true;
+  }
+
+  view.changeNotifier.addListener(onDiff);
+  try {
+    tester.testTextInput.updateEditingValue(value);
+    for (var i = 0; i < 80 && !received; i++) {
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+    expect(received, isTrue, reason: 'Wait for the real validation response');
+    await tester.pumpAndSettle();
+  } finally {
+    view.changeNotifier.removeListener(onDiff);
   }
 }

@@ -82,6 +82,7 @@ import 'package:liveview_flutter/live_view/ui/live_view_ui_registry.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
 import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:uuid/uuid.dart';
+import 'package:liveview_flutter/live_view/mapping/text_replacement.dart';
 import 'package:xml/xml.dart';
 
 var uuid = const Uuid();
@@ -92,6 +93,42 @@ class LiveViewUiParser {
   LiveView liveView;
   String urlPath;
   ViewType viewType;
+
+  // Keep the actual editor alive when a diff rebuilds its ancestors. This
+  // preserves the input connection, composing text, selection and focus.
+  // Each parser belongs to one render, so old routes cannot share these keys.
+  final Map<String, GlobalKey> _textFieldKeys = {};
+
+  GlobalKey _textFieldKey(NodeState state) {
+    String path(XmlNode node) {
+      final parts = <int>[];
+      for (
+        var current = node;
+        current.parent != null;
+        current = current.parent!
+      ) {
+        parts.add(
+          current.parent!.children
+              .where((node) => node is XmlElement)
+              .toList()
+              .indexOf(current),
+        );
+      }
+      return parts.reversed.join('/');
+    }
+
+    final name =
+        getVariableAttribute(state.node, 'id', state.variables).$1 ??
+        getVariableAttribute(state.node, 'name', state.variables).$1;
+    final form =
+        state.node.ancestors
+            .whereType<XmlElement>()
+            .where((node) => node.name.qualified == 'Form')
+            .firstOrNull;
+    final identity =
+        '${state.nestedState.join('/')}:${form == null ? '' : path(form)}:${name ?? path(state.node)}';
+    return _textFieldKeys.putIfAbsent(identity, () => GlobalKey());
+  }
 
   LiveViewUiParser({
     required this.html,
@@ -316,9 +353,12 @@ class LiveViewUiParser {
       ..add([
         'GoogleSignInButton',
       ], (state) => [LiveGoogleSignInButton(state: state, key: Key(uuid.v4()))])
-      ..add([
-        'TextField',
-      ], (state) => [LiveTextField(state: state, key: Key(uuid.v4()))])
+      ..add(
+        ['TextField'],
+        (state) => [
+          LiveTextField(state: state, key: state.parser._textFieldKey(state)),
+        ],
+      )
       ..add([
         'hidden',
       ], (state) => [LiveHiddenInput(state: state, key: Key(uuid.v4()))])

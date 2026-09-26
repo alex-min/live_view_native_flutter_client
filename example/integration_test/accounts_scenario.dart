@@ -90,6 +90,8 @@ void main() {
         await view.livePatch('/accounts/new/manual');
         await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
 
+        await tester.pumpAndSettle();
+
         // The form has three text fields: initial balance, name, description.
         final fields = find.descendant(
           of: find.byType(Form),

@@ -188,8 +188,14 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     // channel. Widgets from previous pages stay mounted in the navigation
     // stack and keep listening; their top-level dynamic keys collide with
     // the current page's keys (both have an empty nestedState), so applying
-    // the diff would merge unrelated statics and dynamics together.
+    // the diff would merge unrelated statics and dynamics together. A prior
+    // visit to the same URL must also be excluded by its route identity.
     if (!widget.state.isOnTheCurrentPage) {
+      return false;
+    }
+    final page = ModalRoute.settingsOf(context);
+    if (page is Page &&
+        page.key != liveView.router.pages.lastOrNull?.page.key) {
       return false;
     }
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
