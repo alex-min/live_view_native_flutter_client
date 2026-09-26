@@ -26,65 +26,26 @@ void main() {
 
   group('Default currency settings', () {
     testWidgets(
-      'sign up and change the default currency from the settings',
+      'currency changes preserve bottom navigation',
       (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
         SharedPreferences.setMockInitialValues({});
 
-        final view = LiveView();
+        final view = await LiveView.withPersistentCache();
+        addTearDown(view.disconnect);
         view.catchExceptions = false;
         view.disableAnimations = true;
         view.throttleSpammyCalls = false;
 
-        final email =
-            'integration+${DateTime.now().millisecondsSinceEpoch}@example.com';
-        const password = 'SuperSecret123!';
-
         await tester.pumpWidget(_TestApp(view: view));
         await view.connect('http://$_serverHost:$_serverPort/');
 
-        // Navigate to the registration form.
-        final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
-        await _waitFor(tester, signUpButton, seconds: 30);
-        await tester.tap(signUpButton);
-        await _waitForUrl(tester, view, '/users/register', seconds: 30);
-
-        await tester.pumpAndSettle();
-        await Future.delayed(const Duration(milliseconds: 200));
-        await tester.pumpAndSettle();
-
-        await _waitFor(tester, find.byType(TextField));
-
-        final fields = find.byType(TextField);
-        expect(
-          fields,
-          findsNWidgets(3),
-          reason: 'The registration form should contain three text fields',
-        );
-
-        await tester.enterText(fields.at(0), email);
-        await tester.pump();
-        await tester.enterText(fields.at(1), password);
-        await tester.pump();
-        await tester.enterText(fields.at(2), password);
-        await tester.pump();
-
-        await Future.delayed(const Duration(milliseconds: 200));
-        await tester.pump();
-
-        await tester.enterText(fields.at(0), email);
-        await tester.pump();
-
-        final submitButton = find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        );
-        await tester.tap(submitButton);
-
-        // Accept the terms of service.
-        await _waitForUrl(tester, view, '/users/accept-tos', seconds: 30);
-        final acceptButton = find.byType(ElevatedButton).last;
-        await tester.ensureVisible(acceptButton);
-        await tester.tap(acceptButton);
+        await _waitFor(
+            tester, find.widgetWithText(ElevatedButton, 'Try the demo'));
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Try the demo'));
 
         // Complete the currency onboarding step (EUR is pre-selected).
         await _waitForUrl(
@@ -100,15 +61,16 @@ void main() {
         await _waitFor(tester, nextButton, seconds: 30);
         await tester.tap(nextButton.last);
 
-        // Wait for the accounts landing page after onboarding.
-        await _waitFor(tester, find.text('No accounts yet'), seconds: 30);
+        // Demo balances in EUR require conversion after changing to ALL.
+        await _waitForUrl(tester, view, '/accounts');
         await tester.pumpAndSettle();
 
-        // Navigate directly to the settings page.
-        await view.connect('http://$_serverHost:$_serverPort/users/settings');
+        // Open settings through the same bottom navigation used by the app.
+        await tester.tap(find.text('Settings').hitTestable().last);
+        await _waitForUrl(tester, view, '/users/settings');
         await _waitFor(tester, find.text('Default currency'), seconds: 30);
 
-        // A fresh user defaults to EUR, shown as the row value badge
+        // A fresh demo defaults to EUR, shown as the row value badge
         // ("{code} · {symbol}", same label as the mobile web menu).
         final currentCurrency = find.textContaining('EUR ·');
         await _waitFor(tester, currentCurrency, seconds: 30);
@@ -120,23 +82,27 @@ void main() {
         await _waitForUrl(tester, view, '/currencies', seconds: 30);
         await _waitFor(tester, find.text('Currency picker'), seconds: 30);
 
-        // The picker filters server-side through phx-change; search by code
-        // to stay locale-independent.
-        await _waitFor(tester, find.byType(TextField), seconds: 30);
-        await tester.enterText(find.byType(TextField).first, 'USD');
-        await tester.pump();
-
-        final usdRow = find.textContaining('USD (');
-        await _waitFor(tester, usdRow, seconds: 30);
-        await tester.tap(usdRow.last);
+        // Select ALL directly from the unfiltered list, matching the reported flow.
+        final allRow = find.textContaining('ALL (');
+        await _waitFor(tester, allRow.hitTestable(), seconds: 30);
+        await tester.tap(allRow.last);
         await tester.pump();
 
         // Selecting a currency saves it server-side and navigates back to the
         // settings menu.
         await _waitForUrl(tester, view, '/users/settings', seconds: 30);
-        await _waitFor(tester, find.textContaining('USD ·'), seconds: 30);
+        await _waitFor(tester, find.textContaining('ALL ·'), seconds: 30);
+        for (final tab in {
+          'Accounts': '/accounts',
+          'Home': '/dashboard',
+          'Settings': '/users/settings'
+        }.entries) {
+          await tester.pumpAndSettle();
+          await tester.tap(find.text(tab.key).hitTestable().last);
+          await _waitForUrl(tester, view, tab.value);
+        }
         expect(
-          find.textContaining('USD ·'),
+          find.textContaining('ALL ·'),
           findsWidgets,
           reason: 'The saved currency should be shown as the row value badge',
         );
