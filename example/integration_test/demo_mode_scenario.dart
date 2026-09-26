@@ -63,6 +63,7 @@ void main() {
               .first,
         );
         expect(find.text('Demo the app with fake data'), findsWidgets);
+        expect(find.byIcon(Icons.explore).hitTestable(), findsOneWidget);
 
         final useDemoData = find.text('Try the app').hitTestable().last;
         await tester.tap(useDemoData);
