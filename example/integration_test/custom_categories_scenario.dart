@@ -91,12 +91,14 @@ void main() {
       await tester.tap(categorySettings.last);
       await _waitForUrl(tester, view, '/settings/categories');
       await _waitFor(tester, find.text('Custom categories'));
+      _expectBalancedPagePadding(tester);
       final add = find.widgetWithText(ElevatedButton, 'Add category');
       await _waitFor(tester, add);
       await tester.tap(add);
       await _waitForUrl(tester, view, '/settings/categories/new');
 
       await _waitFor(tester, find.byType(TextField));
+      _expectBalancedPagePadding(tester);
       fields = find.byType(TextField);
       await tester.enterText(fields.first, 'Coffee runs');
       await tester.pump();
@@ -184,4 +186,13 @@ Future<bool> _serverReady() async {
   } catch (_) {
     return false;
   }
+}
+
+void _expectBalancedPagePadding(WidgetTester tester) {
+  final list = find.byType(ListView).hitTestable().last;
+  expect(
+    tester.widget<ListView>(list).padding,
+    const EdgeInsets.fromLTRB(16, 16, 16, 96),
+    reason: 'Bottom-bar clearance must not become a large left margin',
+  );
 }
