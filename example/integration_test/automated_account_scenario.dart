@@ -74,6 +74,10 @@ void main() {
         await view.livePatch('/accounts/new/automated');
         await _waitForUrl(tester, view, '/accounts/new/automated', seconds: 30);
         await _waitFor(tester, find.text('Connect with Plaid'), seconds: 30);
+        await tester.pumpAndSettle();
+        expect(find.byType(AppBar), findsNothing);
+        expect(find.byIcon(Icons.arrow_back).hitTestable(), findsOneWidget);
+
         expect(
           find.widgetWithText(ElevatedButton, 'Connect with Plaid'),
           findsOneWidget,
@@ -82,6 +86,8 @@ void main() {
           find.widgetWithText(ElevatedButton, 'Connect with Enable Banking'),
           findsOneWidget,
         );
+        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
+        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

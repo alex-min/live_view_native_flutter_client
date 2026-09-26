@@ -74,7 +74,19 @@ void main() {
         // the manual flow directly.
         await _waitFor(tester, find.text('Automated'), seconds: 30);
         expect(find.text('Manual'), findsOneWidget);
+        await tester.pumpAndSettle();
+        expect(find.byType(AppBar), findsNothing);
+        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await view.livePatch('/accounts/new');
+        await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
 
+        await view.livePatch('/accounts/new/manual');
+        await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
+        await tester.pumpAndSettle();
+        expect(find.byType(AppBar), findsNothing);
+        await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
+        await _waitForUrl(tester, view, '/accounts/new', seconds: 30);
         await view.livePatch('/accounts/new/manual');
         await _waitForUrl(tester, view, '/accounts/new/manual', seconds: 30);
 
