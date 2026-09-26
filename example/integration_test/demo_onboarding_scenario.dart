@@ -30,7 +30,8 @@ void main() {
       (tester) async {
         SharedPreferences.setMockInitialValues({});
 
-        final view = LiveView();
+        final view = await LiveView.withPersistentCache();
+        addTearDown(view.disconnect);
         view.catchExceptions = false;
         view.disableAnimations = true;
         view.throttleSpammyCalls = false;
@@ -115,6 +116,12 @@ void main() {
         await _waitForUrl(tester, view, '/users/claim', seconds: 30);
         await tester.pumpAndSettle();
 
+        expect(
+          view.router.pages.any((page) => page.page.name == '/users/settings'),
+          isTrue,
+          reason: 'Opening the claim form must preserve the previous route',
+        );
+        expect(view.cacheCoordinator?.namespace, isNotNull);
         expect(find.byType(AppBar), findsNothing);
         final claimBackButton = find.ancestor(
           of: find.byIcon(Icons.arrow_back),
