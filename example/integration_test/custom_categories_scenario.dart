@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _serverHost = 'localhost';
@@ -81,6 +82,8 @@ void main() {
       await tester.tap(activate);
       await _waitForUrl(tester, view, '/users/settings');
 
+      tester.view.padding = const FakeViewPadding(top: 32);
+      addTearDown(tester.view.resetPadding);
       final categorySettings = find.text('Custom categories');
       await tester.scrollUntilVisible(
         categorySettings,
@@ -189,6 +192,9 @@ Future<bool> _serverReady() async {
 }
 
 void _expectBalancedPagePadding(WidgetTester tester) {
+  expect(find.byType(AppBar), findsNothing);
+  expect(tester.getTopLeft(find.byType(LiveCosmicBackground).last).dy, 0,
+      reason: 'The page background must cover the top system inset');
   final list = find.byType(ListView).hitTestable().last;
   expect(
     tester.widget<ListView>(list).padding,
