@@ -30,7 +30,8 @@ void main() {
       (tester) async {
         SharedPreferences.setMockInitialValues({});
 
-        final view = LiveView();
+        final view = await LiveView.withPersistentCache();
+        addTearDown(view.disconnect);
         view.catchExceptions = false;
         view.disableAnimations = true;
         view.throttleSpammyCalls = false;
@@ -166,6 +167,22 @@ void main() {
         final emailRow = find.text('Email').hitTestable().last;
         await _waitFor(tester, emailRow, seconds: 30);
         await tester.tap(emailRow);
+        await _waitForUrl(tester, view, '/users/settings/email', seconds: 30);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AppBar), findsNothing);
+        expect(find.text('Back to settings'), findsNothing);
+        final backButton = find
+            .ancestor(
+              of: find.byIcon(Icons.arrow_back),
+              matching: find.byType(IconButton),
+            )
+            .hitTestable();
+        expect(backButton, findsOneWidget);
+        await tester.tap(backButton);
+        await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Email').hitTestable().last);
         await _waitForUrl(tester, view, '/users/settings/email', seconds: 30);
         await tester.pumpAndSettle();
 
