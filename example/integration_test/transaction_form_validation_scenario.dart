@@ -9,8 +9,10 @@ import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host and port where the StartupKit dev server is expected to run.
-const _serverHost = 'localhost';
-const _serverPort = 4000;
+/// Overridable with `--dart-define=SERVER_HOST=...` / `SERVER_PORT=...`.
+const _serverHost =
+    String.fromEnvironment('SERVER_HOST', defaultValue: 'localhost');
+const _serverPort = int.fromEnvironment('SERVER_PORT', defaultValue: 4000);
 
 class _TestApp extends StatelessWidget {
   final LiveView view;
@@ -79,15 +81,18 @@ void main() {
 
         // Save with an empty amount: the server re-renders the form with
         // errors and the client displays them under the input.
-        final saveButton = find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        );
-        await _waitFor(tester, saveButton, seconds: 30);
-        await tester.ensureVisible(saveButton.first);
-        await tester.tap(saveButton.first);
-        await tester.pump();
+        Future<void> saveEmpty() async {
+          final saveButton = find.descendant(
+            of: find.byType(Form),
+            matching: find.byType(ElevatedButton),
+          );
+          await _waitFor(tester, saveButton, seconds: 30);
+          await tester.ensureVisible(saveButton.first);
+          await tester.tap(saveButton.first);
+          await tester.pump();
+        }
 
+        await saveEmpty();
         await _waitFor(tester, find.textContaining('blank'), seconds: 30);
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -129,6 +134,71 @@ void main() {
           find.byType(LiveBottomNavigationBar),
           seconds: 30,
         );
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+  });
+}
+
+/// State-sensitive: runs alone in its own entrypoint (fresh
+/// process), see transaction_locale_test.dart.
+void localeMain() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(_ensureServer);
+
+  group('Transaction form locale', () {
+    testWidgets(
+      'the blank-amount validation error follows the session locale in French',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({});
+
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+
+        await _signUpAndOnboard(tester, view);
+
+        // The transaction form needs an account: enter the demo account
+        // from the empty accounts page.
+        final tryDemo = find.widgetWithText(ElevatedButton, 'Try demo');
+        await _waitFor(tester, tryDemo, seconds: 30);
+        await tester.ensureVisible(tryDemo.last);
+        await tester.tap(tryDemo.last.hitTestable());
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+
+        // Switch the account language to French from the settings.
+        await view.livePatch('/users/settings/language');
+        await _waitForUrl(tester, view, '/users/settings/language',
+            seconds: 30);
+        final french = find.widgetWithText(ListTile, 'Français');
+        await _waitFor(tester, french, seconds: 30);
+        await tester.tap(french.first);
+        await tester.pump();
+
+        await view.livePatch('/transactions/new');
+        await _waitForUrl(tester, view, '/transactions/new', seconds: 30);
+
+        // Save with an empty amount: the server error follows the session
+        // locale, not English.
+        final saveButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await _waitFor(tester, saveButton, seconds: 30);
+        await tester.ensureVisible(saveButton.first);
+        await tester.tap(saveButton.first);
+        await tester.pump();
+
+        await _waitFor(
+          tester,
+          find.textContaining('ne peut pas être vide'),
+          seconds: 30,
+        );
+        expect(find.textContaining('blank'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

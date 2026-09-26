@@ -8,8 +8,9 @@ import 'package:liveview_flutter/liveview_flutter.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_cosmic_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _serverHost = 'localhost';
-const _serverPort = 4000;
+const _serverHost =
+    String.fromEnvironment('SERVER_HOST', defaultValue: 'localhost');
+const _serverPort = int.fromEnvironment('SERVER_PORT', defaultValue: 4000);
 
 class _TestApp extends StatelessWidget {
   final LiveView view;
