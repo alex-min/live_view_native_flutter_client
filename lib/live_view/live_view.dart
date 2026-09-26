@@ -190,6 +190,7 @@ class LiveView {
   final LiveViewCacheCoordinator? cacheCoordinator;
   final void Function(ViewType)? onViewTypeRendered;
   int _cacheRenderGeneration = 0;
+  bool _resetHistoryOnNextRender = false;
   Future<int> _cachePrefetchComplete = Future<int>.value(0);
 
   Future<int> get cachePrefetchComplete => _cachePrefetchComplete;
@@ -771,22 +772,24 @@ class LiveView {
     onViewTypeRendered?.call(viewType);
     clearFormTriggerActions(currentUrl);
     connectionNotifier.wipeState();
-    var losesUserPolicy =
-        viewType != ViewType.cached &&
-        cacheManifest == null &&
-        cacheCoordinator?.namespace?.scope == LiveCacheScope.user;
+    // Cache policy is optional. Only an explicit session boundary resets history.
+    var resetsSession =
+        viewType != ViewType.cached && _resetHistoryOnNextRender;
+    if (resetsSession) {
+      _resetHistoryOnNextRender = false;
+      router.history.clear();
+    }
     var noTransition =
         viewType == ViewType.cached ||
         wasCached ||
         cacheCoordinator?.hasRoute(Uri.parse(currentUrl)) == true;
-    if (losesUserPolicy || replacePage) {
+    if (resetsSession || replacePage) {
       router.replacePages(
         url: currentUrl,
         widget: render.$1,
         rootState: render.$2,
         noTransition: noTransition,
       );
-      unawaited(cacheCoordinator!.invalidateActiveUser());
     } else {
       router.updatePage(
         url: currentUrl,
@@ -900,6 +903,7 @@ class LiveView {
           ) {
             if (prefetchedNamespace?.scope == LiveCacheScope.user &&
                 coordinator.namespace == null) {
+              _resetHistoryOnNextRender = true;
               router.retainOnlyCurrentPage();
             }
             return count;
@@ -932,7 +936,10 @@ class LiveView {
         var response = await http.Response.fromStream(
           await prefetchClient.send(request),
         );
-        if (response.statusCode == 401 || response.statusCode == 403) {
+        if (response.headers['x-live-view-session-reset'] == 'true' ||
+            response.headers['x-live-view-session'] == 'anonymous' ||
+            response.statusCode == 401 ||
+            response.statusCode == 403) {
           return const LiveCachePrefetchResult.stop();
         }
         if (response.statusCode == 301 || response.statusCode == 302) {
@@ -955,8 +962,11 @@ class LiveView {
           response.body,
           namespace: namespace,
         );
-        if (!extracted.policyConfirmed) {
+        if (extracted.sessionChanged) {
           return const LiveCachePrefetchResult.stop();
+        }
+        if (!extracted.policyConfirmed) {
+          return const LiveCachePrefetchResult.skip();
         }
         var finalTarget = _withoutFlutterFormat(target);
         if (finalTarget.path != requestedTarget.path ||
@@ -1203,6 +1213,23 @@ class LiveView {
     _lastFormTriggerActions.removeWhere((key, _) => key.startsWith(prefix));
   }
 
+  /// Servers signal logout/session renewal explicitly, independently of caching.
+  /// Process this before following redirects so old snapshots cannot be reused.
+  Future<void> _handleSessionResponse(http.Response response) async {
+    var reset = response.headers['x-live-view-session-reset'] == 'true';
+    var lostSession =
+        response.headers['x-live-view-session'] == 'anonymous' &&
+        cacheCoordinator?.namespace?.scope == LiveCacheScope.user;
+    if (!reset && !lostSession) return;
+    _cacheRenderGeneration += 1;
+    _resetHistoryOnNextRender = true;
+    _pendingCachedSnapshot = null;
+    _replaceWithPendingCachedSnapshot = false;
+    _cachedRenderEvents.clear();
+    cacheManifest = null;
+    await cacheCoordinator?.invalidateActiveUser();
+  }
+
   Future<http.Response> deadViewPostQuery(
     String url,
     Map<String, dynamic> formValues,
@@ -1237,6 +1264,8 @@ class LiveView {
     }
     await disconnect();
 
+    await _handleSessionResponse(r);
+
     if (r.headers['set-cookie'] != null) {
       await _parseAndSaveCookie(r.headers['set-cookie']!);
     }
@@ -1264,6 +1293,8 @@ class LiveView {
       shortUrlToUri(url),
       headers: {...httpHeaders(), 'x-csrf-token': _csrf ?? ''},
     );
+
+    await _handleSessionResponse(r);
 
     if (r.headers['set-cookie'] != null) {
       await _parseAndSaveCookie(r.headers['set-cookie']!);
@@ -1299,6 +1330,8 @@ class LiveView {
         retryClient.close();
       }
     }
+
+    await _handleSessionResponse(r);
 
     if (r.headers['set-cookie'] != null) {
       await _parseAndSaveCookie(r.headers['set-cookie']!);

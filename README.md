@@ -29,6 +29,27 @@ Please see the announcement here: https://alex-min.fr/live-view-native-flutter-r
 - Use "flutter run" in the examples folder to run the client
 - You can modify the live view url in lib/main.dart, by default it uses localhost:4000 and 10.0.2.2:4000 for the android emulator
 
+## Cache policy and session changes
+
+A page without `live-cache-manifest` leaves the previously confirmed policy,
+namespace, snapshots, and navigation history active. Routes in that policy can
+still use cached snapshots, including when navigating Back from an uncached page.
+A missing manifest in a prefetch response skips that response; it does not log
+out the user or clear other cached pages.
+
+Servers must signal authentication boundaries explicitly in HTTP responses:
+
+- `x-live-view-session-reset: true` on logout or session renewal clears the active
+  user cache and resets history on the next server render, including across redirects.
+- `x-live-view-session: anonymous` clears an active user cache when the server
+  confirms that the authenticated session has expired or is absent. Ordinary
+  anonymous navigation preserves history when no user cache is active.
+
+A confirmed manifest with a different user identity also clears the old user's
+cache and navigation history. These headers are independent of route caching.
+Deploy the server signals before updating clients that previously inferred logout
+from a missing manifest.
+
 ## What is there already?
 
 - Some basic components are partially supported (Container, TextButton, Icon, AppBar, BottomNavigationBar ...)

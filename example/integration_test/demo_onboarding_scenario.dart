@@ -30,7 +30,9 @@ void main() {
       (tester) async {
         SharedPreferences.setMockInitialValues({});
 
-        final view = await LiveView.withPersistentCache();
+        final backRenderTypes = <ViewType>[];
+        final view = await LiveView.withPersistentCache(
+            onViewTypeRendered: backRenderTypes.add);
         addTearDown(view.disconnect);
         view.catchExceptions = false;
         view.disableAnimations = true;
@@ -121,15 +123,24 @@ void main() {
           isTrue,
           reason: 'Opening the claim form must preserve the previous route',
         );
+        expect(view.cacheManifest, isNull);
         expect(view.cacheCoordinator?.namespace, isNotNull);
+        expect(
+          await view.cacheCoordinator
+              ?.loadForNavigation(Uri.parse('/users/settings')),
+          isNotNull,
+        );
         expect(find.byType(AppBar), findsNothing);
         final claimBackButton = find.ancestor(
           of: find.byIcon(Icons.arrow_back),
           matching: find.byType(IconButton),
         );
         await _waitFor(tester, claimBackButton, seconds: 30);
+        backRenderTypes.clear();
         await tester.tap(claimBackButton);
         await _waitForUrl(tester, view, '/users/settings', seconds: 30);
+        expect(backRenderTypes, contains(ViewType.cached));
+        expect(backRenderTypes.last, ViewType.liveView);
 
         await _waitFor(tester, claimButton, seconds: 30);
         await tester.ensureVisible(claimButton.last);

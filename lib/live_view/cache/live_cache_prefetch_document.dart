@@ -44,10 +44,12 @@ class LiveCachePrefetchDocument {
       return const LiveCachePrefetchDocumentResult.policyMissing();
     }
     var manifest = manifestParser.parse(manifestElement);
-    if (manifest == null ||
-        manifest.version != namespace.manifestVersion ||
-        manifest.scope != namespace.scope ||
-        manifest.identity != namespace.identity) {
+    if (manifest != null &&
+        (manifest.scope != namespace.scope ||
+            manifest.identity != namespace.identity)) {
+      return const LiveCachePrefetchDocumentResult.sessionChanged();
+    }
+    if (manifest == null || manifest.version != namespace.manifestVersion) {
       return const LiveCachePrefetchDocumentResult.policyMissing();
     }
 
@@ -77,16 +79,25 @@ class LiveCachePrefetchDocument {
 class LiveCachePrefetchDocumentResult {
   final Map<String, dynamic>? rendered;
   final bool policyConfirmed;
+  final bool sessionChanged;
 
   const LiveCachePrefetchDocumentResult.rendered(
     Map<String, dynamic> this.rendered,
-  ) : policyConfirmed = true;
+  ) : policyConfirmed = true,
+      sessionChanged = false;
 
   const LiveCachePrefetchDocumentResult.unsafe()
     : rendered = null,
-      policyConfirmed = true;
+      policyConfirmed = true,
+      sessionChanged = false;
 
   const LiveCachePrefetchDocumentResult.policyMissing()
     : rendered = null,
-      policyConfirmed = false;
+      policyConfirmed = false,
+      sessionChanged = false;
+
+  const LiveCachePrefetchDocumentResult.sessionChanged()
+    : rendered = null,
+      policyConfirmed = false,
+      sessionChanged = true;
 }

@@ -52,7 +52,9 @@ void main() {
     );
 
     expect(missing.policyConfirmed, isFalse);
+    expect(missing.sessionChanged, isFalse);
     expect(anotherUser.policyConfirmed, isFalse);
+    expect(anotherUser.sessionChanged, isTrue);
   });
 
   test('fails closed when presentation still contains forbidden material', () {

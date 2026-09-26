@@ -133,63 +133,115 @@ void main() {
     },
   );
 
-  test('prefetch refuses cross-origin redirects', () async {
-    var store = MemoryLiveViewCacheStore();
-    var coordinator = LiveViewCacheCoordinator(store: store);
-    var (view, server) = await connect(
-      LiveView(cacheCoordinator: coordinator),
-      url: 'http://localhost:9999/accounts',
-      onRequest:
-          (request) =>
-              request.url.path == '/dashboard'
-                  ? http.Response(
-                    '',
-                    302,
-                    headers: {'location': 'https://other.test/'},
-                  )
-                  : null,
-    );
-    var channel = server.lastChannel!;
-    view.handleMessage(
-      Message(
-        event: PhoenixChannelEvent('phx_reply'),
-        payload: {
-          'response': {
-            'rendered': {
-              's': [
-                '<flutter><live-cache-manifest version="finance-v1" '
-                    'scope="user" identity="opaque-user" '
-                    'strategy="stale-while-revalidate">'
-                    '<live-cache-route href="/accounts" max-age="300" />'
-                    '<live-cache-route href="/dashboard" max-age="300" />'
-                    '</live-cache-manifest><Text>Accounts</Text></flutter>',
-              ],
+  for (var responseKind in [
+    'cross origin',
+    'missing policy',
+    'anonymous',
+    'different identity',
+  ]) {
+    test('prefetch handles $responseKind explicitly', () async {
+      var store = MemoryLiveViewCacheStore();
+      var coordinator = LiveViewCacheCoordinator(store: store);
+      var (view, server) = await connect(
+        LiveView(cacheCoordinator: coordinator),
+        url: 'http://localhost:9999/accounts',
+        onRequest:
+            (request) =>
+                request.url.path == '/dashboard'
+                    ? responseKind == 'cross origin'
+                        ? http.Response(
+                          '',
+                          302,
+                          headers: {'location': 'https://other.test/'},
+                        )
+                        : http.Response(
+                          responseKind == 'different identity'
+                              ? '<div data-phx-main><flutter><live-cache-manifest version="finance-v1" scope="user" identity="other-user" strategy="stale-while-revalidate"></live-cache-manifest></flutter></div>'
+                              : '<div data-phx-main><flutter><Text>Uncached</Text></flutter></div>',
+                          200,
+                          headers: {
+                            if (responseKind == 'anonymous')
+                              'x-live-view-session': 'anonymous',
+                          },
+                        )
+                    : null,
+      );
+      var channel = server.lastChannel!;
+      view.handleMessage(
+        Message(
+          event: PhoenixChannelEvent('phx_reply'),
+          payload: {
+            'response': {
+              'rendered': {
+                's': [
+                  '<flutter><live-cache-manifest version="finance-v1" '
+                      'scope="user" identity="opaque-user" '
+                      'strategy="stale-while-revalidate">'
+                      '<live-cache-route href="/accounts" max-age="300" />'
+                      '<live-cache-route href="/dashboard" max-age="300" />'
+                      '</live-cache-manifest><Text>Accounts</Text></flutter>',
+                ],
+              },
             },
           },
-        },
-      ),
-      sourceChannel: channel,
-    );
-    await Future<void>.delayed(Duration.zero);
-    await view.cachePrefetchComplete;
+        ),
+        sourceChannel: channel,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await view.cachePrefetchComplete;
 
-    expect(coordinator.namespace, isNull);
-    expect(
-      server.httpRequestsMade.any(
-        (request) => request.url.host == 'other.test',
-      ),
-      isFalse,
-    );
-  });
+      expect(
+        coordinator.namespace,
+        responseKind == 'missing policy' ? isNotNull : isNull,
+      );
+      if (responseKind == 'missing policy') {
+        expect(
+          await coordinator.loadForNavigation(Uri.parse('/accounts')),
+          isNotNull,
+        );
+        expect(
+          await coordinator.loadForNavigation(Uri.parse('/dashboard')),
+          isNull,
+        );
+      }
+      expect(
+        server.httpRequestsMade.any(
+          (request) => request.url.host == 'other.test',
+        ),
+        isFalse,
+      );
+    });
+  }
 
-  test(
-    'a fresh render without policy invalidates user cache history',
-    () async {
+  for (var mode in [
+    'live',
+    'dead',
+    'cached replacement',
+    'GET reset',
+    'POST reset',
+    'DELETE reset',
+    'expired session',
+  ]) {
+    test('cache history handles $mode independently of missing policy', () async {
       var store = MemoryLiveViewCacheStore();
       var coordinator = LiveViewCacheCoordinator(store: store);
       var (view, _) = await connect(
         LiveView(cacheCoordinator: coordinator),
         url: 'http://localhost:9999/accounts',
+        onRequest:
+            (request) =>
+                request.url.path == '/session-boundary'
+                    ? http.Response(
+                      xmlCsrf,
+                      200,
+                      headers: {
+                        if (mode == 'expired session')
+                          'x-live-view-session': 'anonymous'
+                        else
+                          'x-live-view-session-reset': 'true',
+                      },
+                    )
+                    : null,
       );
       const namespace = LiveCacheNamespace(
         origin: 'http://localhost:9999',
@@ -227,26 +279,46 @@ void main() {
           },
         ),
       );
-      view.router.pushPage(
+      view.router.replacePages(
         url: '/old-authenticated-page',
         widget: const [Text('Old page')],
         rootState: null,
       );
 
-      await view.handleRenderedMessage(const {
-        's': [
-          '<flutter><viewBody><Text>Logged out</Text></viewBody></flutter>',
-        ],
-      }, viewType: ViewType.deadView);
+      var resets = mode.endsWith('reset') || mode == 'expired session';
+      if (mode == 'POST reset') {
+        await view.deadViewPostQuery('/session-boundary', {});
+      } else if (mode == 'DELETE reset') {
+        await view.deadViewDeleteQuery('/session-boundary');
+      } else if (resets) {
+        await view.deadViewGetQuery('/session-boundary');
+      }
+      await view.handleRenderedMessage(
+        const {
+          's': [
+            '<flutter><viewBody><Text>Uncached page</Text></viewBody></flutter>',
+          ],
+        },
+        viewType:
+            mode == 'cached replacement'
+                ? ViewType.cached
+                : mode == 'live'
+                ? ViewType.liveView
+                : ViewType.deadView,
+        replacePage: mode == 'cached replacement',
+      );
       await Future<void>.delayed(Duration.zero);
 
-      expect(coordinator.namespace, isNull);
+      expect(coordinator.namespace, resets ? isNull : namespace);
       expect(
         await store.readSnapshot(namespace, Uri.parse('/accounts')),
-        isNull,
+        resets ? isNull : isNotNull,
       );
-      expect(view.router.pages, hasLength(1));
-      expect(view.router.pages.single.page.name, '/accounts');
-    },
-  );
+      expect(
+        view.router.pages,
+        hasLength(resets || mode == 'cached replacement' ? 1 : 2),
+      );
+      expect(view.router.pages.last.page.name, '/accounts');
+    });
+  }
 }

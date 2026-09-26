@@ -67,6 +67,98 @@ void main() {
     expect(await coordinator.loadForNavigation(settings), isNotNull);
   });
 
+  testWidgets('back from a page without policy uses the existing settings cache', (
+    tester,
+  ) async {
+    var store = MemoryLiveViewCacheStore();
+    var coordinator = LiveViewCacheCoordinator(store: store);
+    var view = LiveView(cacheCoordinator: coordinator);
+    var (_, server) = await connect(
+      view,
+      url: 'http://localhost:9999/users/settings',
+    );
+    await tester.runLiveView(view);
+    const settings = {
+      's': [
+        '<flutter><live-cache-manifest version="test-v1" scope="user" identity="user-a" strategy="stale-while-revalidate"><live-cache-route href="/users/settings" max-age="300" /></live-cache-manifest><viewBody><Text>Cached Settings</Text></viewBody></flutter>',
+      ],
+    };
+    view.handleMessage(
+      Message(
+        event: PhoenixChannelEvent('phx_reply'),
+        payload: {
+          'response': {'rendered': settings},
+        },
+      ),
+      sourceChannel: server.lastChannel,
+    );
+    await tester.pump();
+    await tester.pump();
+    var namespace = coordinator.namespace;
+    expect(
+      await coordinator.loadForNavigation(Uri.parse('/users/settings')),
+      isNotNull,
+    );
+
+    await view.livePatch('/claim');
+    view.handleMessage(
+      Message(event: PhoenixChannelEvent('phx_close')),
+      sourceChannel: server.lastChannel,
+    );
+    await tester.pump();
+    view.handleMessage(
+      Message(
+        event: PhoenixChannelEvent('phx_reply'),
+        payload: {
+          'response': {
+            'rendered': {
+              's': [
+                '<flutter><viewBody><Text>Claim</Text></viewBody></flutter>',
+              ],
+            },
+          },
+        },
+      ),
+      sourceChannel: server.lastChannel,
+    );
+    await tester.pump();
+    expect(view.cacheManifest, isNull);
+    expect(coordinator.namespace, namespace);
+    expect(await coordinator.loadForNavigation(Uri.parse('/claim')), isNull);
+
+    var requestsBeforeBack = server.httpRequestsMade.length;
+    await view.goBack();
+    view.handleMessage(
+      Message(event: PhoenixChannelEvent('phx_close')),
+      sourceChannel: server.lastChannel,
+    );
+    await tester.pump();
+    expect(view.isShowingCachedRender, isTrue);
+    expect(find.text('Cached Settings'), findsOneWidget);
+    expect(server.httpRequestsMade.length, requestsBeforeBack);
+    expect(coordinator.namespace, namespace);
+
+    view.handleMessage(
+      Message(
+        event: PhoenixChannelEvent('phx_reply'),
+        payload: {
+          'response': {
+            'rendered': {
+              's': [
+                '<flutter><viewBody><Text>Fresh Settings</Text></viewBody></flutter>',
+              ],
+            },
+          },
+        },
+      ),
+      sourceChannel: server.lastChannel,
+    );
+    await tester.pump();
+    expect(view.isCurrentRouteReady, isTrue);
+    expect(find.text('Fresh Settings'), findsOneWidget);
+    expect(coordinator.namespace, namespace);
+  });
+
   testWidgets('shows a fresh snapshot until the target channel renders', (
     tester,
   ) async {
