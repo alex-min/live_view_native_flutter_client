@@ -357,6 +357,191 @@ void main() {
     );
 
     testWidgets(
+      'editing a balance adjustment updates the account balance',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({});
+
+        final view = LiveView();
+        view.catchExceptions = false;
+        view.disableAnimations = true;
+        view.throttleSpammyCalls = false;
+
+        await tester.pumpWidget(_TestApp(view: view));
+        await view.connect('http://$_serverHost:$_serverPort/');
+        await _signUpAndOnboard(tester, view);
+        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _createAccount(tester, view, name: 'Adjustable', balance: '100');
+
+        // Open the account ledger and create a balance adjustment.
+        await tester.tap(find.text('Adjustable').last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await tester.tap(find.byIcon(Icons.add).last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/new(?:\?account_id=\d+)?$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.byType(Form), seconds: 30);
+
+        final adjustChip = find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data == 'Adjust balance' ||
+                  widget.data == 'Ajuster le solde'),
+        );
+        await _waitFor(tester, adjustChip, seconds: 30);
+        await tester.ensureVisible(adjustChip.last);
+        await tester.tap(adjustChip.last);
+        await tester.pumpAndSettle();
+
+        final fields = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(TextField),
+        );
+        await _waitFor(tester, fields, seconds: 30);
+        await tester.enterText(fields.at(0), '250');
+        await tester.pump();
+
+        await Future.delayed(const Duration(milliseconds: 200));
+        await tester.pump();
+        await tester.enterText(fields.at(0), '250');
+        await tester.pump();
+
+        final saveButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await tester.ensureVisible(saveButton);
+        await tester.pumpAndSettle();
+        await tester.tap(saveButton);
+
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions\?focus_transaction_id=\d+$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.textContaining('250'), seconds: 30);
+
+        // Tap the adjustment row: the edit form opens with the current
+        // balance pre-filled.
+        final adjustmentRow = find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data == 'Balance adjustment' ||
+                  widget.data == 'Ajustement du solde'),
+        );
+        await _waitFor(tester, adjustmentRow, seconds: 30);
+        await tester.tap(adjustmentRow.last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/\d+/edit$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
+
+        // The form stays in adjustment mode: the amount label is "New
+        // balance", not "Amount".
+        await _waitFor(
+          tester,
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Text &&
+                (widget.data == 'New balance' ||
+                    widget.data == 'Nouveau solde'),
+          ),
+          seconds: 30,
+        );
+
+        final editFields = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(TextField),
+        );
+        await _waitFor(tester, editFields, seconds: 30);
+
+        // The amount field is pre-filled with the adjusted balance so the
+        // user can tweak it without retyping everything.
+        expect(
+          find.widgetWithText(TextField, '250'),
+          findsOneWidget,
+          reason: 'The new balance field should be pre-filled with 250',
+        );
+
+        // Saving without touching the amount must keep the balance intact
+        // (the masked input still submits its pre-filled value).
+        final untouchedSaveButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await tester.ensureVisible(untouchedSaveButton);
+        await tester.pumpAndSettle();
+        await tester.tap(untouchedSaveButton);
+
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.textContaining('250'), seconds: 30);
+
+        // Re-open the editor and change the balance to 300.
+        await tester.tap(adjustmentRow.last);
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/transactions/\d+/edit$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
+
+        // Wait for the pre-filled balance before typing, so a late server
+        // re-render cannot overwrite the entered value.
+        final secondFields = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(TextField),
+        );
+        await _waitFor(tester, secondFields, seconds: 30);
+        await _waitFor(
+          tester,
+          find.widgetWithText(TextField, '250'),
+          seconds: 30,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(secondFields.at(0), '300');
+        await tester.pump();
+
+        await Future.delayed(const Duration(milliseconds: 200));
+        await tester.pump();
+
+        final editSaveButton = find.descendant(
+          of: find.byType(Form),
+          matching: find.byType(ElevatedButton),
+        );
+        await tester.ensureVisible(editSaveButton);
+        await tester.pumpAndSettle();
+        await tester.tap(editSaveButton);
+
+        await _waitForUrl(
+          tester,
+          view,
+          RegExp(r'^/accounts/\d+/transactions$'),
+          seconds: 30,
+        );
+        await _waitFor(tester, find.textContaining('300'), seconds: 30);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
       'creates an account transfer and updates both balances',
       (tester) async {
         SharedPreferences.setMockInitialValues({});
