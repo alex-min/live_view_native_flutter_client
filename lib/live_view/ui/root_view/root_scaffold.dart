@@ -113,17 +113,21 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     rootNode = widget.view.router.pages.last.rootState;
     if (rootNode != null) {
       var viewBody = childrenNodesOf(rootNode!.node, 'viewBody').firstOrNull;
-      if (viewBody != null) {
-        var attributes = bindChildVariableAttributes(viewBody, [
-          'floatingActionButtonLocation',
-        ], rootNode!.variables);
-        var location = getFloatingActionButtonLocation(
-          attributes['floatingActionButtonLocation'],
-        );
-        if (location != null) {
-          floatingActionButtonLocation = location;
-        }
+      // No viewBody yet (e.g. a loading route that hasn't parsed): keep the
+      // previous location so the chrome doesn't flicker mid-navigation.
+      if (viewBody == null) {
+        return;
       }
+      var attributes = bindChildVariableAttributes(viewBody, [
+        'floatingActionButtonLocation',
+      ], rootNode!.variables);
+      // A page without the attribute gets the scaffold default; keeping the
+      // previous page's location here would misplace the FAB (e.g. the
+      // transaction form's centerDockedWithoutBar carried onto pages whose
+      // bottom bar is present).
+      floatingActionButtonLocation = getFloatingActionButtonLocation(
+        attributes['floatingActionButtonLocation'],
+      );
     }
   }
 
