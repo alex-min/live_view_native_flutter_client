@@ -1273,6 +1273,53 @@ class LiveView {
     return r;
   }
 
+  /// Uploads a file to a dead-view endpoint (e.g. a Phoenix controller
+  /// accepting a multipart form). Mirrors [deadViewPostQuery]: the session
+  /// cookie and CSRF token are attached, response cookies are merged, and a
+  /// redirect triggers client-side navigation.
+  Future<http.Response> deadViewUploadQuery(
+    String url,
+    String field,
+    String filePath, {
+    Map<String, String> formValues = const {},
+  }) async {
+    var request = http.MultipartRequest('POST', shortUrlToUri(url));
+    // A streamed multipart body cannot be replayed after a redirect; the
+    // redirect is followed below with a plain GET like deadViewPostQuery.
+    request.followRedirects = false;
+    request.headers.addAll({...httpHeaders(), 'x-csrf-token': _csrf ?? ''});
+    request.fields['_csrf_token'] = _csrf ?? '';
+    request.fields.addAll(formValues);
+    request.files.add(await http.MultipartFile.fromPath(field, filePath));
+
+    var r = await http.Response.fromStream(await httpClient.send(request));
+
+    await disconnect();
+
+    await _handleSessionResponse(r);
+
+    if (r.headers['set-cookie'] != null) {
+      await _parseAndSaveCookie(r.headers['set-cookie']!);
+    }
+
+    if (r.statusCode >= 200 && r.statusCode < 300) {
+      var content = html.parse(r.body);
+      _readInitialSession(content);
+    }
+
+    if ((r.statusCode == 302 || r.statusCode == 301) &&
+        r.headers['location'] != null) {
+      await execHrefClick(r.headers['location']!);
+      return r;
+    }
+
+    handleRenderedMessage({
+      's': [r.body],
+    }, viewType: ViewType.deadView);
+
+    return r;
+  }
+
   Future<http.Response> deadViewDeleteQuery(String url) async {
     var r = await httpClient.delete(
       shortUrlToUri(url),
