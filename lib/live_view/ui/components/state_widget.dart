@@ -75,18 +75,6 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   void initState() {
     stateNotifier = Provider.of<StateNotifier>(context, listen: false);
 
-    status = Status.visible;
-    currentVariables = Map<String, dynamic>.from(widget.state.variables);
-    if (stateNotifier.getDiff().isNotEmpty) {
-      var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
-      currentVariables = mergeVariables(currentVariables, lastLiveDiff);
-      reloadPredefinedAttributes(node);
-    }
-    computedAttributes = VariableAttributes({}, []);
-    extraKeysListened = [];
-    onStateChange(currentVariables);
-    onFormInitialize();
-    reloadPredefinedAttributes(node);
     stateNotifier.addListener(onDiffUpdateEvent);
     widget.state.liveView.connectionNotifier.addListener(onWipeState);
     widget.state.liveView.goBackNotifier.addListener(onGoBack);
@@ -103,6 +91,39 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
       Future.delayed(Duration.zero, () => onLoad());
     }
     super.initState();
+  }
+
+  /// Whether [initializeVariables] already ran for this widget instance.
+  bool _variablesInitialized = false;
+
+  /// Resolves the attributes for the first build. Runs from
+  /// [didChangeDependencies] instead of [initState] so the pending diff can
+  /// be validated against the route: looking up [ModalRoute] requires an
+  /// active element, which [initState] does not have yet.
+  void initializeVariables() {
+    if (_variablesInitialized) {
+      return;
+    }
+    _variablesInitialized = true;
+
+    status = Status.visible;
+    currentVariables = Map<String, dynamic>.from(widget.state.variables);
+    if (stateNotifier.getDiff().isNotEmpty && isDiffTarget()) {
+      var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);
+      currentVariables = mergeVariables(currentVariables, lastLiveDiff);
+    }
+    // Keep keys registered by subclasses in initState after super.initState
+    // (e.g. listenInnerTextKeys): they run before this first initialization.
+    computedAttributes = VariableAttributes({}, []);
+    onStateChange(currentVariables);
+    onFormInitialize();
+    reloadPredefinedAttributes(node);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    initializeVariables();
   }
 
   @override
@@ -183,6 +204,22 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     }
   }
 
+  /// Whether server diffs may be applied to this widget. Diffs always
+  /// target the page currently joined on the channel; widgets from other
+  /// routes (kept mounted in the navigation stack, including an offstage
+  /// visit to the same URL) must ignore them.
+  bool isDiffTarget() {
+    if (!widget.state.isOnTheCurrentPage) {
+      return false;
+    }
+    final page = ModalRoute.settingsOf(context);
+    if (page is Page &&
+        page.key != liveView.router.pages.lastOrNull?.page.key) {
+      return false;
+    }
+    return true;
+  }
+
   bool _handleDiff() {
     // Diffs from the server always target the page currently joined on the
     // channel. Widgets from previous pages stay mounted in the navigation
@@ -190,12 +227,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     // the current page's keys (both have an empty nestedState), so applying
     // the diff would merge unrelated statics and dynamics together. A prior
     // visit to the same URL must also be excluded by its route identity.
-    if (!widget.state.isOnTheCurrentPage) {
-      return false;
-    }
-    final page = ModalRoute.settingsOf(context);
-    if (page is Page &&
-        page.key != liveView.router.pages.lastOrNull?.page.key) {
+    if (!isDiffTarget()) {
       return false;
     }
     var lastLiveDiff = stateNotifier.getNestedDiff(widget.state.nestedState);

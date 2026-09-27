@@ -91,7 +91,7 @@ void main() {
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts');
         await _waitFor(tester, find.text('No accounts yet'));
-        await _waitForAbsent(tester, find.text('Cash'));
+        await _waitForAbsent(tester, find.text('Cash wallet'));
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

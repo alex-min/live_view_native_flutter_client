@@ -498,13 +498,13 @@ void main() {
 
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
-        // Rows build lazily: scroll until the Cash row enters the viewport.
+        // Rows build lazily: scroll until the Cash wallet row enters the viewport.
         // The previous accounts route stays mounted underneath, so scope the
         // finders to the visible list.
         final visibleList = find.byType(ListView).hitTestable().last;
         final cashTile = find.descendant(
           of: visibleList,
-          matching: find.text('Cash'),
+          matching: find.text('Cash wallet'),
         );
         await tester.scrollUntilVisible(
           cashTile,
@@ -522,7 +522,7 @@ void main() {
           await tester.pump();
         }
         final visibleCashAccount = find
-            .descendant(of: visibleList, matching: find.text('Cash'))
+            .descendant(of: visibleList, matching: find.text('Cash wallet'))
             .hitTestable();
         await _waitFor(tester, visibleCashAccount, seconds: 30);
         await tester.tap(visibleCashAccount);
@@ -597,7 +597,7 @@ void main() {
         expect(
           find.descendant(
             of: find.byType(LiveBalanceChart).hitTestable().last,
-            matching: find.text('Cash').hitTestable(),
+            matching: find.text('Cash wallet').hitTestable(),
           ),
           findsOneWidget,
         );
@@ -869,7 +869,7 @@ void main() {
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         // The merged overview and the filter pills render above the list.
-        await _waitFor(tester, find.text('Stock picks'), seconds: 30);
+        await _waitFor(tester, find.text('Stock portfolio'), seconds: 30);
         expect(find.text('Total').hitTestable(), findsOneWidget);
         expect(find.text('All').hitTestable(), findsOneWidget);
 
@@ -890,7 +890,7 @@ void main() {
           reason: 'Scrolling should move the overview out of view',
         );
         await tester.scrollUntilVisible(
-          find.text('Stock picks').last,
+          find.text('Stock portfolio').last,
           120,
           scrollable: find
               .descendant(
@@ -900,7 +900,7 @@ void main() {
               .first,
         );
         expect(
-          find.text('Stock picks').hitTestable(),
+          find.text('Stock portfolio').hitTestable(),
           findsWidgets,
           reason: 'The account rows should stay visible while scrolled',
         );

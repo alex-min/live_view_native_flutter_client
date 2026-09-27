@@ -74,10 +74,10 @@ void main() {
 
         // Demo users land on the accounts page with the demo dataset
         // already seeded by the currency onboarding step. The list is
-        // virtualized, so assert on the first row ("Stock picks" sorts
+        // virtualized, so assert on the first row ("Stock portfolio" sorts
         // above "Cash") and on the empty state being gone.
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
-        await _waitFor(tester, find.text('Stock picks'), seconds: 30);
+        await _waitFor(tester, find.text('Stock portfolio'), seconds: 30);
         expect(
           find.text('No accounts yet'),
           findsNothing,
