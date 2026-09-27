@@ -14,6 +14,7 @@ import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
+import 'package:liveview_flutter/when/when.dart';
 import 'package:provider/provider.dart';
 import 'package:xml/xml.dart';
 
@@ -70,6 +71,10 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
   /// It would make the view appear janky when we switch from one page to the other
   /// The state is wiped on the next rerender.
   bool _dirty = false;
+
+  /// Whether the initial responsive visibility was already applied for this
+  /// widget instance.
+  bool _responsiveVisibilityApplied = false;
 
   @override
   void initState() {
@@ -297,6 +302,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     if (_dirty) {
       _dirty = false;
       status = Status.visible;
+      _responsiveVisibilityApplied = false;
       computedAttributes = VariableAttributes({}, []);
       currentVariables = Map.from(widget.state.variables);
       onStateChange(currentVariables);
@@ -308,6 +314,7 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   @override
   Widget build(BuildContext context) {
+    applyInitialResponsiveVisibility();
     executeDirty();
     var child = handleTransitions(render(context));
     child = handleMarginPadding(child);
@@ -321,6 +328,60 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
 
   Widget handleMarginPadding(Widget child) {
     return child;
+  }
+
+  /// Applies phx-responsive show/hide execs to this widget before its first
+  /// paint.
+  ///
+  /// onLoad() only runs after the first frame, so a widget that a
+  /// phx-responsive exec hides used to paint visible and then collapse once
+  /// the exec ran, producing a visible relayout on every page open.
+  /// Resolving the execs from the XML tree up front lets the widget build
+  /// directly in its final visibility state. Execs whose condition does not
+  /// match apply their inverse action, mirroring
+  /// [ExecVisibilityAction.conditionalHandler].
+  void applyInitialResponsiveVisibility() {
+    if (_responsiveVisibilityApplied) return;
+    _responsiveVisibilityApplied = true;
+
+    final id = node.getAttribute('id');
+    if (id == null && node.getAttribute('phx-responsive') == null) return;
+
+    final hiddenIds = _responsiveHiddenIds(node.root);
+    if (id != null && hiddenIds.contains(id) && status == Status.visible) {
+      status = Status.hidden;
+      animationDuration ??= 0;
+    }
+  }
+
+  Set<String> _responsiveHiddenIds(XmlNode root) {
+    final hidden = <String>{};
+    final shown = <String>{};
+    for (final element in root.descendants.whereType<XmlElement>()) {
+      final responsive = element.getAttribute('phx-responsive');
+      if (responsive == null) continue;
+      final conditions = When(
+        conditions: element.getAttribute('phx-responsive-when') ?? '',
+      );
+      final matches = conditions.execute(context);
+      for (final exec in FlutterExec.parse(
+        responsive,
+        'phx-responsive',
+        null,
+      )) {
+        if (exec is! ExecVisibilityAction || exec.to == null) continue;
+        final hides = (exec is ExecHideAction) == matches;
+        if (hides) {
+          hidden.add(exec.to!);
+          shown.remove(exec.to!);
+        } else {
+          shown.add(exec.to!);
+          hidden.remove(exec.to!);
+        }
+      }
+    }
+    hidden.removeWhere(shown.contains);
+    return hidden;
   }
 
   Widget handleTransitions(Widget child) {

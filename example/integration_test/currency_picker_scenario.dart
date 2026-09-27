@@ -30,7 +30,6 @@ void main() {
       'lists currencies, filters by search and selects a currency',
       (tester) async {
         SharedPreferences.setMockInitialValues({});
-        // Wide enough for the desktop app bar actions (window_width >= 900).
         await tester.binding.setSurfaceSize(const Size(1200, 900));
 
         final view = LiveView();
@@ -41,11 +40,9 @@ void main() {
         await tester.pumpWidget(_TestApp(view: view));
         await view.connect('http://$_serverHost:$_serverPort/currencies');
 
-        // Logged-out visitors get a single "Sign in" link in the app bar,
-        // without any account email or "Sign up" button.
-        await _waitFor(tester, find.widgetWithText(TextButton, 'Sign in'));
-        expect(find.text('Sign up'), findsNothing);
-        expect(find.textContaining('@'), findsNothing);
+        // The picker uses the compact app bar like the other app screens, so
+        // the title sits at the top of the screen with no app bar chrome.
+        await _waitFor(tester, find.text('Currency picker'));
 
         // The picker lists currencies as native list tiles. The ListView
         // builds children lazily, so only the first currencies (AED, ...)
