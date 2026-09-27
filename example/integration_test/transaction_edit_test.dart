@@ -460,6 +460,17 @@ void main() {
           seconds: 30,
         );
 
+        // Adjustments support categories like income and expenses.
+        await _waitFor(
+          tester,
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Text &&
+                (widget.data == 'Category' || widget.data == 'Catégorie'),
+          ),
+          seconds: 30,
+        );
+
         final editFields = find.descendant(
           of: find.byType(Form),
           matching: find.byType(TextField),
