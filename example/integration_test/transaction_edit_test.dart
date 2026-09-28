@@ -93,15 +93,9 @@ void main() {
         await _waitFor(tester, find.text('No transactions yet'), seconds: 30);
 
         // Add a transaction through the app bar add button.
-        final addFab = find
-            .ancestor(
-              of: find.byIcon(Icons.add),
-              matching: find.byType(FloatingActionButton),
-            )
-            .hitTestable();
-        expect(addFab, findsOneWidget);
+        final addFab = await _waitForAddFab(tester);
         final addFabCenter = tester.getCenter(addFab);
-        await tester.tap(find.byIcon(Icons.add).last);
+        await tester.tap(addFab);
         await _waitForUrl(
           tester,
           view,
@@ -144,7 +138,7 @@ void main() {
         );
         await _waitFor(tester, find.text('No transactions yet'), seconds: 30);
 
-        await tester.tap(find.byIcon(Icons.add).last);
+        await _tapAddFab(tester);
         await _waitForUrl(
           tester,
           view,
@@ -380,7 +374,7 @@ void main() {
           RegExp(r'^/accounts/\d+/transactions$'),
           seconds: 30,
         );
-        await tester.tap(find.byIcon(Icons.add).last);
+        await _tapAddFab(tester);
         await _waitForUrl(
           tester,
           view,
@@ -478,7 +472,13 @@ void main() {
         await _waitFor(tester, editFields, seconds: 30);
 
         // The amount field is pre-filled with the adjusted balance so the
-        // user can tweak it without retyping everything.
+        // user can tweak it without retyping everything. The pre-fill
+        // arrives with the connected render, after the fields exist.
+        await _waitFor(
+          tester,
+          find.widgetWithText(TextField, '250'),
+          seconds: 30,
+        );
         expect(
           find.widgetWithText(TextField, '250'),
           findsOneWidget,
@@ -575,7 +575,7 @@ void main() {
         // The transfer quick action is desktop-only on the mobile web
         // accounts page; create the transfer from the FAB and pick the
         // "Transfer" type in the form instead.
-        await tester.tap(find.byIcon(Icons.add).last);
+        await _tapAddFab(tester);
         await _waitForUrl(
           tester,
           view,
@@ -616,7 +616,9 @@ void main() {
           of: find.byType(Form),
           matching: find.byType(TextField),
         );
-        expect(fields, findsNWidgets(3));
+        // The transfer form rebuilds with a third field (description) after
+        // the type switch; poll for it instead of catching the old form.
+        await _waitForCount(tester, fields, 3);
         await tester.enterText(fields.at(0), '25');
         await tester.pump();
         await tester.enterText(fields.at(2), 'Integration transfer');
@@ -640,6 +642,9 @@ void main() {
         await view.livePatch('/accounts');
         await _waitForUrl(tester, view, '/accounts', seconds: 30);
         await _waitFor(tester, find.text('Savings'), seconds: 30);
+        // The balances arrive with the connected render, after the account
+        // names from a possible cached render.
+        await _waitFor(tester, find.textContaining('225'), seconds: 30);
         expect(find.textContaining('25'), findsWidgets);
         expect(find.textContaining('225'), findsWidgets);
         expect(find.textContaining('250'), findsWidgets);
@@ -751,6 +756,43 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   // accounts page (which has a compact app bar, so the email never shows).
   await _waitForUrl(tester, view, '/accounts', seconds: 30);
   await tester.pumpAndSettle();
+}
+
+/// Polls [finder] until it matches exactly [count] widgets.
+Future<void> _waitForCount(
+  WidgetTester tester,
+  Finder finder,
+  int count, {
+  int seconds = 30,
+}) async {
+  for (var i = 0; i < seconds; i++) {
+    await tester.pump();
+    if (finder.evaluate().length == count) {
+      return;
+    }
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+  throw Exception('Timed out waiting for $count widgets matching $finder');
+}
+
+/// Waits for the hittable add-transaction FAB.
+///
+/// Tapping `find.byIcon(Icons.add)` directly is unreliable: the client keeps
+/// previous routes in an offstage navigation stack, so the icon can resolve
+/// to a widget that is not hit-testable and the tap silently misses.
+Future<Finder> _waitForAddFab(WidgetTester tester) async {
+  final fab = find
+      .ancestor(
+        of: find.byIcon(Icons.add),
+        matching: find.byType(FloatingActionButton),
+      )
+      .hitTestable();
+  await _waitFor(tester, fab, seconds: 30);
+  return fab;
+}
+
+Future<void> _tapAddFab(WidgetTester tester) async {
+  await tester.tap(await _waitForAddFab(tester));
 }
 
 /// Polls [finder] up to [seconds] times at 200 ms intervals.
