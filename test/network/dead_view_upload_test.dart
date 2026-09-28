@@ -16,22 +16,22 @@ void main() {
   late Directory tempDir;
 
   setUp(() {
-    tempDir = Directory.systemTemp.createTempSync('mavio-upload-test');
+    tempDir = Directory.systemTemp.createTempSync('dead-view-upload-test');
   });
 
   tearDown(() {
     tempDir.deleteSync(recursive: true);
   });
 
-  File dbFixture() {
-    return File('${tempDir.path}/app_database8.db')
-      ..writeAsBytesSync(utf8.encode('SQLite format 3 fake-content'));
+  File uploadFixture() {
+    return File('${tempDir.path}/upload.bin')
+      ..writeAsBytesSync(utf8.encode('fake file content'));
   }
 
   test(
     'dead-view uploads send a multipart request with cookie and csrf',
     () async {
-      var file = dbFixture();
+      var file = uploadFixture();
 
       var (view, server) = await connect(
         LiveView(),
@@ -47,8 +47,8 @@ void main() {
       );
 
       var response = await view.deadViewUploadQuery(
-        '/settings/import/mavio',
-        'mavio[database]',
+        '/upload',
+        'file',
         file.path,
         formValues: {'extra': 'field'},
       );
@@ -58,7 +58,7 @@ void main() {
       var request = server.httpRequestsMade.lastWhere(
         (request) => request.method == 'POST',
       );
-      expect(request.url.path, '/settings/import/mavio');
+      expect(request.url.path, '/upload');
       expect(
         request.headers['content-type'],
         contains('multipart/form-data; boundary='),
@@ -73,9 +73,9 @@ void main() {
       );
       expect(body, contains('name="extra"'));
       expect(body, contains('field'));
-      expect(body, contains('name="mavio[database]"'));
-      expect(body, contains('filename="app_database8.db"'));
-      expect(body, contains('SQLite format 3 fake-content'));
+      expect(body, contains('name="file"'));
+      expect(body, contains('filename="upload.bin"'));
+      expect(body, contains('fake file content'));
     },
   );
 
@@ -95,11 +95,7 @@ void main() {
 
     expect(view.cookie, contains('live_view=session'));
 
-    await view.deadViewUploadQuery(
-      '/settings/import/mavio',
-      'mavio[database]',
-      dbFixture().path,
-    );
+    await view.deadViewUploadQuery('/upload', 'file', uploadFixture().path);
 
     expect(view.cookie, contains('live_view=refreshed'));
   });
@@ -116,9 +112,9 @@ void main() {
     );
 
     var response = await view.deadViewUploadQuery(
-      '/settings/import/mavio',
-      'mavio[database]',
-      dbFixture().path,
+      '/upload',
+      'file',
+      uploadFixture().path,
     );
 
     expect(response.statusCode, 302);

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
-/// Mavio-style month picker content for use inside a modal bottom sheet.
+/// Month picker content for use inside a modal bottom sheet.
 ///
 /// Each [LiveMonthPickerYear] becomes a pinned year header followed by the
 /// server-rendered month rows for that year.

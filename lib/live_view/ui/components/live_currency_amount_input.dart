@@ -22,11 +22,9 @@ extension NumberTruncation on double {
   }
 }
 
-/// A locale-aware currency amount mask, ported from mavio's
-/// money_input_formatter, minus the arithmetic expressions.
-///
-/// Only the decimal separator is locale-aware (`","` for French, `"."`
-/// otherwise); the thousands separator is always a plain space. Keyboard
+/// A locale-aware currency amount mask: the decimal separator is
+/// locale-aware (`","` for French, `"."` otherwise) and the thousands
+/// separator is always a plain space. Keyboard
 /// input accepts both `,` and `.` as the decimal separator regardless of
 /// the locale; the typed separator is normalized to the locale one.
 /// Typing re-masks the value on every keystroke, keeps a user-typed trailing
