@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 abstract interface class MavioDatabaseLocator {
   Future<String?> locate(String databaseName);
@@ -12,6 +13,11 @@ abstract interface class MavioDatabaseLocator {
 class SqfliteMavioDatabaseLocator implements MavioDatabaseLocator {
   @override
   Future<String?> locate(String databaseName) async {
+    if (Platform.isLinux || Platform.isWindows) {
+      // sqflite only ships Android/iOS/macOS plugins; use the ffi factory so
+      // the legacy database lookup also works on desktop.
+      databaseFactory = databaseFactoryFfi;
+    }
     var path = p.join(await getDatabasesPath(), databaseName);
     return File(path).existsSync() ? path : null;
   }
