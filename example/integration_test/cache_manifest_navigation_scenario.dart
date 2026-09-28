@@ -45,31 +45,23 @@ void main() {
       await _signUpAndOnboard(tester, view);
 
       await _waitForCachedRoutes(tester, view, const [
-        '/dashboard',
-        '/accounts',
-        '/transactions',
+        '/home',
         '/users/settings',
       ]);
 
       await _expectRapidCachedTabSwitching(tester, view);
 
       for (final route in const [
-        '/dashboard',
-        '/transactions',
+        '/home',
         '/users/settings',
-        '/accounts',
       ]) {
         await _expectCachedThenFresh(tester, view, route, renderedTypes);
       }
 
       final firstCoordinator = view.cacheCoordinator!;
       final firstNamespace = firstCoordinator.namespace;
-      final persistedDashboard = await firstCoordinator.loadForNavigation(
-        Uri.parse('/dashboard'),
-      );
       expect(firstNamespace, isNotNull);
-      expect(firstNamespace?.manifestVersion, 'finance-v2');
-      expect(persistedDashboard, isNotNull);
+      expect(firstNamespace?.manifestVersion, 'startup-kit-v1');
 
       await _failFast(view.disconnect(), 'disconnect before restart');
       await tester.pumpWidget(const SizedBox.shrink());
@@ -87,30 +79,33 @@ void main() {
       );
       expect(
         await restartedView.cacheCoordinator?.loadForNavigation(
-          Uri.parse('/dashboard'),
+          Uri.parse('/home'),
         ),
         isNull,
         reason: 'Persisted user data stays hidden before identity confirmation',
       );
+      final persistedDashboard = await firstCoordinator.loadForNavigation(
+        Uri.parse('/users/settings'),
+      );
 
       await tester.pumpWidget(_TestApp(view: restartedView));
       await _failFast(
-        restartedView.connect('http://$_serverHost:$_serverPort/accounts'),
+        restartedView.connect('http://$_serverHost:$_serverPort/home'),
         'connection after restart',
       );
-      await _waitForUrl(tester, restartedView, '/accounts');
+      await _waitForUrl(tester, restartedView, '/home');
       await _waitForCachePolicy(tester, restartedView);
 
       expect(restartedView.cacheCoordinator?.namespace, firstNamespace);
       final restoredDashboard = await restartedView.cacheCoordinator
-          ?.loadForNavigation(Uri.parse('/dashboard'));
+          ?.loadForNavigation(Uri.parse('/users/settings'));
       expect(restoredDashboard, isNotNull);
       expect(restoredDashboard?.storedAt, persistedDashboard?.storedAt);
 
       await _expectCachedThenFresh(
         tester,
         restartedView,
-        '/dashboard',
+        '/home',
         restartedRenderedTypes,
       );
 
@@ -128,9 +123,7 @@ void main() {
       final secondUserRenderStart = restartedRenderedTypes.length;
       await _signUpAndOnboard(tester, restartedView);
       await _waitForCachedRoutes(tester, restartedView, const [
-        '/dashboard',
-        '/accounts',
-        '/transactions',
+        '/home',
         '/users/settings',
       ]);
 
@@ -145,7 +138,7 @@ void main() {
       expect(
         await restartedView.cacheCoordinator?.store.readSnapshot(
           firstNamespace,
-          Uri.parse('/dashboard'),
+          Uri.parse('/home'),
         ),
         isNull,
       );
@@ -162,7 +155,7 @@ void main() {
       await _expectCachedThenFresh(
         tester,
         restartedView,
-        '/dashboard',
+        '/home',
         restartedRenderedTypes,
       );
     },
@@ -206,10 +199,10 @@ Future<void> _expectRapidCachedTabSwitching(
   view.router.addListener(observeRoute);
   try {
     for (final route in const [
-      '/accounts',
-      '/transactions',
       '/users/settings',
-      '/dashboard',
+      '/home',
+      '/users/settings',
+      '/home',
     ]) {
       unawaited(view.livePatch(route));
       await tester.pump();
@@ -227,7 +220,7 @@ Future<void> _expectRapidCachedTabSwitching(
         reason: '$route must not gain a transient root app bar',
       );
     }
-    await _waitForUrl(tester, view, '/dashboard');
+    await _waitForUrl(tester, view, '/home');
   } finally {
     view.router.removeListener(observeRoute);
   }
@@ -251,7 +244,7 @@ Future<void> _waitForLogoutInvalidation(
     await tester.pump();
     final snapshot = await coordinator.store.readSnapshot(
       namespace,
-      Uri.parse('/dashboard'),
+      Uri.parse('/home'),
     );
     final manifest = await coordinator.store.readManifest(
       LiveViewCacheCoordinator.manifestStorageKey(namespace),
@@ -369,15 +362,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   final acceptButton = find.byType(ElevatedButton).last;
   await tester.ensureVisible(acceptButton);
   await tester.tap(acceptButton);
-  await _waitForUrl(tester, view, '/users/onboarding/currency');
-  await _waitFor(tester, find.textContaining('EUR (€)'));
-
-  final nextButton = find.descendant(
-    of: find.byType(Form),
-    matching: find.byType(ElevatedButton),
-  );
-  await tester.tap(nextButton.last);
-  await _waitForUrl(tester, view, '/accounts');
+  await _waitForUrl(tester, view, '/home', seconds: 30);
 }
 
 Future<void> _waitFor(

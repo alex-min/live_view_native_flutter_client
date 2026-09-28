@@ -102,19 +102,9 @@ void main() {
         await tester.ensureVisible(acceptButton);
         await tester.tap(acceptButton);
 
-        // Complete the currency onboarding step (EUR is pre-selected).
-        await _waitForUrl(
-          tester,
-          view,
-          '/users/onboarding/currency',
-          seconds: 30,
-        );
-        final nextButton = find.descendant(
-          of: find.byType(Form),
-          matching: find.byType(ElevatedButton),
-        );
-        await _waitFor(tester, nextButton, seconds: 30);
-        await tester.tap(nextButton.last);
+        // Accepting the terms completes the onboarding and lands on the
+        // generic home page.
+        await _waitForUrl(tester, view, '/home', seconds: 30);
 
         // Switch to a mobile viewport so the bottom navigation bar builds.
         tester.view.physicalSize = const Size(400, 800);

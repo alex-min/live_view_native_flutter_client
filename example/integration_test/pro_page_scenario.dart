@@ -42,22 +42,26 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         await _signUpAndOnboard(tester, view);
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUrl(tester, view, '/home', seconds: 30);
 
         await view.livePatch('/pro');
         await _waitForUrl(tester, view, '/pro', seconds: 30);
 
         // The dark Pro card renders with the yearly price by default.
-        await _waitFor(tester, find.textContaining('Mavio Pro'), seconds: 30);
+        await _waitFor(
+            tester, find.textContaining('The useful kind of upgrade.'),
+            seconds: 30);
         expect(find.textContaining('€3.33'), findsWidgets);
         expect(find.textContaining('€39.99 billed once a year'), findsWidgets);
         expect(find.textContaining('Upgrade to Pro'), findsWidgets);
 
         // Switching to monthly updates the price and billing note.
-        final monthlyLabel = find.descendant(
-          of: find.byType(SegmentedButton<String>),
-          matching: find.text('Monthly'),
-        );
+        final monthlyLabel = find
+            .descendant(
+              of: find.byType(SegmentedButton<String>),
+              matching: find.text('Monthly'),
+            )
+            .first;
         await _waitFor(tester, monthlyLabel, seconds: 30);
         await tester.ensureVisible(monthlyLabel);
         await tester.pumpAndSettle();
@@ -68,10 +72,12 @@ void main() {
         expect(find.textContaining('Billed monthly'), findsWidgets);
 
         // The upgrade button surfaces the coming-soon flash.
-        final upgradeButton = find.widgetWithText(
-          ElevatedButton,
-          'Upgrade to Pro →',
-        );
+        final upgradeButton = find
+            .widgetWithText(
+              ElevatedButton,
+              'Upgrade to Pro →',
+            )
+            .first;
         await _waitFor(tester, upgradeButton, seconds: 30);
         await tester.ensureVisible(upgradeButton);
         await tester.pumpAndSettle();
@@ -90,7 +96,7 @@ void main() {
 }
 
 /// Signs up a brand new user and completes the onboarding (TOS + default
-/// currency). Mirrors the theme settings integration test.
+/// service). Mirrors the theme settings integration test.
 Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
   await _waitFor(tester, signUpButton, seconds: 30);
@@ -139,17 +145,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.ensureVisible(acceptButton);
   await tester.tap(acceptButton);
 
-  await _waitForUrl(tester, view, '/users/onboarding/currency', seconds: 30);
-  await _waitFor(tester, find.textContaining('EUR (€)'), seconds: 30);
-
-  final nextButton = find.descendant(
-    of: find.byType(Form),
-    matching: find.byType(ElevatedButton),
-  );
-  await _waitFor(tester, nextButton, seconds: 30);
-  await tester.tap(nextButton.last);
-
-  await _waitForUrl(tester, view, '/accounts', seconds: 30);
+  await _waitForUrl(tester, view, '/home', seconds: 30);
   await tester.pumpAndSettle();
 }
 

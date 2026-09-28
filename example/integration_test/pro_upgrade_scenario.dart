@@ -42,7 +42,7 @@ void main() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         await _signUpAndOnboard(tester, view);
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUrl(tester, view, '/home', seconds: 30);
 
         await view.livePatch('/pro');
         await _waitForUrl(tester, view, '/pro', seconds: 30);
@@ -67,7 +67,7 @@ void main() {
 }
 
 /// Signs up a brand new user and completes the onboarding (TOS + default
-/// currency). Mirrors the theme settings integration test.
+/// service). Mirrors the theme settings integration test.
 Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
   await _waitFor(tester, signUpButton, seconds: 30);
@@ -116,17 +116,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.ensureVisible(acceptButton);
   await tester.tap(acceptButton);
 
-  await _waitForUrl(tester, view, '/users/onboarding/currency', seconds: 30);
-  await _waitFor(tester, find.textContaining('EUR (€)'), seconds: 30);
-
-  final nextButton = find.descendant(
-    of: find.byType(Form),
-    matching: find.byType(ElevatedButton),
-  );
-  await _waitFor(tester, nextButton, seconds: 30);
-  await tester.tap(nextButton.last);
-
-  await _waitForUrl(tester, view, '/accounts', seconds: 30);
+  await _waitForUrl(tester, view, '/home', seconds: 30);
   await tester.pumpAndSettle();
   await _dismissSnackbars(tester);
 }

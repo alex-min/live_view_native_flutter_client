@@ -72,7 +72,7 @@ void main() {
 
         await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
         await _waitForUrl(tester, view, '/', seconds: 30);
-        expect(find.text('Welcome to Mavio'), findsOneWidget);
+        expect(find.textContaining('Welcome to'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
@@ -89,40 +89,62 @@ void main() {
 
         await tester.pumpWidget(_TestApp(view: view));
         await view.connect('http://$_serverHost:$_serverPort/');
-        await _waitFor(tester, find.text('Welcome to Mavio'), seconds: 30);
-        await tester.tap(
-          find.widgetWithText(ElevatedButton, 'Try the demo').hitTestable(),
-        );
-        await _waitForUrl(
-          tester,
-          view,
-          '/users/onboarding/currency',
-          seconds: 30,
-        );
-        final nextButton = find.descendant(
-          of: find.byType(Form),
-          matching: find.widgetWithText(ElevatedButton, 'Next'),
-        );
-        await _waitFor(tester, nextButton, seconds: 30);
-        await tester.tap(nextButton.last);
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitFor(tester, find.textContaining('Welcome to'), seconds: 30);
+        await _signUpAndOnboard(tester, view);
         await _waitForUserCache(tester, view);
 
         await _waitFor(tester, find.byIcon(Icons.chat_bubble), seconds: 30);
         await tester.tap(find.byIcon(Icons.chat_bubble).hitTestable());
         await _waitForUrl(tester, view, '/support', seconds: 30);
         expect(
-          view.router.pages.any((page) => page.page.name == '/accounts'),
+          view.router.pages.any((page) => page.page.name == '/home'),
           isTrue,
           reason: 'The full-page chat must keep its previous route',
         );
 
         await tester.tap(find.byIcon(Icons.arrow_back).hitTestable());
-        await _waitForUrl(tester, view, '/accounts', seconds: 30);
+        await _waitForUrl(tester, view, '/home', seconds: 30);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
   });
+}
+
+/// Registers a fresh user through the real form and accepts the terms of
+/// service, landing on the generic home page.
+Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
+  final signUpButton = find.widgetWithText(OutlinedButton, 'Sign up');
+  await _waitFor(tester, signUpButton, seconds: 30);
+  await tester.tap(signUpButton);
+  await _waitForUrl(tester, view, '/users/register', seconds: 30);
+  await tester.pumpAndSettle();
+
+  await _waitFor(tester, find.byType(TextField));
+  final email =
+      'chat-integration+${DateTime.now().millisecondsSinceEpoch}@example.com';
+  const password = 'SuperSecret123!';
+  final fields = find.byType(TextField);
+  await tester.enterText(fields.at(0), email);
+  await tester.pump();
+  await tester.enterText(fields.at(1), password);
+  await tester.pump();
+  await tester.enterText(fields.at(2), password);
+  await tester.pump();
+  await tester.enterText(fields.at(0), email);
+  await tester.pump();
+
+  final submitButton = find.descendant(
+    of: find.byType(Form),
+    matching: find.byType(ElevatedButton),
+  );
+  await tester.tap(submitButton);
+  await _waitForUrl(tester, view, '/users/accept-tos', seconds: 30);
+
+  final acceptButton = find.byType(ElevatedButton).last;
+  await tester.ensureVisible(acceptButton);
+  await tester.tap(acceptButton);
+  await _waitForUrl(tester, view, '/home', seconds: 30);
+  await tester.pumpAndSettle();
 }
 
 /// Waits up to [seconds] for [finder] to match at least one widget,
