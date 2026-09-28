@@ -138,7 +138,7 @@ void main() {
       );
       expect(
         tosChannel?.params?['params']?['_mounts'],
-        '0',
+        0,
         reason: 'A new LiveView join must start with _mounts: 0',
       );
     },

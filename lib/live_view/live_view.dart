@@ -516,8 +516,11 @@ class LiveView {
   Map<String, dynamic> _socketParams() => {
     ..._requiredSocketParams(),
     '_csrf_token': _csrf,
-    '_mounts': mount.toString(),
-    '_mount_attempts': '0',
+    // Phoenix compares `_mounts` with the integer 0 to decide whether the
+    // disconnected render's flash should be carried into the first live
+    // render; a string "0" never matches and redirect flashes get dropped.
+    '_mounts': mount,
+    '_mount_attempts': 0,
     'client_id': _clientId,
   };
 

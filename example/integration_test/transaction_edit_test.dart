@@ -92,7 +92,10 @@ void main() {
         );
         await _waitFor(tester, find.text('No transactions yet'), seconds: 30);
 
-        // Add a transaction through the app bar add button.
+        // Add a transaction through the app bar add button. A flash snackbar
+        // shifts the FAB while visible, so dismiss it before measuring.
+        await _dismissSnackbars(tester);
+        await _waitForAbsent(tester, find.byType(SnackBar));
         final addFab = await _waitForAddFab(tester);
         final addFabCenter = tester.getCenter(addFab);
         await tester.tap(addFab);
@@ -221,6 +224,8 @@ void main() {
           seconds: 30,
         );
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
+        // The save flash snackbar also carries a close icon.
+        await _dismissSnackbars(tester);
 
         // Mavio's edit screen replaces the complete bottom navigation with one
         // centered floating close button. Closing returns to the same
@@ -260,6 +265,7 @@ void main() {
           seconds: 30,
         );
         await _waitFor(tester, find.text('Edit transaction'), seconds: 30);
+        await _dismissSnackbars(tester);
 
         // Returning must keep working after the list and edit routes have
         // already been rebuilt once.
@@ -756,6 +762,35 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   // accounts page (which has a compact app bar, so the email never shows).
   await _waitForUrl(tester, view, '/accounts', seconds: 30);
   await tester.pumpAndSettle();
+  await _dismissSnackbars(tester);
+}
+
+/// Dismisses visible flash snackbars by tapping their close icon, which also
+/// clears the flash server-side so it does not reappear on later renders.
+/// Snackbars shift the FAB and cover bottom-aligned buttons.
+Future<void> _dismissSnackbars(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump();
+    final snackbar = find.byType(SnackBar);
+    if (snackbar.evaluate().isEmpty) {
+      return;
+    }
+    final close = find
+        .descendant(of: snackbar, matching: find.byIcon(Icons.close))
+        .hitTestable();
+    if (close.evaluate().isNotEmpty) {
+      await tester.tap(close.first);
+    }
+    // Wait for the exit animation: while it runs, an AbsorbPointer in the
+    // overlay still swallows taps.
+    for (var j = 0; j < 15; j++) {
+      await tester.pump();
+      if (find.byType(SnackBar).evaluate().isEmpty) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+  }
 }
 
 /// Polls [finder] until it matches exactly [count] widgets.

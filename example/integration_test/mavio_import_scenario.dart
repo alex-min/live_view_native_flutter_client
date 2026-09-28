@@ -119,6 +119,14 @@ void main() {
     await tester.pumpAndSettle();
     await _waitFor(tester, find.text('Wallet'), seconds: 15);
     expect(find.text('Wallet'), findsWidgets);
+
+    // The import summary flash survives the redirect to /accounts.
+    await _waitFor(
+      tester,
+      find.textContaining('Mavio import complete'),
+      seconds: 15,
+    );
+    expect(find.textContaining('Mavio import complete'), findsOneWidget);
   });
 }
 

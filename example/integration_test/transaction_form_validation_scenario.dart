@@ -161,6 +161,7 @@ void localeMain() {
         await view.connect('http://$_serverHost:$_serverPort/');
 
         await _signUpAndOnboard(tester, view);
+        await _dismissSnackbars(tester);
 
         // The transaction form needs an account: enter the demo account
         // from the empty accounts page.
@@ -325,4 +326,32 @@ Future<void> _ensureServer() async {
     '$_serverHost:$_serverPort. Start it with `mix phx.server` '
     'before running the integration tests.',
   );
+}
+
+/// Dismisses visible flash snackbars by tapping their close icon, which also
+/// clears the flash server-side so it does not reappear on later renders.
+/// Snackbars cover bottom-aligned buttons such as "Try demo".
+Future<void> _dismissSnackbars(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump();
+    final snackbar = find.byType(SnackBar);
+    if (snackbar.evaluate().isEmpty) {
+      return;
+    }
+    final close = find
+        .descendant(of: snackbar, matching: find.byIcon(Icons.close))
+        .hitTestable();
+    if (close.evaluate().isNotEmpty) {
+      await tester.tap(close.first);
+    }
+    // Wait for the exit animation: while it runs, an AbsorbPointer in the
+    // overlay still swallows taps.
+    for (var j = 0; j < 15; j++) {
+      await tester.pump();
+      if (find.byType(SnackBar).evaluate().isEmpty) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+  }
 }

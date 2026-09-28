@@ -63,6 +63,9 @@ void main() {
         await _waitFor(tester, activateButton, seconds: 30);
         await tester.ensureVisible(activateButton);
         await tester.pumpAndSettle();
+        // A flash snackbar covers the bottom of the page; dismiss it so the
+        // tap reaches the button.
+        await _dismissSnackbars(tester);
         await tester.tap(activateButton);
         await tester.pumpAndSettle();
 
@@ -156,6 +159,10 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
 
   await _waitForUrl(tester, view, '/accounts', seconds: 30);
   await tester.pumpAndSettle();
+
+  // Signup and onboarding flashes show as snackbars on the accounts page;
+  // dismiss them now so later taps are not swallowed.
+  await _dismissSnackbars(tester);
 }
 
 /// Polls [finder] up to [seconds] times at 200 ms intervals.
@@ -172,6 +179,34 @@ Future<void> _waitFor(
     await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder');
+}
+
+/// Dismisses visible flash snackbars by tapping their close icon, which also
+/// clears the flash server-side so it does not reappear on later renders.
+/// Snackbars shift the FAB and cover bottom-aligned buttons.
+Future<void> _dismissSnackbars(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump();
+    final snackbar = find.byType(SnackBar);
+    if (snackbar.evaluate().isEmpty) {
+      return;
+    }
+    final close = find
+        .descendant(of: snackbar, matching: find.byIcon(Icons.close))
+        .hitTestable();
+    if (close.evaluate().isNotEmpty) {
+      await tester.tap(close.first);
+    }
+    // Wait for the exit animation: while it runs, an AbsorbPointer in the
+    // overlay still swallows taps.
+    for (var j = 0; j < 15; j++) {
+      await tester.pump();
+      if (find.byType(SnackBar).evaluate().isEmpty) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+  }
 }
 
 /// Waits up to [seconds] for the live view to navigate to [url] (a plain

@@ -168,6 +168,9 @@ void main() {
         expect(find.text('Expenses'), findsOneWidget);
         expect(find.text('No transactions for this period'), findsOneWidget);
 
+        // A flash snackbar adds its own close icon; dismiss it so the close
+        // finders below only match the month picker's.
+        await _dismissSnackbars(tester);
         await tester.tap(find.byIcon(Icons.calendar_today));
         await _waitFor(tester, find.byType(LiveMonthPickerDrawer), seconds: 30);
         expect(find.byType(BottomSheet), findsOneWidget);
@@ -718,6 +721,9 @@ void main() {
           seconds: 30,
         );
 
+        // A flash snackbar adds its own close icon; dismiss it so the finder
+        // below only matches the edit page's close button.
+        await _dismissSnackbars(tester);
         final closeButton = find.byIcon(Icons.close).hitTestable();
         await _waitFor(tester, closeButton, seconds: 30);
         await tester.tap(closeButton);
@@ -1058,6 +1064,10 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   // accounts page (which has a compact app bar, so the email never shows).
   await _waitForUrl(tester, view, '/accounts', seconds: 30);
   await tester.pumpAndSettle();
+
+  // Signup and onboarding flashes show as snackbars on the accounts page;
+  // dismiss them now so later taps are not swallowed.
+  await _dismissSnackbars(tester);
 }
 
 /// Polls [finder] up to [seconds] times at 200 ms intervals.
@@ -1080,6 +1090,34 @@ Future<void> _waitFor(
     await Future.delayed(const Duration(milliseconds: 200));
   }
   throw Exception('Timed out waiting for $finder. ${_visibleText()}');
+}
+
+/// Dismisses visible flash snackbars by tapping their close icon, which also
+/// clears the flash server-side so it does not reappear on later renders.
+/// Snackbars cover bottom-aligned buttons and add stray close icons.
+Future<void> _dismissSnackbars(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump();
+    final snackbar = find.byType(SnackBar);
+    if (snackbar.evaluate().isEmpty) {
+      return;
+    }
+    final close = find
+        .descendant(of: snackbar, matching: find.byIcon(Icons.close))
+        .hitTestable();
+    if (close.evaluate().isNotEmpty) {
+      await tester.tap(close.first);
+    }
+    // Wait for the exit animation: while it runs, an AbsorbPointer in the
+    // overlay still swallows taps.
+    for (var j = 0; j < 15; j++) {
+      await tester.pump();
+      if (find.byType(SnackBar).evaluate().isEmpty) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+  }
 }
 
 String _visibleText() {
