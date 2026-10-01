@@ -26,7 +26,7 @@ void main() {
 
   group('Pro page', () {
     testWidgets(
-      'renders the pricing card, switches price with the billing toggle and shows the checkout flash',
+      'shows store availability and membership controls',
       (tester) async {
         SharedPreferences.setMockInitialValues({});
 
@@ -47,48 +47,16 @@ void main() {
         await view.livePatch('/pro');
         await _waitForUrl(tester, view, '/pro', seconds: 30);
 
-        // The dark Pro card renders with the yearly price by default.
         await _waitFor(
             tester, find.textContaining('The useful kind of upgrade.'),
             seconds: 30);
-        expect(find.textContaining('€3.33'), findsWidgets);
-        expect(find.textContaining('€39.99 billed once a year'), findsWidgets);
-        expect(find.textContaining('Upgrade to Pro'), findsWidgets);
-
-        // Switching to monthly updates the price and billing note.
-        final monthlyLabel = find
-            .descendant(
-              of: find.byType(SegmentedButton<String>),
-              matching: find.text('Monthly'),
-            )
-            .first;
-        await _waitFor(tester, monthlyLabel, seconds: 30);
-        await tester.ensureVisible(monthlyLabel);
-        await tester.pumpAndSettle();
-        await tester.tap(monthlyLabel);
-        await tester.pumpAndSettle();
-
-        await _waitFor(tester, find.textContaining('€4.99'), seconds: 30);
-        expect(find.textContaining('Billed monthly'), findsWidgets);
-
-        // The upgrade button surfaces the coming-soon flash.
-        final upgradeButton = find
-            .widgetWithText(
-              ElevatedButton,
-              'Upgrade to Pro →',
-            )
-            .first;
-        await _waitFor(tester, upgradeButton, seconds: 30);
-        await tester.ensureVisible(upgradeButton);
-        await tester.pumpAndSettle();
-        await tester.tap(upgradeButton);
-        await tester.pumpAndSettle();
-
-        await _waitFor(
-          tester,
-          find.text('Checkout is coming soon.'),
-          seconds: 30,
-        );
+        expect(
+            find.textContaining('Prices and billing terms come from the store'),
+            findsWidgets);
+        expect(find.text('Purchases are not available yet.'), findsWidgets);
+        expect(find.text('Restore purchases'), findsWidgets);
+        expect(find.text('Refresh membership'), findsWidgets);
+        expect(find.textContaining('€3.33'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
