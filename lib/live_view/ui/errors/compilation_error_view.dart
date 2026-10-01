@@ -14,6 +14,7 @@ class CompilationErrorView extends StatefulWidget {
 class _CompilationErrorViewState extends State<CompilationErrorView> {
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     dom.Document document = htmlparser.parse(widget.html);
     var error = HtmlUnescape().convert(
       document
@@ -23,22 +24,22 @@ class _CompilationErrorViewState extends State<CompilationErrorView> {
     );
     List<Widget> doc = [
       Container(
-        color: Colors.grey[200],
+        color: colors.errorContainer,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Compilation Error',
               style: TextStyle(
-                color: Colors.red,
+                color: colors.onErrorContainer,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
             ),
             Text(
               'Console output is shown below',
-              style: TextStyle(fontSize: 15, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 15, color: colors.onSurfaceVariant),
             ),
           ],
         ),
@@ -49,12 +50,12 @@ class _CompilationErrorViewState extends State<CompilationErrorView> {
         padding: const EdgeInsets.all(20),
         child: Text(
           error == '' ? document.outerHtml : error,
-          style: const TextStyle(color: Colors.black, fontSize: 15),
+          style: TextStyle(color: colors.onSurface, fontSize: 15),
         ),
       ),
     ]);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       body: ListView(children: doc),
     );
   }

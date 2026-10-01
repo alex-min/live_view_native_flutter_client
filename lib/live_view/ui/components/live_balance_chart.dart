@@ -62,6 +62,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
 
   @override
   Widget render(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final points =
         (getAttribute('points') ?? '')
             .split(',')
@@ -77,7 +78,7 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                 .decode(base64Url.decode(base64Url.normalize(encodedLabels)))
                 .split('|');
     final lineColor =
-        getColor(context, getAttribute('lineColor')) ?? const Color(0xFF8D63FF);
+        getColor(context, getAttribute('lineColor')) ?? colors.primary;
     final scope = InfiniteListScrollScope.maybeOf(context);
     final scrollOffset =
         scope?.notifier?.hasClients == true ? scope!.notifier!.offset : 0.0;
@@ -161,10 +162,12 @@ class _LiveBalanceChartState extends StateWidget<LiveBalanceChart> {
                   scaleMinimum: animatedFrame.minimum,
                   scaleMaximum: animatedFrame.maximum,
                   lineColor: lineColor,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  tooltipColor: Theme.of(context).colorScheme.inverseSurface,
-                  tooltipTextColor:
-                      Theme.of(context).colorScheme.onInverseSurface,
+                  backgroundColor: colors.surface,
+                  tooltipColor: colors.inverseSurface,
+                  tooltipTextColor: colors.onInverseSurface,
+                  incomeColor: colors.secondary,
+                  expenseColor: colors.error,
+                  markerHaloColor: colors.surface,
                   topInset: safeTop + 12 + 52 * compactOpacity,
                   horizontalInset: 8 * (1 - collapseProgress),
                   bottomInset: 10 * (1 - collapseProgress),
@@ -425,6 +428,9 @@ class BalanceHistoryPainter extends CustomPainter {
   final Color backgroundColor;
   final Color tooltipColor;
   final Color tooltipTextColor;
+  final Color incomeColor;
+  final Color expenseColor;
+  final Color markerHaloColor;
   final double topInset;
   final double horizontalInset;
   final double bottomInset;
@@ -439,8 +445,11 @@ class BalanceHistoryPainter extends CustomPainter {
     this.scaleMaximum,
     required this.lineColor,
     this.backgroundColor = Colors.transparent,
-    this.tooltipColor = const Color(0xFF24212F),
-    this.tooltipTextColor = Colors.white,
+    required this.tooltipColor,
+    required this.tooltipTextColor,
+    required this.incomeColor,
+    required this.expenseColor,
+    required this.markerHaloColor,
     this.topInset = 12,
     this.horizontalInset = 8,
     this.bottomInset = 10,
@@ -516,12 +525,12 @@ class BalanceHistoryPainter extends CustomPainter {
       final direction =
           selectedIndex < directions.length ? directions[selectedIndex] : '';
       final color = switch (direction) {
-        'income' => const Color(0xFF25A36B),
-        'expense' => const Color(0xFFE55276),
+        'income' => incomeColor,
+        'expense' => expenseColor,
         _ => lineColor,
       };
       final point = offsetFor(selectedIndex);
-      canvas.drawCircle(point, 7.5, Paint()..color = Colors.white);
+      canvas.drawCircle(point, 7.5, Paint()..color = markerHaloColor);
       canvas.drawCircle(point, 5, Paint()..color = color);
 
       final label = selectedIndex < labels.length ? labels[selectedIndex] : '';
@@ -598,6 +607,9 @@ class BalanceHistoryPainter extends CustomPainter {
       oldDelegate.backgroundColor != backgroundColor ||
       oldDelegate.tooltipColor != tooltipColor ||
       oldDelegate.tooltipTextColor != tooltipTextColor ||
+      oldDelegate.incomeColor != incomeColor ||
+      oldDelegate.expenseColor != expenseColor ||
+      oldDelegate.markerHaloColor != markerHaloColor ||
       oldDelegate.topInset != topInset ||
       oldDelegate.horizontalInset != horizontalInset ||
       oldDelegate.bottomInset != bottomInset;

@@ -16,17 +16,18 @@ class MissingPageComponent extends StatefulWidget {
 class _MissingPageComponentState extends State<MissingPageComponent> {
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     List<Widget> doc = [
       Container(
-        color: Colors.grey[200],
+        color: colors.errorContainer,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               "Unable to find any <viewBody> component on url ${widget.url}",
-              style: const TextStyle(
-                color: Colors.red,
+              style: TextStyle(
+                color: colors.onErrorContainer,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -41,13 +42,13 @@ class _MissingPageComponentState extends State<MissingPageComponent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Your page needs to contain a <viewBody> component directly inside the <flutter> component representing the view",
-              style: TextStyle(color: Colors.black, fontSize: 15),
+              style: TextStyle(color: colors.onSurface, fontSize: 15),
             ),
-            const Text(
+            Text(
               'Current invalid view returned:',
-              style: TextStyle(color: Colors.black, fontSize: 15),
+              style: TextStyle(color: colors.onSurface, fontSize: 15),
             ),
             Text(widget.html),
           ],
@@ -57,7 +58,7 @@ class _MissingPageComponentState extends State<MissingPageComponent> {
     debugPrint("Unable to find any <viewBody> component on url ${widget.url}");
     debugPrint(widget.html);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       body: ListView(children: doc),
     );
   }

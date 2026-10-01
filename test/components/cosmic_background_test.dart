@@ -20,19 +20,32 @@ void main() {
     expect(find.byType(LiveCosmicBackground), findsOneWidget);
     expect(find.byType(ImageFiltered), findsNothing);
     expect(find.byType(CustomPaint), findsWidgets);
+    final paint = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .firstWhere((widget) => widget.painter is CosmicAmbientPainter);
+    expect(
+      (paint.painter! as CosmicAmbientPainter).colors,
+      Theme.of(tester.element(find.byType(LiveCosmicBackground))).colorScheme,
+    );
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
-  test('ambient painter only repaints when the theme brightness changes', () {
-    const light = CosmicAmbientPainter(isDark: false);
+  test('ambient painter repaints when theme colors change', () {
+    final light = CosmicAmbientPainter(
+      colors: ColorScheme.fromSeed(seedColor: Colors.blue),
+    );
+    final dark = CosmicAmbientPainter(
+      colors: ColorScheme.fromSeed(
+        seedColor: Colors.blue,
+        brightness: Brightness.dark,
+      ),
+    );
+    final other = CosmicAmbientPainter(
+      colors: ColorScheme.fromSeed(seedColor: Colors.green),
+    );
 
-    expect(
-      light.shouldRepaint(const CosmicAmbientPainter(isDark: false)),
-      isFalse,
-    );
-    expect(
-      light.shouldRepaint(const CosmicAmbientPainter(isDark: true)),
-      isTrue,
-    );
+    expect(light.shouldRepaint(light), isFalse);
+    expect(light.shouldRepaint(dark), isTrue);
+    expect(light.shouldRepaint(other), isTrue);
   });
 }

@@ -30,18 +30,19 @@ class _ReloadWidgetState extends State<ReloadWidget>
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return AnimatedBuilder(
       animation: controller,
-      builder: (_, __) {
+      builder: (_, _) {
         return FractionallySizedBox(
           widthFactor: controller.value,
           child: Container(
             height: 5,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment(0.8, 1),
-                colors: [Colors.green, Colors.red, Colors.blue, Colors.purple],
+                colors: [colors.primary, colors.secondary, colors.tertiary],
               ),
             ),
           ),

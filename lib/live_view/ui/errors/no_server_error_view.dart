@@ -11,18 +11,19 @@ class NoServerError extends StatefulWidget {
 class _NoServerErrorState extends State<NoServerError> {
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     debugPrint(widget.error.toString());
     List<Widget> doc = [
       Container(
-        color: Colors.grey[200],
+        color: colors.errorContainer,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Unable to connect to the Live View Server",
               style: TextStyle(
-                color: Colors.red,
+                color: colors.onErrorContainer,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -30,7 +31,7 @@ class _NoServerErrorState extends State<NoServerError> {
             Text(widget.error.summary.toString()),
             Text(
               'Stacktrace is shown below',
-              style: TextStyle(fontSize: 15, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 15, color: colors.onSurfaceVariant),
             ),
           ],
         ),
@@ -41,12 +42,12 @@ class _NoServerErrorState extends State<NoServerError> {
         padding: const EdgeInsets.all(20),
         child: Text(
           widget.error.stack.toString(),
-          style: const TextStyle(color: Colors.black, fontSize: 15),
+          style: TextStyle(color: colors.onSurface, fontSize: 15),
         ),
       ),
     ]);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       body: ListView(children: doc),
     );
   }

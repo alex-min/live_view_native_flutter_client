@@ -119,6 +119,35 @@ void main() {
     expect(painter.labels.last, '€105\nJan 2, 2026');
     expect(painter.selectedIndex, 2);
     expect(painter.lineColor, const Color(0xFF8D63FF));
+    final scheme = Theme.of(tester.element(chartPaint)).colorScheme;
+    expect(painter.incomeColor, scheme.secondary);
+    expect(painter.expenseColor, scheme.error);
+    expect(painter.markerHaloColor, scheme.surface);
+  });
+
+  testWidgets('uses the current theme for its default line color', (
+    tester,
+  ) async {
+    final (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<BalanceChart points="1,2,3" height="142" />'],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    final paint = find.byWidgetPredicate(
+      (widget) =>
+          widget is CustomPaint && widget.painter is BalanceHistoryPainter,
+    );
+    final painter =
+        tester.widget<CustomPaint>(paint).painter! as BalanceHistoryPainter;
+    expect(
+      painter.lineColor,
+      Theme.of(tester.element(paint)).colorScheme.primary,
+    );
   });
 
   testWidgets('shrinks and follows the transaction crossing the list', (
