@@ -4,9 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/liveview_flutter.dart';
 
+import 'billing/revenuecat_plugin.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp(view: await LiveView.withPersistentCache()));
+  final view = await LiveView.withPersistentCache();
+  await view.installPlugins([RevenueCatPlugin()]);
+  runApp(MyApp(view: view));
 }
 
 class MyApp extends StatefulWidget {

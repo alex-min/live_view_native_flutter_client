@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   liveview_flutter:
     path: ../
+  purchases_flutter: ^10.14.0
 
 dev_dependencies:
   flutter_test:

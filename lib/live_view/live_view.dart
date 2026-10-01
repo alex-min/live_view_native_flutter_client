@@ -1324,10 +1324,26 @@ class LiveView {
   }
 
   Future<http.Response> deadViewDeleteQuery(String url) async {
-    var r = await httpClient.delete(
-      shortUrlToUri(url),
-      headers: {...httpHeaders(), 'x-csrf-token': _csrf ?? ''},
-    );
+    // Logout may follow a long websocket-only session. Avoid reusing a stale
+    // pooled HTTP connection for this session-changing request.
+    var deleteClient =
+        identical(httpClient, _initialHttpClient)
+            ? _httpClientFactory()
+            : httpClient;
+    var closeDeleteClient = !identical(deleteClient, httpClient);
+    late http.Response r;
+    try {
+      r = await deleteClient.delete(
+        shortUrlToUri(url),
+        headers: {
+          ...httpHeaders(),
+          'connection': 'close',
+          'x-csrf-token': _csrf ?? '',
+        },
+      );
+    } finally {
+      if (closeDeleteClient) deleteClient.close();
+    }
 
     await _handleSessionResponse(r);
 
