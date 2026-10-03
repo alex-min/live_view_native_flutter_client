@@ -80,7 +80,9 @@ void main() {
   testWidgets('an explicit location on the destination page still wins', (
     tester,
   ) async {
-    tester.setScreenSize(const Size(1280, 720));
+    // Narrow screen: BottomNavigationBar collapses at wider breakpoints and
+    // takes the BottomAppBar band with it, so the bar must exist here.
+    tester.setScreenSize(const Size(400, 720));
 
     var (view, _) = await connect(
       LiveView(),
