@@ -9,6 +9,7 @@ import 'package:liveview_flutter/exec/exec_navigate.dart';
 import 'package:liveview_flutter/exec/exec_phx_href.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
 import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
+import 'package:liveview_flutter/exec/exec_audio.dart';
 import 'package:liveview_flutter/exec/exec_speak.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
 import 'package:liveview_flutter/exec/exec_toggle_theme.dart';
@@ -133,6 +134,9 @@ class FlutterExecAction {
       ..add(['showBottomSheet'], (_, __) => ExecShowBottomSheet())
       ..add(['speak'], (value, attributes) {
         return ExecSpeak(text: value?['text'], lang: value?['lang']);
+      })
+      ..add(['playAudio'], (value, attributes) {
+        return ExecPlayAudio(url: value?['url']);
       })
       ..add(['phx-on-mount'], (value, attributes) {
         return ExecLiveEvent(
