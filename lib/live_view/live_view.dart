@@ -216,6 +216,35 @@ class LiveView {
 
   Map<String, dynamic>? formValuesFor(String urlPath) => _formValues[urlPath];
 
+  /// Field names currently backed by a mounted form, per page. Server renders
+  /// rebuild form subtrees into fresh widget instances before the old form is
+  /// unmounted, so a form being recreated registers its fields before the
+  /// previous instance unregisters them; only when the last instance of a
+  /// field is gone (form actually closed) is the remembered value dropped.
+  final Map<String, Map<String, int>> _liveFormFields = {};
+
+  void registerLiveFormField(String urlPath, String name) {
+    final page = _liveFormFields.putIfAbsent(urlPath, () => {});
+    page[name] = (page[name] ?? 0) + 1;
+  }
+
+  void unregisterLiveFormField(String urlPath, String name) {
+    final page = _liveFormFields[urlPath];
+    if (page == null) {
+      return;
+    }
+    final count = (page[name] ?? 0) - 1;
+    if (count > 0) {
+      page[name] = count;
+      return;
+    }
+    page.remove(name);
+    // The last form holding this field left the tree: drop the remembered
+    // value so a form reopened later starts from server-rendered values
+    // instead of resurrecting stale input.
+    _formValues[urlPath]?.remove(name);
+  }
+
   void rememberFormValue(String urlPath, String name, dynamic value) {
     _formValues.putIfAbsent(urlPath, () => {})[name] = value;
   }

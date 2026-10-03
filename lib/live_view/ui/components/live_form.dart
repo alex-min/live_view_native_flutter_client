@@ -45,6 +45,17 @@ class _LiveFormState extends StateWidget<LiveForm> {
   Map<String, dynamic> formValues = {};
   bool _dependenciesReady = false;
 
+  /// Field names this form instance registered on the LiveView, so disposing
+  /// unregisters exactly those (and not another form's values sharing the
+  /// same page).
+  final Set<String> _registeredKeys = {};
+
+  void _registerKey(String name) {
+    if (_registeredKeys.add(name)) {
+      liveView.registerLiveFormField(widget.state.urlPath, name);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +64,18 @@ class _LiveFormState extends StateWidget<LiveForm> {
     formValues = Map<String, dynamic>.from(
       liveView.formValuesFor(widget.state.urlPath) ?? {},
     );
+    // Registration happens before the previous form instance's dispose runs
+    // (build precedes unmount), which is what lets the unregister step tell
+    // a rebuilt form from a genuinely closed one.
+    formValues.keys.forEach(_registerKey);
+  }
+
+  @override
+  void dispose() {
+    for (var name in _registeredKeys) {
+      liveView.unregisterLiveFormField(widget.state.urlPath, name);
+    }
+    super.dispose();
   }
 
   @override
@@ -142,6 +165,7 @@ class _LiveFormState extends StateWidget<LiveForm> {
         onNotification: (event) {
           if (event.type == FormFieldEventType.change ||
               event.type == FormFieldEventType.initField) {
+            _registerKey(event.name);
             formValues[event.name] = event.data;
             liveView.rememberFormValue(
               widget.state.urlPath,

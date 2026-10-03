@@ -216,7 +216,7 @@ main() async {
     });
 
     for (var entered in ['12.34', '']) {
-      testWidgets('restores "$entered" after a picker replaces the form', (
+      testWidgets('resets "$entered" when the form is removed then re-added', (
         tester,
       ) async {
         const form =
@@ -235,6 +235,9 @@ main() async {
         await tester.enterText(find.byType(TextField), entered);
         await tester.pumpAndSettle();
 
+        // The form leaves the tree (e.g. an inline form cancelled, or a
+        // picker replacing it): its remembered values must not outlive it,
+        // otherwise reopening the form resurrects stale input.
         view.handleDiffMessage({
           '0': {
             's': ['<Text>Category picker</Text>'],
@@ -242,18 +245,21 @@ main() async {
         });
         await tester.pumpAndSettle();
         expect(find.byType(TextField), findsNothing);
+        expect(view.formValuesFor(view.currentUrl)?['amount'], isNull);
+
         view.handleDiffMessage({
           '0': {
             's': [form],
           },
         });
         await tester.pumpAndSettle();
-        expect(fieldValue(), entered);
+        await tester.pump(const Duration(milliseconds: 10));
+        expect(fieldValue(), '7');
         await tester.tap(find.text('Save'));
         await tester.pumpAndSettle();
         expect(
           server.lastChannelAction.toString(),
-          contains('event: save, value: amount=$entered'),
+          contains('event: save, value: amount=7'),
         );
       });
     }
