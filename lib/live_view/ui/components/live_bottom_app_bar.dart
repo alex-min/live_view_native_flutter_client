@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_bottom_navigation_bar.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class LiveBottomAppBar extends LiveStateWidget<LiveBottomAppBar> {
@@ -26,7 +27,24 @@ class _LiveBottomAppBarState extends StateWidget<LiveBottomAppBar> {
       reloadAttributes(node, attributes);
 
   @override
+  void onWindowResize() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget render(BuildContext context) {
+    final child = singleChild();
+
+    // BottomNavigationBar collapses below the mobile breakpoint; a bar
+    // wrapping only it must not paint an empty band on wide screens.
+    if (child is LiveBottomNavigationBar &&
+        MediaQuery.of(context).size.width >=
+            LiveBottomNavigationBar.mobileBreakpoint) {
+      return const SizedBox.shrink();
+    }
+
     final bar = BottomAppBar(
       height: doubleAttribute('height'),
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.none,
@@ -36,7 +54,7 @@ class _LiveBottomAppBarState extends StateWidget<LiveBottomAppBar> {
       elevation: doubleAttribute('elevation'),
       surfaceTintColor: colorAttribute(context, 'surfaceTintColor'),
       shadowColor: colorAttribute(context, 'shadowColor'),
-      child: singleChild(),
+      child: child,
     );
 
     if (booleanAttribute('ignorePointer') ?? false) {
