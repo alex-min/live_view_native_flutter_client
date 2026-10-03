@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/alignment_directional.dart';
 import 'package:liveview_flutter/live_view/mapping/colors.dart';
 import 'package:liveview_flutter/live_view/mapping/css.dart';
 import 'package:liveview_flutter/live_view/mapping/edge_insets.dart';
@@ -21,6 +22,7 @@ ButtonStyle? getButtonStyle(BuildContext context, String? style) {
   MaterialStateProperty<OutlinedBorder?>? shape;
   MaterialTapTargetSize? tapTargetSize;
   VisualDensity? visualDensity;
+  AlignmentGeometry? alignment;
 
   for (var (styleKey, styleValue) in parseCss(style)) {
     switch (styleKey) {
@@ -46,6 +48,8 @@ ButtonStyle? getButtonStyle(BuildContext context, String? style) {
         tapTargetSize = getMaterialTapTargetSize(styleValue);
       case 'visualDensity':
         visualDensity = getVisualDensity(styleValue);
+      case 'alignment':
+        alignment = getAlignmentDirectional(styleValue);
       default:
         warnInvalidStyle('button', 'unknown property "$styleKey"');
     }
@@ -60,6 +64,7 @@ ButtonStyle? getButtonStyle(BuildContext context, String? style) {
     shape: shape,
     tapTargetSize: tapTargetSize,
     visualDensity: visualDensity,
+    alignment: alignment,
   );
 }
 
