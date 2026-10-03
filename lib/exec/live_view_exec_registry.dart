@@ -6,7 +6,7 @@ typedef ExecBuilder =
       Map<String, dynamic>? attributes,
     );
 
-enum LiveViewExecTrigger { onTap }
+enum LiveViewExecTrigger { onTap, onMount }
 
 class LiveViewExecRegistry {
   LiveViewExecRegistry._internal();

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:liveview_flutter/exec/exec.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
@@ -14,6 +15,7 @@ import 'package:liveview_flutter/live_view/state/element_key.dart';
 import 'package:liveview_flutter/live_view/state/state_child.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/node_state.dart';
+import 'package:liveview_flutter/live_view/ui/utils.dart';
 import 'package:liveview_flutter/when/when.dart';
 import 'package:provider/provider.dart';
 import 'package:xml/xml.dart';
@@ -94,6 +96,20 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     if (node.getAttribute('phx-onload') != null ||
         node.getAttribute('phx-responsive') != null) {
       Future.delayed(Duration.zero, () => onLoad());
+    }
+    if (LiveViewExecRegistry.instance
+        .execsByTrigger(LiveViewExecTrigger.onMount)
+        .any((attribute) => node.getAttribute(attribute) != null)) {
+      // Firing is deferred to the end of the frame (like onLoad) because the
+      // handler needs a mounted context. Firing from initState means the exec
+      // runs exactly once per element insertion; attribute updates on a kept
+      // element and server diffs reuse the same State instance and never
+      // re-trigger it. MountExecTracker dedups the subtree re-creations that
+      // server diffs cause, which plain element lifecycle cannot distinguish
+      // from real insertions.
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        executeOnMountEvents();
+      });
     }
     super.initState();
   }
@@ -518,6 +534,62 @@ abstract class StateWidget<T extends LiveStateWidget> extends State<T>
     reloadPredefinedAttributes(node);
     gatherAllTapEvents(events, fromAttributes: fromAttributes);
     executeAllEvents(events);
+  }
+
+  /// Executes the execs carried by attributes registered with the
+  /// [LiveViewExecTrigger.onMount] trigger (e.g. `phx-on-mount`). Called once
+  /// when the widget is inserted into the tree, never on rebuilds.
+  ///
+  /// Firing is gated by [MountExecTracker]: because diffs re-create widget
+  /// subtrees, element lifecycle alone can't tell a kept element from a
+  /// re-inserted one, so the tracker dedups on (element position, resolved
+  /// payload) and only lets a payload through again when a diff re-introduced
+  /// the statics carrying it.
+  void executeOnMountEvents() {
+    if (!mounted) {
+      return;
+    }
+
+    reloadPredefinedAttributes(node);
+
+    final mountAttributes = LiveViewExecRegistry.instance.execsByTrigger(
+      LiveViewExecTrigger.onMount,
+    );
+    final eligible =
+        mountAttributes.where((attribute) {
+          final value = getAttribute(attribute);
+          return value != null &&
+              liveView.mountTracker.shouldFire(
+                nestedState: widget.state.nestedState,
+                childIndex: _mountChildIndex(),
+                attribute: attribute,
+                resolvedValue: value,
+              );
+        }).toList();
+
+    if (eligible.isEmpty) {
+      return;
+    }
+
+    List<EventHandler> events = [];
+    gatherAllEvents(eligible, events);
+    executeAllEvents(events);
+  }
+
+  /// Position of this element among its parent's non-empty children, used to
+  /// distinguish siblings carrying identical mount payloads.
+  int _mountChildIndex() {
+    final parent = node.parent;
+    if (parent == null) {
+      return 0;
+    }
+    final children = parent.nonEmptyChildren;
+    for (var i = 0; i < children.length; i++) {
+      if (identical(children[i], node)) {
+        return i;
+      }
+    }
+    return 0;
   }
 
   void executeOnTriggerEventsManually({Map<String, dynamic>? fromAttributes}) {

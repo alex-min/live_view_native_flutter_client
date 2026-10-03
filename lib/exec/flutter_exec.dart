@@ -9,6 +9,7 @@ import 'package:liveview_flutter/exec/exec_navigate.dart';
 import 'package:liveview_flutter/exec/exec_phx_href.dart';
 import 'package:liveview_flutter/exec/exec_save_current_theme.dart';
 import 'package:liveview_flutter/exec/exec_show_bottom_sheet.dart';
+import 'package:liveview_flutter/exec/exec_speak.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
 import 'package:liveview_flutter/exec/exec_toggle_theme.dart';
 import 'package:liveview_flutter/exec/exec_visibility_action.dart';
@@ -129,7 +130,17 @@ class FlutterExecAction {
           timeInMilliseconds: value?['time'],
         );
       })
-      ..add(['showBottomSheet'], (_, __) => ExecShowBottomSheet());
+      ..add(['showBottomSheet'], (_, __) => ExecShowBottomSheet())
+      ..add(['speak'], (value, attributes) {
+        return ExecSpeak(text: value?['text'], lang: value?['lang']);
+      })
+      ..add(['phx-on-mount'], (value, attributes) {
+        return ExecLiveEvent(
+          type: 'phx-on-mount',
+          name: value!['name'],
+          value: getPhxValues(attributes),
+        );
+      }, triggers: [LiveViewExecTrigger.onMount]);
   }
 }
 

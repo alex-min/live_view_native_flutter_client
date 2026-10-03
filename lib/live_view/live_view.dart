@@ -10,6 +10,7 @@ import 'package:http_query_string/http_query_string.dart' as qs;
 import 'package:liveview_flutter/exec/exec_live_event.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/exec/live_view_exec_registry.dart';
+import 'package:liveview_flutter/exec/mount_exec_tracker.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_manifest_parser.dart';
 import 'package:liveview_flutter/live_view/cache/live_cache_namespace.dart';
@@ -183,6 +184,9 @@ class LiveView {
   late LiveConnectionNotifier connectionNotifier;
   late ThemeSettings themeSettings;
   LiveGoBackNotifier goBackNotifier = LiveGoBackNotifier();
+
+  /// Deduplicates `onMount` exec firings across rebuilds and diffs.
+  final MountExecTracker mountTracker = MountExecTracker();
   bool _isGoingBack = false;
   late LiveRouterDelegate router;
   bool throttleSpammyCalls = true;
@@ -759,6 +763,8 @@ class LiveView {
     _renderedViewType = viewType;
     onViewTypeRendered?.call(viewType);
     clearFormTriggerActions(currentUrl);
+    // A new render replaces the whole tree: mount execs must fire again.
+    mountTracker.reset();
     connectionNotifier.wipeState();
     // Cache policy is optional. Only an explicit session boundary resets history.
     var resetsSession =
@@ -995,6 +1001,7 @@ class LiveView {
 
   handleDiffMessage(Map<String, dynamic> diff) {
     _handleDiffEvents(diff);
+    mountTracker.recordDiff(diff);
     changeNotifier.setDiff(diff);
   }
 

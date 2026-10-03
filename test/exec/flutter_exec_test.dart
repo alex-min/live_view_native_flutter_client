@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liveview_flutter/exec/exec_live_event.dart';
+import 'package:liveview_flutter/exec/exec_speak.dart';
 import 'package:liveview_flutter/exec/exec_switch_theme.dart';
 import 'package:liveview_flutter/exec/exec_toggle_theme.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
@@ -22,5 +24,38 @@ void main() {
 
     expect(execs.length, 1);
     expect(execs.first, isA<ExecSwitchTheme>());
+  });
+
+  test('parses speak with text and lang from a phx-click payload', () {
+    var execs = FlutterExec.parse(
+      '[["speak", {"text": "xin chào", "lang": "vi-VN"}]]',
+      'phx-click',
+      null,
+    );
+
+    expect(execs.length, 1);
+    expect(execs.first, isA<ExecSpeak>());
+    var speak = execs.first as ExecSpeak;
+    expect(speak.text, 'xin chào');
+    expect(speak.lang, 'vi-VN');
+  });
+
+  test('parses speak from a phx-on-mount payload', () {
+    var execs = FlutterExec.parse(
+      '[["speak", {"text": "xin chào", "lang": "vi-VN"}]]',
+      'phx-on-mount',
+      null,
+    );
+
+    expect(execs.length, 1);
+    expect(execs.first, isA<ExecSpeak>());
+  });
+
+  test('plain string phx-on-mount pushes a server event', () {
+    var execs = FlutterExec.parse('some_event', 'phx-on-mount', null);
+
+    expect(execs.length, 1);
+    expect(execs.first, isA<ExecLiveEvent>());
+    expect((execs.first as ExecLiveEvent).name, 'some_event');
   });
 }

@@ -39,6 +39,7 @@ dependencies:
   flutter_widget_from_html: ^0.17.2
   community_charts_flutter: ^1.0.4
   google_sign_in: ^7.2.0
+  flutter_tts: ^4.2.2
 
 dev_dependencies:
   flutter_test:
