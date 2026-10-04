@@ -7,6 +7,11 @@ class FakeTtsEngine extends TtsEngine {
   final List<String> stops = [];
   final List<String> spoken = [];
   bool failInit = false;
+  void Function()? completionHandler;
+
+  /// When true, speak() signals completion right after recording, like a
+  /// real engine finishing the utterance.
+  bool autoComplete = false;
 
   FakeTtsEngine({this.languages = const ['vi', 'en-US', 'fr-FR']});
 
@@ -33,6 +38,14 @@ class FakeTtsEngine extends TtsEngine {
   @override
   Future<void> speak(String text) async {
     spoken.add(text);
+    if (autoComplete) {
+      completionHandler?.call();
+    }
+  }
+
+  @override
+  void setCompletionHandler(void Function() handler) {
+    completionHandler = handler;
   }
 }
 
@@ -92,6 +105,70 @@ void main() {
 
     expect(engine.languageCalls, isEmpty);
     expect(engine.spoken, ['hello']);
+  });
+
+  test(
+    'speakSequence speaks steps in order, waiting for each utterance',
+    () async {
+      engine.autoComplete = true;
+
+      await service.speakSequence([
+        SpeakStep(text: 'thành công', lang: 'vi-VN'),
+        SpeakStep(
+          text: 'Chúc bạn thành công!',
+          lang: 'vi-VN',
+          delayBefore: Duration.zero,
+        ),
+      ]);
+
+      expect(engine.spoken, ['thành công', 'Chúc bạn thành công!']);
+      // each step cancels in-flight speech first
+      expect(engine.stops, ['stop', 'stop']);
+    },
+  );
+
+  test('speakSequence waits for the delay before the follow-up step', () async {
+    engine.autoComplete = true;
+
+    final started = DateTime.now();
+    await service.speakSequence([
+      SpeakStep(text: 'thành công', lang: 'vi-VN'),
+      SpeakStep(
+        text: 'Chúc bạn thành công!',
+        lang: 'vi-VN',
+        delayBefore: Duration(milliseconds: 100),
+      ),
+    ]);
+
+    expect(
+      DateTime.now().difference(started),
+      greaterThanOrEqualTo(Duration(milliseconds: 100)),
+    );
+    expect(engine.spoken, ['thành công', 'Chúc bạn thành công!']);
+  });
+
+  test('a newer speak cancels the pending follow-up of a sequence', () async {
+    // first utterance never completes: once a plain speak bumps the
+    // generation, the sequence loop aborts instead of speaking the follow-up
+    final sequence = service.speakSequence([
+      SpeakStep(text: 'thành công', lang: 'vi-VN'),
+      SpeakStep(text: 'Chúc bạn thành công!', lang: 'vi-VN'),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    await service.speak(text: 'xin chào', lang: 'vi-VN');
+    await sequence;
+
+    expect(engine.spoken, ['thành công', 'xin chào']);
+  });
+
+  test('speakSequence with only empty steps is a no-op', () async {
+    await service.speakSequence([
+      SpeakStep(text: '   ', lang: 'vi-VN'),
+      SpeakStep(text: '', lang: 'vi-VN'),
+    ]);
+
+    expect(engine.spoken, isEmpty);
+    expect(engine.stops, isEmpty);
   });
 
   test('init failures are swallowed, not thrown', () async {
