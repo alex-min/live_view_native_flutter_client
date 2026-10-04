@@ -519,7 +519,11 @@ class LiveView {
       var themeMode =
           content.querySelector('html')?.attributes['data-theme-mode'];
       if (themeName != null && themeMode != null) {
-        unawaited(switchTheme(themeName, themeMode));
+        // The server renders its default theme for visitors and for users
+        // without an explicit pick; adopting it blindly would clobber a
+        // locally saved or OS-driven choice, so the default is mirrored
+        // rather than persisted.
+        unawaited(themeSettings.adoptServerTheme(themeName, themeMode));
       }
     } catch (e, stack) {
       router.pushPage(

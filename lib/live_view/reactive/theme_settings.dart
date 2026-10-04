@@ -11,7 +11,7 @@ class ThemeSettings extends ChangeNotifier {
   late String host;
 
   String _themeName = 'cosmic';
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode = ThemeMode.system;
   ThemeData? _lightTheme;
   ThemeData? _darkTheme;
   final Map<String, ThemeData> _decodedThemes = {};
@@ -42,10 +42,27 @@ class ThemeSettings extends ChangeNotifier {
   Future<void> loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _themeName = prefs.getString('themeName') ?? 'cosmic';
+    // Visitors without an explicit pick follow the OS appearance, mirroring
+    // the web client's OS-preference fallback. The fallback is never
+    // persisted: an explicit choice still wins and is saved.
     _themeMode = ThemeModeStringify.parse(
-      prefs.getString('themeMode') ?? 'light',
+      prefs.getString('themeMode') ?? 'system',
     );
     notifyListeners();
+  }
+
+  /// Adopts the theme rendered by a dead view.
+  ///
+  /// The server renders its default theme for visitors and for users without
+  /// an explicit pick; like the web client, that default must not override a
+  /// local or OS-driven choice, so it is left untouched. Explicit themes are
+  /// adopted and persisted.
+  Future<void> adoptServerTheme(String name, String mode) async {
+    if (name == 'cosmic' && mode == 'light') {
+      return;
+    }
+    await setTheme(name, mode);
+    await save();
   }
 
   Future<void> loadCurrentTheme() async {

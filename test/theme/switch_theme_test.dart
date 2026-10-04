@@ -35,7 +35,9 @@ main() async {
 
     expect(view.themeSettings.lightTheme, null);
     expect(view.themeSettings.darkTheme, null);
-    expect(view.themeSettings.themeMode, ThemeMode.light);
+    // visitors without a stored choice follow the OS appearance (light in tests)
+    expect(view.themeSettings.themeMode, ThemeMode.system);
+    expect(view.themeSettings.getDisplayedThemeMode(), ThemeMode.light);
     expect(view.themeSettings.themeName, 'cosmic');
   });
 
@@ -209,7 +211,9 @@ main() async {
     await tester.runLiveView(view);
     await tester.pumpAndSettle();
 
-    expect(view.themeSettings.themeMode, ThemeMode.light);
+    // visitors without a stored choice follow the OS appearance (light in tests)
+    expect(view.themeSettings.themeMode, ThemeMode.system);
+    expect(view.themeSettings.getDisplayedThemeMode(), ThemeMode.light);
 
     await tester.tap(find.byType(LiveIconButton));
     await tester.pumpAndSettle();
