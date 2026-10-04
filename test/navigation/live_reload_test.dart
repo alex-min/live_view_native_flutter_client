@@ -112,4 +112,45 @@ main() async {
     );
     expect(view.router.pages.last.page.name, '/second-page');
   });
+
+  testWidgets('live reload keeps query params on the current route', (
+    tester,
+  ) async {
+    var (view, server) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<link live-patch="/review?language=35&practice=1">link</link>'],
+      },
+    );
+
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(LiveLink));
+    view.handleMessage(Message(event: PhoenixChannelEvent('phx_close')));
+    view.handleRenderedMessage({
+      's': ['<Text>practice</Text>'],
+    });
+    await tester.pumpAndSettle();
+
+    expect(view.currentUrl, '/review?language=35&practice=1');
+
+    view.handleLiveReloadMessage(
+      Message(event: PhoenixChannelEvent.custom('assets_change')),
+    );
+    await tester.pumpAndSettle();
+
+    // the dead-view refetch and the channel rejoin must keep the query string
+    expect(
+      server.httpRequestsMade.map((r) => r.url.toString()),
+      contains(
+        'http://localhost:9999/review?language=35&practice=1&_format=flutter',
+      ),
+    );
+    expect(
+      server.lastChannel?.parameters['redirect'],
+      'http://localhost:9999/review?language=35&practice=1',
+    );
+    expect(view.currentUrl, '/review?language=35&practice=1');
+  });
 }

@@ -319,6 +319,9 @@ class LiveView {
     bool initialized = false;
 
     currentUrl = endpoint.path == "" ? "/" : endpoint.path;
+    if (endpoint.query.isNotEmpty) {
+      currentUrl = '$currentUrl?${endpoint.query}';
+    }
     endpointScheme = endpoint.scheme;
     try {
       var response = await deadViewGetQuery(currentUrl);
