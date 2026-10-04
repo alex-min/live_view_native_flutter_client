@@ -25,7 +25,7 @@ class _LiveContainerState extends StateWidget<LiveContainer> {
   @override
   Widget render(BuildContext context) {
     return Container(
-      alignment: getAlignmentDirectional('alignment'),
+      alignment: getAlignmentDirectional(getAttribute('alignment')),
       height: doubleAttribute('height'),
       width: doubleAttribute('width'),
       margin: getEdgeInsets(getAttribute('margin')),
