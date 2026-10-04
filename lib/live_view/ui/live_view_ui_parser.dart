@@ -75,6 +75,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_tooltip.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_trailing_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_underline_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_swipeable.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_wrap.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
 import 'package:liveview_flutter/live_view/ui/errors/parsing_error_view.dart';
@@ -391,6 +392,9 @@ class LiveViewUiParser {
       ..add(['Row'], (state) => [LiveRow(state: state, key: Key(uuid.v4()))])
       ..add(['Flex'], (state) => [LiveFlex(state: state, key: Key(uuid.v4()))])
       ..add(['Wrap'], (state) => [LiveWrap(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'Swipeable',
+      ], (state) => [LiveSwipeable(state: state, key: Key(uuid.v4()))])
       ..add(
         ['PersistentFooterButton'],
         (state) => [
