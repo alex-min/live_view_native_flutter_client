@@ -187,10 +187,21 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
     // Compact app bars are the native bottom-tab layout: they intentionally
     // contribute no toolbar or status-bar inset. Keep the route edge-to-edge
     // even during the frame where the root attribute is still catching up to
-    // the newly selected tab; otherwise SafeArea briefly paints a top strip.
+    // the newly selected tab — or while the previous tab's page is still on
+    // top during a cached switch — otherwise SafeArea briefly paints a top
+    // strip. The body then pads itself below the status bar (see below).
+    var recentPages =
+        widget.view.router.pages.length > 1
+            ? widget.view.router.pages.sublist(
+              widget.view.router.pages.length - 2,
+            )
+            : widget.view.router.pages;
+    var hasRecentCompactAppBar = recentPages.any(
+      (page) => widgetsContainCompactAppBar(page.widgets),
+    );
     var extendBodyBehindAppBar =
         getBoolean(getRootAttribute('extendBodyBehindAppBar')) ??
-        hasCompactAppBar;
+        hasRecentCompactAppBar;
     var extendBody = getBoolean(getRootAttribute('extendBody')) ?? false;
 
     // The bottom navigation bar only appears under the mobile breakpoint;
@@ -206,6 +217,11 @@ class _RootScaffoldState extends State<RootScaffold> with ComputedAttributes {
       routerDelegate: widget.view.router,
       backButtonDispatcher: RootBackButtonDispatcher(),
     );
+    // Pages whose app bar is hidden or compact leave the top edge uncovered
+    // by chrome. Their body content pads itself below the status bar (see
+    // LiveViewBody); the scaffold stays edge-to-edge so ambient backgrounds
+    // still paint behind the status bar.
+    widget.view.padBodyBelowStatusBar = extendBodyBehindAppBar && hideAppBar;
     var child = extendBodyBehindAppBar ? router : SafeArea(child: router);
 
     child = Column(

@@ -128,6 +128,12 @@ class LiveView {
   EventHub eventHub = EventHub();
   bool isLiveReloading = false;
 
+  /// Whether the current page's app bar is hidden or compact and therefore
+  /// does not cover the status bar. Set by [RootScaffold] on every build;
+  /// [LiveViewBody] reads it to pad the page content below the status bar
+  /// while ambient backgrounds keep painting edge-to-edge.
+  bool padBodyBelowStatusBar = false;
+
   // Widgets marked persistent="true" are skipped by the parser and hoisted
   // here instead; RootScaffold renders them above the page body so they
   // survive page navigation like the bottom navigation bar. Presence is

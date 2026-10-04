@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets(
-    'a compact app bar keeps the route edge-to-edge while root attributes settle',
+    'a compact app bar pads the body below the status bar once chrome settles',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
       final view = LiveView();
@@ -38,13 +38,14 @@ void main() {
       tester.view.padding = const FakeViewPadding(top: 24);
       await tester.pumpAndSettle();
 
-      expect(find.byType(SafeArea), findsNothing);
-      expect(tester.getTopLeft(find.text('Tab page')).dy, 0);
+      // the hidden app bar does not cover the status bar, so the body pads
+      // itself below it
+      expect(tester.getTopLeft(find.text('Tab page')).dy, 24);
     },
   );
 
   testWidgets(
-    'a compact app bar does not reserve the status bar inset while navigation chrome loads',
+    'a compact app bar reserves the status bar inset once navigation chrome loads',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
       final view = LiveView();
@@ -81,12 +82,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('main_app_bar')), findsNothing);
-      expect(tester.getTopLeft(find.text('Cached page')).dy, 0);
+      expect(tester.getTopLeft(find.text('Cached page')).dy, 24);
 
       tester.view.physicalSize = const Size(800, 1000);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('main_app_bar')), findsNothing);
-      expect(tester.getTopLeft(find.text('Cached page')).dy, 0);
+      expect(tester.getTopLeft(find.text('Cached page')).dy, 24);
     },
   );
 

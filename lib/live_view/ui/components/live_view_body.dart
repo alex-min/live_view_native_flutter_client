@@ -26,14 +26,20 @@ class _LiveMainViewState extends StateWidget<LiveViewBody> {
       widget.state.liveView.persistentChromePageRendered = true;
     }
     final child = singleChild();
-    if (getAttribute('cosmicBackground') != 'true') return child;
+    // A hidden or compact app bar leaves the status bar uncovered: pad the
+    // page content, keeping ambient backgrounds (painted below) edge-to-edge.
+    final padded =
+        widget.state.liveView.padBodyBelowStatusBar
+            ? SafeArea(child: child)
+            : child;
+    if (getAttribute('cosmicBackground') != 'true') return padded;
 
     return Stack(
       children: [
         Positioned.fill(
           child: LiveCosmicBackground(state: widget.state, key: widget.key),
         ),
-        Positioned.fill(child: child),
+        Positioned.fill(child: padded),
       ],
     );
   }
