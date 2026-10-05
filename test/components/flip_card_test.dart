@@ -165,6 +165,53 @@ void main() {
     );
   }
 
+  testWidgets('dragging tilts the card and releasing settles it flat', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(LiveFlipCard)),
+    );
+    // real drags stream small deltas; a single jump would not start the pan
+    for (var i = 0; i < 6; i++) {
+      await gesture.moveBy(const Offset(10, 7));
+      await tester.pump();
+    }
+    final tilted = _faceTransform(tester, 'front').transform;
+    expect(tilted, isNot(Matrix4.identity()));
+    // tilting is not flipping
+    expect(engine.spoken, isEmpty);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_faceTransform(tester, 'front').transform, Matrix4.identity());
+    expect(engine.spoken, isEmpty);
+  });
+
+  testWidgets('a drag does not flip the card but a tap still does', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    await tester.drag(find.byType(LiveFlipCard), const Offset(120, 0));
+    await tester.pumpAndSettle();
+    expect(engine.spoken, isEmpty);
+
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pumpAndSettle();
+    expect(engine.spoken, ['flipped']);
+  });
+
+  testWidgets('the foil layers are present at low opacity', (tester) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    for (final key in ['foil-rainbow', 'foil-sparkle', 'foil-glare']) {
+      final foil = tester.widget<Opacity>(find.byKey(ValueKey(key)));
+      expect(foil.opacity, lessThanOrEqualTo(0.2));
+    }
+  });
+
   testWidgets('the initial frame is perfectly flat (identity transform)', (
     tester,
   ) async {
