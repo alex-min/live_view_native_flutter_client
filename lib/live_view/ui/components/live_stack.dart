@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liveview_flutter/live_view/mapping/alignment_directional.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 
 class LiveStack extends LiveStateWidget<LiveStack> {
@@ -9,7 +10,7 @@ class LiveStack extends LiveStateWidget<LiveStack> {
 }
 
 class _LiveStackState extends StateWidget<LiveStack> {
-  final attributes = ['clipBehavior'];
+  final attributes = ['clipBehavior', 'alignment'];
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
@@ -19,6 +20,9 @@ class _LiveStackState extends StateWidget<LiveStack> {
   @override
   Widget render(BuildContext context) {
     return Stack(
+      alignment:
+          getAlignmentDirectional(getAttribute('alignment')) ??
+          AlignmentDirectional.topStart,
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
       children: multipleChildren(),
     );

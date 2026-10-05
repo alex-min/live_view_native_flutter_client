@@ -76,6 +76,29 @@ void main() {
     return view;
   }
 
+  Future<void> pumpPropagationCard(WidgetTester tester) async {
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          '''
+          <Swipeable phx-click='[["speak", {"text": "reveal", "lang": "en-US"}]]'>
+            <Container height="300">
+              <Text>empty area</Text>
+              <IconButton
+                phx-click='[["speak", {"text": "sentence", "lang": "en-US"}]]'
+                icon="volume_up"
+              />
+            </Container>
+          </Swipeable>
+          ''',
+        ],
+      },
+    );
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+  }
+
   const upExec = '[["speak", {"text": "up", "lang": "en-US"}]]';
   const downExec = '[["speak", {"text": "down", "lang": "en-US"}]]';
 
@@ -118,11 +141,31 @@ void main() {
   testWidgets('animateIn slides the card in and settles in place', (
     tester,
   ) async {
-    await pumpSwipeable(tester, onSwipeUp: upExec, extraAttributes: '');
+    await pumpSwipeable(tester, onSwipeUp: upExec);
 
     final swipeable = find.byType(LiveSwipeable);
     expect(swipeable, findsOneWidget);
     // the enter animation completed and the card is visible
     expect(tester.getRect(find.text('card')).top, greaterThanOrEqualTo(0));
+  });
+
+  testWidgets('tapping a nested speaker button does not fire the card tap', (
+    tester,
+  ) async {
+    await pumpPropagationCard(tester);
+
+    await tester.tap(find.byIcon(Icons.volume_up));
+    await tester.pumpAndSettle();
+
+    expect(engine.spoken, ['sentence']);
+  });
+
+  testWidgets('tapping empty card area fires the card tap', (tester) async {
+    await pumpPropagationCard(tester);
+
+    await tester.tap(find.text('empty area'));
+    await tester.pumpAndSettle();
+
+    expect(engine.spoken, ['reveal']);
   });
 }
