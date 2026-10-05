@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
 import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
@@ -33,7 +34,7 @@ class LiveFlipCard extends LiveStateWidget<LiveFlipCard> {
 }
 
 class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
-  static const Duration flipDuration = Duration(milliseconds: 380);
+  static const Duration defaultFlipDuration = Duration(milliseconds: 380);
   static const Duration tiltSettleDuration = Duration(milliseconds: 320);
   static const double _perspective = 0.0016;
 
@@ -45,7 +46,7 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   /// else writes the angle; server state only ever adjusts the target.
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: flipDuration,
+    duration: defaultFlipDuration,
   );
   late final AnimationController _tiltController = AnimationController(
     vsync: this,
@@ -69,6 +70,7 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   /// Pointer position relative to the card, 0..1 on both axes, feeding the
   /// glare highlight.
   Offset _pointer = const Offset(0.5, 0.5);
+  bool _interacting = false;
 
   @override
   void initState() {
@@ -83,7 +85,8 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
 
   @override
   void onStateChange(Map<String, dynamic> diff) {
-    reloadAttributes(node, ['flipped', 'onFlip']);
+    reloadAttributes(node, ['flipped', 'onFlip', 'flip-duration']);
+    _controller.duration = _flipDuration;
     final serverFlipped = getAttribute('flipped') == 'true';
     if (serverFlipped == _flipped && _attributesLoaded) return;
     final firstLoad = !_attributesLoaded;
@@ -118,12 +121,21 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
     super.dispose();
   }
 
+  /// Optional server override of the flip length, in milliseconds. An absent
+  /// or invalid `flip-duration` keeps the default so existing templates
+  /// behave unchanged.
+  Duration get _flipDuration {
+    final ms = int.tryParse(getAttribute('flip-duration') ?? '');
+    if (ms == null || ms <= 0) return defaultFlipDuration;
+    return Duration(milliseconds: ms);
+  }
+
   void _animateTo(bool flipped) {
     _controller
         .animateTo(
           flipped ? 1 : 0,
           curve: Curves.easeInOut,
-          duration: flipDuration,
+          duration: _controller.duration,
         )
         .whenComplete(() {
           // rest exactly flat: no tilt may survive a completed flip
@@ -136,7 +148,36 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   void _resetTilt() {
     _tiltTween = null;
     _tiltController.stop();
-    if (_tilt != Offset.zero) setState(() => _tilt = Offset.zero);
+    if (_tilt != Offset.zero ||
+        _interacting ||
+        _pointer != const Offset(0.5, 0.5)) {
+      setState(() {
+        _tilt = Offset.zero;
+        _pointer = const Offset(0.5, 0.5);
+        _interacting = false;
+      });
+    }
+  }
+
+  void _onHover(PointerHoverEvent event) {
+    if (_controller.isAnimating) return;
+    final renderObject = context.findRenderObject();
+    final size = renderObject is RenderBox ? renderObject.size : Size.zero;
+    if (size.width == 0 || size.height == 0) return;
+    final pointer = Offset(
+      (event.localPosition.dx / size.width).clamp(0.0, 1.0),
+      (event.localPosition.dy / size.height).clamp(0.0, 1.0),
+    );
+    _tiltController.stop();
+    _tiltTween = null;
+    setState(() {
+      _pointer = pointer;
+      _tilt = Offset(
+        (0.5 - pointer.dy) * 2 * _maxTilt,
+        (pointer.dx - 0.5) * 2 * _maxTilt,
+      );
+      _interacting = true;
+    });
   }
 
   void _toggle() {
@@ -158,6 +199,7 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
     final size = renderObject is RenderBox ? renderObject.size : Size.zero;
     if (size.width == 0 || size.height == 0) return;
     setState(() {
+      _interacting = true;
       _tilt = Offset(
         (_tilt.dx - details.delta.dy / size.height * 2.2).clamp(
           -_maxTilt,
@@ -176,6 +218,10 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   }
 
   void _onPanEnd(DragEndDetails _) {
+    setState(() {
+      _interacting = false;
+      _pointer = const Offset(0.5, 0.5);
+    });
     if (_tilt == Offset.zero) return;
     _tiltTween = Tween<Offset>(
       begin: _tilt,
@@ -198,7 +244,7 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
     final angle = flipAngle % (2 * pi);
     if (angle == 0 && _tilt == Offset.zero) return Matrix4.identity();
     return Matrix4.identity()
-      ..setEntry(3, 0, _perspective)
+      ..setEntry(3, 2, -_perspective)
       ..rotateY(angle + _tilt.dy)
       ..rotateX(_tilt.dx);
   }
@@ -212,7 +258,21 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
       child: Transform(
         alignment: Alignment.center,
         transform: _transform(angle),
-        child: child,
+        child: Stack(
+          fit: StackFit.passthrough,
+          children: [
+            child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: FoilOverlay(
+                  tilt: _tilt,
+                  pointer: _pointer,
+                  interacting: _interacting,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -228,25 +288,30 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
       animation: _controller,
       builder: (context, _) {
         final angle = _controller.value * pi;
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _toggle,
-          onPanUpdate: _onPanUpdate,
-          onPanEnd: _onPanEnd,
-          onPanCancel: () => _onPanEnd(DragEndDetails()),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              _face(front, angle, angle <= pi / 2),
-              _face(back, angle + pi, angle > pi / 2),
-              // The foil floats above whichever face shows; it must not
-              // steal gestures from the card or its controls.
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: FoilOverlay(tilt: _tilt, pointer: _pointer),
-                ),
-              ),
-            ],
+        return MouseRegion(
+          onHover: _onHover,
+          onExit: (_) => _onPanEnd(DragEndDetails()),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _toggle,
+            onPanUpdate: _onPanUpdate,
+            onPanEnd: _onPanEnd,
+            onPanCancel: () => _onPanEnd(DragEndDetails()),
+            child: LayoutBuilder(
+              builder:
+                  (context, constraints) => Stack(
+                    alignment: Alignment.center,
+                    fit:
+                        constraints.hasBoundedWidth &&
+                                constraints.hasBoundedHeight
+                            ? StackFit.expand
+                            : StackFit.loose,
+                    children: [
+                      _face(front, angle, angle <= pi / 2),
+                      _face(back, angle + pi, angle > pi / 2),
+                    ],
+                  ),
+            ),
           ),
         );
       },
@@ -260,29 +325,36 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
 class FoilOverlay extends StatelessWidget {
   final Offset tilt;
   final Offset pointer;
+  final bool interacting;
 
-  const FoilOverlay({super.key, required this.tilt, required this.pointer});
+  const FoilOverlay({
+    super.key,
+    required this.tilt,
+    required this.pointer,
+    required this.interacting,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
       child: Stack(
+        fit: StackFit.expand,
         children: [
           Opacity(
             key: const ValueKey('foil-rainbow'),
-            opacity: 0.14,
+            opacity: interacting ? 0.38 : 0.24,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  // the rainbow slides across the card as it tilts
-                  begin: Alignment(-1.0 + tilt.dy * 2.5, -1.0),
-                  end: Alignment(1.0 + tilt.dy * 2.5, 1.0),
+                  begin: Alignment(-1.8 + pointer.dx * 1.6, -1.2 + tilt.dx),
+                  end: Alignment(0.2 + pointer.dx * 1.6, 1.2 + tilt.dx),
                   colors: const [
-                    Color(0x33ff6b6b),
-                    Color(0x33ffd93d),
-                    Color(0x334ade80),
-                    Color(0x334d9dff),
-                    Color(0x33c86bff),
+                    Color(0x55f80e35),
+                    Color(0x55eedf10),
+                    Color(0x5521e985),
+                    Color(0x550dbde9),
+                    Color(0x55c929f1),
                   ],
                 ),
               ),
@@ -290,18 +362,18 @@ class FoilOverlay extends StatelessWidget {
           ),
           Opacity(
             key: const ValueKey('foil-sparkle'),
-            opacity: 0.10,
+            opacity: interacting ? 0.18 : 0.10,
             child: CustomPaint(painter: _SparklePainter(), size: Size.infinite),
           ),
           Opacity(
             key: const ValueKey('foil-glare'),
-            opacity: 0.12,
+            opacity: interacting ? 0.32 : 0.08,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment(pointer.dx * 2 - 1, pointer.dy * 2 - 1),
-                  radius: 0.75,
-                  colors: const [Color(0x40ffffff), Color(0x00ffffff)],
+                  radius: 0.7,
+                  colors: const [Color(0x88ffffff), Color(0x00ffffff)],
                 ),
               ),
             ),

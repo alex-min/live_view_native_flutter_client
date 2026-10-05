@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
@@ -52,6 +53,7 @@ void main() {
     WidgetTester tester, {
     String flipped = 'false',
     String? onFlip,
+    String? flipDuration,
     bool withSpeaker = false,
   }) async {
     final speaker =
@@ -67,7 +69,7 @@ void main() {
       rendered: {
         's': [
           '''
-          <FlipCard flipped="$flipped" ${onFlip != null ? "onFlip='" + onFlip + "'" : ''}>
+          <FlipCard flipped="$flipped" ${onFlip != null ? "onFlip='" + onFlip + "'" : ''} ${flipDuration != null ? 'flip-duration="$flipDuration"' : ''}>
             <Container height="300" decoration="background: #ff0000">
               <Text>front</Text>
               $speaker
@@ -205,13 +207,75 @@ void main() {
     expect(engine.spoken, ['flipped']);
   });
 
-  testWidgets('the foil layers are present at low opacity', (tester) async {
+  testWidgets('both rotating faces carry a restrained foil layer', (
+    tester,
+  ) async {
     await pumpCard(tester, onFlip: flipExec);
 
+    expect(find.byType(FoilOverlay), findsNWidgets(2));
+    final front = find.ancestor(
+      of: find.text('front'),
+      matching: find.byType(Transform),
+    );
+    expect(
+      find.descendant(of: front.first, matching: find.byType(FoilOverlay)),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(front.first),
+      tester.getSize(find.byType(LiveFlipCard)),
+    );
     for (final key in ['foil-rainbow', 'foil-sparkle', 'foil-glare']) {
-      final foil = tester.widget<Opacity>(find.byKey(ValueKey(key)));
-      expect(foil.opacity, lessThanOrEqualTo(0.2));
+      final foils = tester.widgetList<Opacity>(find.byKey(ValueKey(key)));
+      expect(foils.length, 2);
+      expect(foils.first.opacity, lessThanOrEqualTo(0.4));
+      expect(
+        tester.getSize(find.byKey(ValueKey(key)).first),
+        tester.getSize(front.first),
+      );
     }
+  });
+
+  testWidgets('mouse position tilts the card and moves its glare', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+    final card = find.byType(LiveFlipCard);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: tester.getCenter(card));
+    await tester.pump();
+    await mouse.moveTo(tester.getTopLeft(card) + const Offset(70, 70));
+    await tester.pump();
+
+    expect(
+      _faceTransform(tester, 'front').transform,
+      isNot(Matrix4.identity()),
+    );
+    final foil = tester.widget<FoilOverlay>(find.byType(FoilOverlay).first);
+    expect(foil.pointer, isNot(const Offset(0.5, 0.5)));
+    expect(foil.interacting, isTrue);
+
+    await mouse.moveTo(const Offset(-50, -50));
+    await tester.pumpAndSettle();
+    expect(_faceTransform(tester, 'front').transform, Matrix4.identity());
+    expect(
+      tester.widget<FoilOverlay>(find.byType(FoilOverlay).first).interacting,
+      isFalse,
+    );
+  });
+
+  testWidgets('the card rotates in depth with a perspective projection', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final matrix = _faceTransform(tester, 'front').transform;
+    expect(matrix.storage[3], greaterThan(0));
+    expect(matrix.storage[11], lessThan(0));
+    await tester.pumpAndSettle();
   });
 
   /// Samples the front face's rotation across the flip and returns the
@@ -288,6 +352,55 @@ void main() {
     expect(swept, lessThan(pi * 1.05));
     // the echo must not have re-fired the exec either
     expect(engine.spoken, ['flipped']);
+  });
+
+  testWidgets('a replacement section keeps the active flip animation', (
+    tester,
+  ) async {
+    String card(bool flipped) =>
+        '<FlipCard flipped="$flipped" flip-duration="2000" onFlip=\'$flipExec\'>'
+        '<Container height="300"><Text>front</Text></Container>'
+        '<Container height="300"><Text>back</Text></Container>'
+        '</FlipCard>';
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': ['<Container>', '</Container>'],
+        '0': {
+          's': [card(false)],
+        },
+      },
+    );
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    final before = tester.state(find.byType(LiveFlipCard));
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pump(const Duration(milliseconds: 200));
+    view.handleDiffMessage({
+      '0': {
+        's': [card(true)],
+      },
+    });
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(tester.state(find.byType(LiveFlipCard)), same(before));
+    final front = tester.widget<Visibility>(
+      find.ancestor(of: find.text('front'), matching: find.byType(Visibility)),
+    );
+    expect(front.visible, isTrue);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<Visibility>(
+            find.ancestor(
+              of: find.text('back'),
+              matching: find.byType(Visibility),
+            ),
+          )
+          .visible,
+      isTrue,
+    );
   });
 
   testWidgets('a rapid double-tap flips once', (tester) async {
@@ -374,5 +487,42 @@ void main() {
       isNot(Matrix4.identity()),
     );
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('the flip-duration attribute sets the animation length', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec, flipDuration: '5000');
+
+    await tester.tap(find.byType(LiveFlipCard));
+    // past the default 380ms the flip would be over; with 5000ms it is not
+    await tester.pump(const Duration(milliseconds: 1000));
+    final frontVis = tester.widget<Visibility>(
+      find.ancestor(of: find.text('front'), matching: find.byType(Visibility)),
+    );
+    expect(frontVis.visible, isTrue);
+
+    await tester.pump(const Duration(milliseconds: 4500));
+    await tester.pumpAndSettle();
+    final backVis = tester.widget<Visibility>(
+      find.ancestor(of: find.text('back'), matching: find.byType(Visibility)),
+    );
+    expect(backVis.visible, isTrue);
+  });
+
+  testWidgets('a card without flip-duration keeps the default speed', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    await tester.tap(find.byType(LiveFlipCard));
+    // the tap lands on the next frame; then run past the 380ms default
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 400));
+    // default is 380ms + settle: the flip is done
+    final backVis = tester.widget<Visibility>(
+      find.ancestor(of: find.text('back'), matching: find.byType(Visibility)),
+    );
+    expect(backVis.visible, isTrue);
   });
 }

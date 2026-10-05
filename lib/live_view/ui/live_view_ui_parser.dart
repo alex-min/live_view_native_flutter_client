@@ -100,25 +100,26 @@ class LiveViewUiParser {
   // preserves the input connection, composing text, selection and focus.
   // Each parser belongs to one render, so old routes cannot share these keys.
   final Map<String, GlobalKey> _textFieldKeys = {};
+  final Map<String, GlobalKey> _flipCardKeys = {};
+
+  String _nodePath(XmlNode node) {
+    final parts = <int>[];
+    for (
+      var current = node;
+      current.parent != null;
+      current = current.parent!
+    ) {
+      parts.add(
+        current.parent!.children
+            .where((node) => node is XmlElement)
+            .toList()
+            .indexOf(current),
+      );
+    }
+    return parts.reversed.join('/');
+  }
 
   GlobalKey _textFieldKey(NodeState state) {
-    String path(XmlNode node) {
-      final parts = <int>[];
-      for (
-        var current = node;
-        current.parent != null;
-        current = current.parent!
-      ) {
-        parts.add(
-          current.parent!.children
-              .where((node) => node is XmlElement)
-              .toList()
-              .indexOf(current),
-        );
-      }
-      return parts.reversed.join('/');
-    }
-
     final name =
         getVariableAttribute(state.node, 'id', state.variables).$1 ??
         getVariableAttribute(state.node, 'name', state.variables).$1;
@@ -128,8 +129,15 @@ class LiveViewUiParser {
             .where((node) => node.name.qualified == 'Form')
             .firstOrNull;
     final identity =
-        '${state.nestedState.join('/')}:${form == null ? '' : path(form)}:${name ?? path(state.node)}';
+        '${state.nestedState.join('/')}:${form == null ? '' : _nodePath(form)}:${name ?? _nodePath(state.node)}';
     return _textFieldKeys.putIfAbsent(identity, () => GlobalKey());
+  }
+
+  GlobalKey _flipCardKey(NodeState state) {
+    final id = getVariableAttribute(state.node, 'id', state.variables).$1;
+    final identity =
+        '${state.nestedState.join('/')}:${id ?? _nodePath(state.node)}';
+    return _flipCardKeys.putIfAbsent(identity, () => GlobalKey());
   }
 
   LiveViewUiParser({
@@ -396,9 +404,12 @@ class LiveViewUiParser {
       ..add([
         'Swipeable',
       ], (state) => [LiveSwipeable(state: state, key: Key(uuid.v4()))])
-      ..add([
-        'FlipCard',
-      ], (state) => [LiveFlipCard(state: state, key: Key(uuid.v4()))])
+      ..add(
+        ['FlipCard'],
+        (state) => [
+          LiveFlipCard(state: state, key: state.parser._flipCardKey(state)),
+        ],
+      )
       ..add(
         ['PersistentFooterButton'],
         (state) => [
