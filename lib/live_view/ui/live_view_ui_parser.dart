@@ -75,6 +75,7 @@ import 'package:liveview_flutter/live_view/ui/components/live_tooltip.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_trailing_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_underline_attribute.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_view_body.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_flip_card.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_swipeable.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_wrap.dart';
 import 'package:liveview_flutter/live_view/ui/dynamic_component.dart';
@@ -395,6 +396,9 @@ class LiveViewUiParser {
       ..add([
         'Swipeable',
       ], (state) => [LiveSwipeable(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'FlipCard',
+      ], (state) => [LiveFlipCard(state: state, key: Key(uuid.v4()))])
       ..add(
         ['PersistentFooterButton'],
         (state) => [
