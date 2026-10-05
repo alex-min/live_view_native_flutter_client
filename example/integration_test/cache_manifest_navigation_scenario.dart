@@ -333,8 +333,6 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.tap(signUpButton);
   await _waitForUrl(tester, view, '/users/register');
   await tester.pumpAndSettle();
-  await Future<void>.delayed(const Duration(seconds: 1));
-  await tester.pumpAndSettle();
 
   await _waitFor(tester, find.byType(TextField));
   final email =
@@ -348,8 +346,7 @@ Future<void> _signUpAndOnboard(WidgetTester tester, LiveView view) async {
   await tester.pump();
   await tester.enterText(fields.at(2), password);
   await tester.pump();
-  await Future<void>.delayed(const Duration(seconds: 1));
-  await tester.pump();
+  await tester.pumpAndSettle();
   await tester.enterText(fields.at(0), email);
   await tester.pump();
 
@@ -370,12 +367,12 @@ Future<void> _waitFor(
   Finder finder, {
   int seconds = 30,
 }) async {
-  for (var attempt = 0; attempt < seconds; attempt++) {
+  for (var attempt = 0; attempt < seconds * 10; attempt++) {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) {
       return;
     }
-    await Future<void>.delayed(const Duration(seconds: 1));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   }
   throw Exception('Timed out waiting for $finder');
 }
