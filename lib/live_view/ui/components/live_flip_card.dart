@@ -10,8 +10,9 @@ import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 /// card (anywhere except on nested interactive controls, which win the
 /// gesture arena) rotates the card 180° around its Y axis with a perspective
 /// tween and fires the `onFlip` exec so the server can mirror the state.
-/// When the server changes the `flipped` attribute (mount, patch, reconnect)
-/// the card animates to match without firing the exec again.
+/// When the server changes the `flipped` attribute (patch, reconnect) the
+/// card animates to match — except on a fresh mount, where it snaps straight
+/// to the server's face so a remount can never replay the flip.
 ///
 /// While pressed, the card tilts in 3D to follow the pointer (like a
 /// collectible card tilted into the light); a small drag is still a tap, a
@@ -27,9 +28,6 @@ import 'package:liveview_flutter/live_view/ui/components/state_widget.dart';
 class LiveFlipCard extends LiveStateWidget<LiveFlipCard> {
   const LiveFlipCard({super.key, required super.state});
 
-  /// Test hook: how many pan updates the card received.
-  static int debugPanCount = 0;
-
   @override
   State<LiveFlipCard> createState() => _LiveFlipCardState();
 }
@@ -43,6 +41,8 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   /// never rotates far enough to hurt readability.
   static const double _maxTilt = 0.20;
 
+  /// The single driver of the flip angle: value 0 = front, 1 = back. Nothing
+  /// else writes the angle; server state only ever adjusts the target.
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: flipDuration,
@@ -52,7 +52,15 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
     duration: tiltSettleDuration,
   );
   Animation<Offset>? _tiltTween;
+
+  /// Single source of truth for which face should show.
   bool _flipped = false;
+
+  /// Whether the widget is established (has applied its first server
+  /// state). Until then a mismatched `flipped` attribute means a fresh
+  /// mount or recreation: snap, never animate, so a remount cannot replay
+  /// the flip.
+  bool _attributesLoaded = false;
 
   /// Current tilt as radians: dx rotates around X (vertical drag), dy
   /// around Y (horizontal drag).
@@ -77,11 +85,30 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   void onStateChange(Map<String, dynamic> diff) {
     reloadAttributes(node, ['flipped', 'onFlip']);
     final serverFlipped = getAttribute('flipped') == 'true';
-    if (serverFlipped != _flipped) {
-      _flipped = serverFlipped;
-      _resetTilt();
-      _animateTo(_flipped);
+    if (serverFlipped == _flipped && _attributesLoaded) return;
+    final firstLoad = !_attributesLoaded;
+    _attributesLoaded = true;
+    _flipped = serverFlipped;
+
+    final settledAtTarget =
+        _flipped ? _controller.value == 1 : _controller.value == 0;
+    if (settledAtTarget || (!firstLoad && _controller.isAnimating)) {
+      // either already showing the server's face, or our own gesture is
+      // animating toward it: the controller is the only driver
+      return;
     }
+    if (firstLoad) {
+      // Fresh mount / reconnect / recreation: land on the server's face
+      // immediately. Animating here would replay a flip the user already
+      // watched (or never asked for).
+      _resetTilt();
+      _controller
+        ..stop()
+        ..value = _flipped ? 1 : 0;
+      return;
+    }
+    _resetTilt();
+    _animateTo(_flipped);
   }
 
   @override
@@ -92,11 +119,18 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   }
 
   void _animateTo(bool flipped) {
-    _controller.animateTo(
-      flipped ? 1 : 0,
-      curve: Curves.easeInOut,
-      duration: flipDuration,
-    );
+    _controller
+        .animateTo(
+          flipped ? 1 : 0,
+          curve: Curves.easeInOut,
+          duration: flipDuration,
+        )
+        .whenComplete(() {
+          // rest exactly flat: no tilt may survive a completed flip
+          if (mounted && _tilt != Offset.zero) {
+            setState(() => _tilt = Offset.zero);
+          }
+        });
   }
 
   void _resetTilt() {
@@ -105,7 +139,9 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
     if (_tilt != Offset.zero) setState(() => _tilt = Offset.zero);
   }
 
-  void _onTap() {
+  void _toggle() {
+    // one gesture, one flip: taps during the tween are ignored
+    if (_controller.isAnimating) return;
     _flipped = !_flipped;
     _resetTilt();
     _animateTo(_flipped);
@@ -117,7 +153,6 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    LiveFlipCard.debugPanCount++;
     if (_controller.isAnimating) return;
     final renderObject = context.findRenderObject();
     final size = renderObject is RenderBox ? renderObject.size : Size.zero;
@@ -157,12 +192,14 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
 
   /// The transform for a face. A fully flat card (no flip, no tilt) must be
   /// the identity: applying the perspective term without a rotation would
-  /// skew the card.
+  /// skew the card. Angles are normalized so a face resting at 2π (the back
+  /// face when the front is up) takes the identity shortcut too.
   Matrix4 _transform(double flipAngle) {
-    if (flipAngle == 0 && _tilt == Offset.zero) return Matrix4.identity();
+    final angle = flipAngle % (2 * pi);
+    if (angle == 0 && _tilt == Offset.zero) return Matrix4.identity();
     return Matrix4.identity()
       ..setEntry(3, 0, _perspective)
-      ..rotateY(flipAngle + _tilt.dy)
+      ..rotateY(angle + _tilt.dy)
       ..rotateX(_tilt.dx);
   }
 
@@ -193,7 +230,7 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
         final angle = _controller.value * pi;
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: _onTap,
+          onTap: _toggle,
           onPanUpdate: _onPanUpdate,
           onPanEnd: _onPanEnd,
           onPanCancel: () => _onPanEnd(DragEndDetails()),

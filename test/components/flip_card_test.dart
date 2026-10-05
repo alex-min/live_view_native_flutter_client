@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liveview_flutter/exec/flutter_exec.dart';
@@ -210,6 +212,149 @@ void main() {
       final foil = tester.widget<Opacity>(find.byKey(ValueKey(key)));
       expect(foil.opacity, lessThanOrEqualTo(0.2));
     }
+  });
+
+  /// Samples the front face's rotation across the flip and returns the
+  /// total swept angle in radians: one flip must sweep exactly pi, no more.
+  Future<double> _sweptRadians(WidgetTester tester) async {
+    double? previous;
+    var swept = 0.0;
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      final m = _faceTransform(tester, 'front').transform;
+      final cos = m.storage[0].clamp(-1.0, 1.0);
+      var angle = acos(cos);
+      // past 90 degrees the front is culled but still built: mirror it.
+      // (rotateY stores +sin in storage[8], -sin in storage[2])
+      if (m.storage[8] < 0) angle = 2 * pi - angle;
+      angle = angle % (2 * pi);
+      if (previous != null) swept += (angle - previous!).abs();
+      previous = angle;
+    }
+    return swept;
+  }
+
+  testWidgets('one tap flips exactly once, sweeping exactly pi', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    await tester.tap(find.byType(LiveFlipCard));
+    final swept = await _sweptRadians(tester);
+    await tester.pumpAndSettle();
+
+    expect(swept, greaterThan(pi * 0.95));
+    expect(swept, lessThan(pi * 1.05));
+    expect(engine.spoken, ['flipped']);
+
+    // and back: one more tap, one more single flip
+    await tester.tap(find.byType(LiveFlipCard));
+    final sweptBack = await _sweptRadians(tester);
+    await tester.pumpAndSettle();
+    expect(sweptBack, greaterThan(pi * 0.95));
+    expect(sweptBack, lessThan(pi * 1.05));
+    expect(engine.spoken, ['flipped', 'flipped']);
+  });
+
+  testWidgets('the server attribute echo mid-animation adds no extra sweep', (
+    tester,
+  ) async {
+    // the flipped/onFlip attributes live in a dynamic template slot so the
+    // echo arrives as an attribute-level diff, like a real server patch
+    SharedPreferences.setMockInitialValues({});
+    // onFlip stays inline (static); only the flip state lives in the slot
+    const flipExec = '[["speak", {"text": "flipped", "lang": "en-US"}]]';
+    var (view, _) = await connect(
+      LiveView(),
+      rendered: {
+        's': [
+          "<FlipCard onFlip='" + flipExec + "' ",
+          "><Container height=\"300\" decoration=\"background: #ff0000\"><Text>front</Text></Container><Container height=\"300\" decoration=\"background: #0000ff\"><Text>back</Text></Container></FlipCard>",
+        ],
+        '0': 'flipped="false"',
+      },
+    );
+    await tester.runLiveView(view);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(LiveFlipCard));
+    // halfway through the tween the server echo arrives with the same state
+    await tester.pump(const Duration(milliseconds: 120));
+    view.handleDiffMessage({'0': 'flipped="true"'});
+    final swept = await _sweptRadians(tester);
+    await tester.pumpAndSettle();
+
+    expect(swept, greaterThan(pi * 0.95));
+    expect(swept, lessThan(pi * 1.05));
+    // the echo must not have re-fired the exec either
+    expect(engine.spoken, ['flipped']);
+  });
+
+  testWidgets('a rapid double-tap flips once', (tester) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pump(const Duration(milliseconds: 80));
+    await tester.tap(find.byType(LiveFlipCard));
+    final swept = await _sweptRadians(tester);
+    await tester.pumpAndSettle();
+
+    expect(swept, greaterThan(pi * 0.95));
+    expect(swept, lessThan(pi * 1.05));
+    expect(engine.spoken, ['flipped']);
+  });
+
+  testWidgets('both faces rest exactly flat with zero tilt residue', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pumpAndSettle();
+
+    // on the answer the back face is flat; the culled front rests at an
+    // exact rotateY(pi) — cos exactly -1.0, no rotateX residue (storage[6]
+    // would be sin(tiltX)), no translation (storage[12..14] zero)
+    expect(_faceTransform(tester, 'back').transform, Matrix4.identity());
+    final front = _faceTransform(tester, 'front').transform;
+    expect(front.storage[0], -1.0);
+    expect(front.storage[6], 0.0);
+    expect(front.storage[8], closeTo(0.0, 1e-12));
+    expect(front.storage[12], 0.0);
+    expect(front.storage[13], 0.0);
+    expect(front.storage[14], 0.0);
+
+    // flip back: the back face returns to an exact rotateY(pi), no residue
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pumpAndSettle();
+    expect(_faceTransform(tester, 'front').transform, Matrix4.identity());
+    final backAgain = _faceTransform(tester, 'back').transform;
+    expect(backAgain.storage[0], -1.0);
+    expect(backAgain.storage[6], 0.0);
+  });
+
+  testWidgets('tilt then flip settles with the tilt exactly zero', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(LiveFlipCard)),
+    );
+    for (var i = 0; i < 6; i++) {
+      await gesture.moveBy(const Offset(10, 7));
+      await tester.pump();
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pumpAndSettle();
+
+    // the culled front face carries the exact rotateY(pi), tilt-free
+    final front = _faceTransform(tester, 'front').transform;
+    expect(front.storage[0], -1.0);
+    expect(front.storage[6], 0.0);
   });
 
   testWidgets('the initial frame is perfectly flat (identity transform)', (
