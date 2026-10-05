@@ -71,6 +71,16 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
     }
   }
 
+  /// The transform for a face at [angle]. A zero angle must be the identity:
+  /// applying the perspective term without a rotation would skew the flat
+  /// card on the first frame.
+  Matrix4 _transform(double angle) {
+    if (angle == 0) return Matrix4.identity();
+    return Matrix4.identity()
+      ..setEntry(3, 0, _perspective)
+      ..rotateY(angle);
+  }
+
   Widget _face(Widget child, double angle, bool visible) {
     return Visibility(
       visible: visible,
@@ -79,10 +89,7 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
       maintainAnimation: true,
       child: Transform(
         alignment: Alignment.center,
-        transform:
-            Matrix4.identity()
-              ..setEntry(3, 0, _perspective)
-              ..rotateY(angle),
+        transform: _transform(angle),
         child: child,
       ),
     );

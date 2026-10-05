@@ -158,4 +158,29 @@ void main() {
     );
     expect(backVis.visible, isFalse);
   });
+
+  Transform _faceTransform(WidgetTester tester, String faceText) {
+    return tester.widget<Transform>(
+      find.ancestor(of: find.text(faceText), matching: find.byType(Transform)),
+    );
+  }
+
+  testWidgets('the initial frame is perfectly flat (identity transform)', (
+    tester,
+  ) async {
+    await pumpCard(tester, onFlip: flipExec);
+
+    // angle 0 must be the identity: no rotation, no perspective skew
+    expect(_faceTransform(tester, 'front').transform, Matrix4.identity());
+
+    // and once flipping, the front face carries a rotation
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      _faceTransform(tester, 'front').transform,
+      isNot(Matrix4.identity()),
+    );
+    await tester.pumpAndSettle();
+  });
 }
