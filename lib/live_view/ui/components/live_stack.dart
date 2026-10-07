@@ -13,6 +13,12 @@ class _LiveStackState extends StateWidget<LiveStack> {
   final attributes = ['clipBehavior', 'alignment'];
 
   @override
+  void initState() {
+    super.initState();
+    listenInnerTextKeys();
+  }
+
+  @override
   void onStateChange(Map<String, dynamic> diff) {
     reloadAttributes(node, attributes);
   }
@@ -24,10 +30,11 @@ class _LiveStackState extends StateWidget<LiveStack> {
           getAlignmentDirectional(getAttribute('alignment')) ??
           AlignmentDirectional.topStart,
       clipBehavior: clipAttribute('clipBehavior') ?? Clip.hardEdge,
-      children: multipleChildren(),
+      children: flexChildren(),
     );
   }
 
+  @override
   Clip? clipAttribute(String name) {
     switch (getAttribute(name)) {
       case 'none':

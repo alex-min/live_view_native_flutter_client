@@ -51,7 +51,7 @@ void main() {
 
   Future<LiveView> pumpCard(
     WidgetTester tester, {
-    String flipped = 'false',
+    String? flipped = 'false',
     String? onFlip,
     String? flipDuration,
     bool withSpeaker = false,
@@ -69,7 +69,7 @@ void main() {
       rendered: {
         's': [
           '''
-          <FlipCard flipped="$flipped" ${onFlip != null ? "onFlip='" + onFlip + "'" : ''} ${flipDuration != null ? 'flip-duration="$flipDuration"' : ''}>
+          <FlipCard ${flipped == null ? '' : 'flipped="$flipped"'} ${onFlip != null ? "onFlip='" + onFlip + "'" : ''} ${flipDuration != null ? 'flip-duration="$flipDuration"' : ''}>
             <Container height="300" decoration="background: #ff0000">
               <Text>front</Text>
               $speaker
@@ -88,6 +88,19 @@ void main() {
   }
 
   const flipExec = '[["speak", {"text": "flipped", "lang": "en-US"}]]';
+
+  testWidgets('a locally controlled card flips without an exec', (
+    tester,
+  ) async {
+    await pumpCard(tester, flipped: null);
+    await tester.tap(find.byType(LiveFlipCard));
+    await tester.pumpAndSettle();
+    final back = tester.widget<Visibility>(
+      find.ancestor(of: find.text('back'), matching: find.byType(Visibility)),
+    );
+    expect(back.visible, isTrue);
+    expect(engine.spoken, isEmpty);
+  });
 
   testWidgets('both faces are built and the front faces the viewer', (
     tester,

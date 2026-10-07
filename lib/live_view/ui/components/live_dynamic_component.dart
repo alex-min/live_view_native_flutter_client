@@ -41,6 +41,11 @@ class LiveDynamicComponent extends LiveStateWidget<LiveDynamicComponent> {
   static List<Widget>? initialContent(NodeState state) {
     for (var elementKey in extractDynamicKeys(state.node.toString())) {
       var value = state.variables[elementKey.key];
+      if (value is String && isLiteralMarkup(value)) {
+        return parseContent(state, elementKey, {
+          's': [value],
+        });
+      }
       if (value is Map && (value.containsKey('s') || value.containsKey('d'))) {
         return parseContent(
           state,
@@ -51,6 +56,11 @@ class LiveDynamicComponent extends LiveStateWidget<LiveDynamicComponent> {
     }
     return null;
   }
+
+  // Phoenix safe fragments are strings containing markup; escaped learner
+  // text starts with &lt; and continues to render as text.
+  static bool isLiteralMarkup(String value) =>
+      RegExp(r'^\s*<[A-Za-z][A-Za-z0-9]*[\s/>]').hasMatch(value);
 
   static List<Widget> parseContent(
     NodeState state,
@@ -117,8 +127,8 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
     lastLiveDiff = _mergeDiff(lastLiveDiff, diff);
     listenInnerTextKeys();
     if (extraKeysListened.isNotEmpty) {
-      if (lastLiveDiff.containsKey(extraKeysListened[0]) &&
-          lastLiveDiff[extraKeysListened[0]] == '') {
+      if (lastLiveDiff.containsKey(extraKeysListened[0].key) &&
+          lastLiveDiff[extraKeysListened[0].key] == '') {
         child = null;
       }
     }
@@ -164,6 +174,14 @@ class _LiveDynamicComponentState extends StateWidget<LiveDynamicComponent> {
       return const SizedBox.shrink();
     }
 
+    if (diffEntry is String &&
+        LiveDynamicComponent.isLiteralMarkup(diffEntry)) {
+      return body(
+        _parseContent(elementKey, {
+          's': [diffEntry],
+        }),
+      );
+    }
     if (diffEntry is Map) {
       return _handleMapDiffEntry(diffEntry, elementKey);
     }

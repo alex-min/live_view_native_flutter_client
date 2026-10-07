@@ -87,6 +87,7 @@ class _LiveFlipCardState extends StateWidget<LiveFlipCard> {
   void onStateChange(Map<String, dynamic> diff) {
     reloadAttributes(node, ['flipped', 'onFlip', 'flip-duration']);
     _controller.duration = _flipDuration;
+    if (_attributesLoaded && getAttribute('flipped') == null) return;
     final serverFlipped = getAttribute('flipped') == 'true';
     if (serverFlipped == _flipped && _attributesLoaded) return;
     final firstLoad = !_attributesLoaded;

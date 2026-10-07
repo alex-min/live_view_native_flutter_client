@@ -25,6 +25,20 @@ Future<void> setStyle(WidgetTester tester, String style) async {
 }
 
 main() {
+  testWidgets(
+    'fontFamily selects a loaded font without changing size or weight',
+    (tester) async {
+      await setStyle(
+        tester,
+        'fontFamily: Brush; fontSize: 24; fontWeight: bold',
+      );
+      final style = materialTextStyle()!.resolve({})!;
+      expect(style.fontFamily, 'Brush');
+      expect(style.fontSize, 24);
+      expect(style.fontWeight, FontWeight.bold);
+    },
+  );
+
   testWidgets('material text style', (tester) async {
     await setStyle(tester, 'hello');
     expect(materialTextStyle()!.resolve({}), const TextStyle());

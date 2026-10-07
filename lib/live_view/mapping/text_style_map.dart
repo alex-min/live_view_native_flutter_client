@@ -96,6 +96,8 @@ TextStyle? getTextStyle(String? style, BuildContext context) {
             TextStyle(color: getColor(context, styleValue)),
           );
 
+        case 'fontFamily':
+          finalStyle = finalStyle.merge(TextStyle(fontFamily: styleValue));
         case 'fontStyle':
           if (fontStyleMap.containsKey(styleValue)) {
             finalStyle = finalStyle.merge(

@@ -1,3 +1,5 @@
+import 'package:liveview_flutter/live_view/ui/components/live_scaled_box.dart';
+import 'package:liveview_flutter/live_view/ui/components/live_fitted_box.dart';
 import 'package:flutter/material.dart';
 import 'package:liveview_flutter/live_view/live_view.dart';
 import 'package:liveview_flutter/live_view/ui/components/live_action_chip.dart';
@@ -398,6 +400,12 @@ class LiveViewUiParser {
       ..add([
         'Column',
       ], (state) => [LiveColumn(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'ScaledBox',
+      ], (state) => [LiveScaledBox(state: state, key: Key(uuid.v4()))])
+      ..add([
+        'FittedBox',
+      ], (state) => [LiveFittedBox(state: state, key: Key(uuid.v4()))])
       ..add(['Row'], (state) => [LiveRow(state: state, key: Key(uuid.v4()))])
       ..add(['Flex'], (state) => [LiveFlex(state: state, key: Key(uuid.v4()))])
       ..add(['Wrap'], (state) => [LiveWrap(state: state, key: Key(uuid.v4()))])
